@@ -225,7 +225,6 @@ pub fn iterate_events(
         events.values.drain(0..=1);
     } else if event == Events::SelectAnimFrame {
         let selected_anim = selections.anim;
-        let selected_bone_idx = selections.bone_idx;
         let selected_bone_ids = selections.bone_ids.clone();
         let last_selected = ui.last_selected.clone();
         unselect_all(selections, edit_mode, ui);
@@ -258,7 +257,6 @@ pub fn iterate_events(
             }
         }
 
-        selections.bone_idx = selected_bone_idx;
         selections.bone_ids = selected_bone_ids;
         ui.last_selected_frame = selections.anim_frame;
         ui.last_selected = last_selected;
@@ -431,10 +429,7 @@ pub fn iterate_events(
             // only move root bones (in context of selected bones)
             selections.bone_ids = selections.only_root_bones(&armature.bones)
         }
-        let new_bone_idx = drag_bone(armature, pointing_id, &selections.bone_ids, is_above);
-        if new_bone_idx != usize::MAX {
-            selections.bone_idx = new_bone_idx;
-        }
+        drag_bone(armature, pointing_id, &selections.bone_ids, is_above);
         events.events.remove(0);
         events.values.drain(0..=2);
     } else {
@@ -645,7 +640,6 @@ pub fn simple_event(
             selections.anim_frame = 0;
         }
         Events::SelectStyle => {
-            selections.bone_idx = usize::MAX;
             selections.bone_ids = vec![];
             selections.style_id = value as i32;
             ui.last_selected = if value as i32 == -1 { "" } else { "style" }.to_string();
@@ -721,7 +715,6 @@ pub fn simple_event(
             }
 
             // de-select bone(s) to prevent any errors
-            selections.bone_idx = usize::MAX;
             selections.bone_ids = vec![];
         }
         Events::DeleteSelectedTextures => {
@@ -770,7 +763,8 @@ pub fn simple_event(
                 return;
             }
 
-            let bone = armature.bones[value as usize].clone();
+            let bones = &armature.bones;
+            let bone = bones.iter().find(|b| b.id == value as i32).unwrap().clone();
             if ui.is_animating(&edit_mode, &selections) && !bone.locked {
                 let anim = armature.animations[selections.anim as usize].clone();
                 undo_states.new_undo_anim(&anim);
@@ -933,7 +927,7 @@ pub fn simple_event(
         Events::NewVertex => {
             // remove drag vertex action, since it's always triggered
             undo_states.undo_actions.pop();
-            undo_states.new_undo_bone(&armature.bones[selections.bone_idx]);
+            undo_states.new_undo_bone(&armature.sel_bone(&selections).unwrap());
 
             let sel = &selections;
 
@@ -1231,7 +1225,6 @@ pub fn simple_event(
 
             // select new parent
             selections.bone_ids = vec![parent.id];
-            selections.bone_idx = bones.iter().position(|b| b.id == parent.id).unwrap();
         }
         Events::MoveSelectedKeyframes => {
             if value as i32 == ui.dragged_keyframe.frame
@@ -1360,32 +1353,26 @@ pub fn simple_event(
 
             // reset selected bones, so that only new bone will be selected later
             selections.bone_ids = vec![];
-            selections.bone_idx = usize::MAX;
 
             // create new bone
             let idx;
             (_, idx) = armature.new_bone(target_id);
             armature.bones[idx].name = "".to_string();
-            let new_bone_id = armature.bones[idx].id;
 
             // don't select new bone until user has done it at least once this session
             if ui.selected_bone_first_time {
                 select_bone(selections, ui, armature, edit_mode, input, idx, false);
             }
 
-            ui.rename_id = "bone_".to_string() + &new_bone_id.to_string();
+            ui.rename_id = "bone_".to_string() + &armature.bones[idx].id.to_string();
 
             // mark this bone as selected, so focus isn't taken away from bone name input
-            ui.prev_selected_bone_idx = idx;
+            ui.prev_selected_bone_id = armature.bones[idx].id;
         }
         Events::SetArmatureSplit => edit_mode.armature_split = value,
         Events::SelectAllTexturedBones => {
             let bones = &armature.bones;
             selections.bone_ids = bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
-            selections.bone_idx = bones
-                .iter()
-                .position(|b| b.id == selections.sel_bone())
-                .unwrap();
         }
         _ => {}
     }
@@ -1677,14 +1664,9 @@ pub fn move_bone(bones: &mut Vec<Bone>, old_idx: i32, new_idx: i32, is_setting_p
     }
 }
 
-pub fn drag_bone(
-    armature: &mut Armature,
-    pointing_id: i32,
-    bone_ids: &Vec<i32>,
-    is_above: bool,
-) -> usize {
+pub fn drag_bone(armature: &mut Armature, pointing_id: i32, bone_ids: &Vec<i32>, is_above: bool) {
     if bone_ids.contains(&pointing_id) {
-        return usize::MAX;
+        return;
     }
 
     // ignore if pointing bone is a child of this
@@ -1696,7 +1678,7 @@ pub fn drag_bone(
         armature_window::get_all_children(&armature.bones, &mut children, &db);
         let children_ids: Vec<i32> = children.iter().map(|c| c.id).collect();
         if children_ids.contains(&pointing_id) {
-            return usize::MAX;
+            return;
         }
     }
 
@@ -1737,9 +1719,6 @@ pub fn drag_bone(
         // adjust dragged bone so it stays in place
         armature.offset_pos_by_parent(old_parents, id);
     }
-
-    let bones = &armature.bones;
-    bones.iter().position(|b| b.id == bone_ids[0]).unwrap()
 }
 
 fn edit_bone(

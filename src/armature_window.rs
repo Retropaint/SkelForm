@@ -279,7 +279,7 @@ pub fn draw_hierarchy(
                     let hidden_f32 = if !bone_hidden { 1. } else { 0. };
                     let sel = selections.anim;
                     let frame = selections.anim_frame;
-                    events.save_edited_bone(b);
+                    events.save_edited_bone(armature.bones[b].id);
                     events.edit_bone(bone_id, &AnimElement::Hidden, hidden_f32, "", sel, frame);
                 }
 
@@ -309,7 +309,7 @@ pub fn draw_hierarchy(
                 }
                 if response.clicked() {
                     let locked_f32 = if !locked { 1. } else { 0. };
-                    events.save_edited_bone(b);
+                    events.save_edited_bone(armature.bones[b].id);
                     let locked = &AnimElement::Locked;
                     events.edit_bone(bone_id, locked, locked_f32, "", usize::MAX, -1);
                 }

@@ -77,9 +77,9 @@ pub fn draw(
             .color_edit_button_srgba_premultiplied(&mut col)
             .on_hover_text(tooltip);
         // focus on the first element of bone panel, upon selecting a new bone
-        if shared_ui.prev_selected_bone_idx != selections.bone_idx {
+        if shared_ui.prev_selected_bone_id != selections.sel_bone() {
             group_color_button.request_focus();
-            shared_ui.prev_selected_bone_idx = selections.bone_idx;
+            shared_ui.prev_selected_bone_id = selections.sel_bone();
         }
         if col != og_col {
             events.edit_bone(bone.id, &E::GroupColorR, col[0] as f32, "", usize::MAX, -1);
@@ -104,7 +104,7 @@ pub fn draw(
             let hidden_f32 = if !bone.hidden { 1. } else { 0. };
             let sel = selections.anim;
             let frame = selections.anim_frame;
-            events.save_edited_bone(selections.bone_idx);
+            events.save_edited_bone(selections.sel_bone());
             events.edit_bone(bone.id, &AnimElement::Hidden, hidden_f32, "", sel, frame);
         }
 
@@ -174,7 +174,7 @@ pub fn draw(
                 }
 
                 let frame = selections.anim_frame;
-                events.save_edited_bone(selections.bone_idx);
+                events.save_edited_bone(selections.sel_bone());
                 let bone_ids = selections.only_root_bones(&armature.bones);
                 edit_bones(&bone_ids, $element, $float, "", anim_id, frame, events);
                 *shared_ui.saving.lock().unwrap() = shared::Saving::Autosaving;
@@ -1188,7 +1188,7 @@ pub fn visuals(
         });
     });
     if changed {
-        events.save_edited_bone(selections.bone_idx);
+        events.save_edited_bone(selections.sel_bone());
         for id in &selections.bone_ids {
             events.set_bone_texture(*id as usize, selected_tex.clone());
         }
@@ -1222,7 +1222,7 @@ pub fn visuals(
             let (edited, value, _) =
                 ui.float_input(id, shared_ui, bone.pivot_pos.x, 1., options.clone());
             if edited {
-                events.save_edited_bone(selections.bone_idx);
+                events.save_edited_bone(selections.sel_bone());
                 events.edit_bone(bone.id, &AnimElement::PivotX, value, "", usize::MAX, -1);
             }
 
@@ -1231,7 +1231,7 @@ pub fn visuals(
             let (edited, value, _) =
                 ui.float_input(id, shared_ui, bone.pivot_pos.y, 1., options.clone());
             if edited {
-                events.save_edited_bone(selections.bone_idx);
+                events.save_edited_bone(selections.sel_bone());
                 events.edit_bone(bone.id, &AnimElement::PivotY, value, "", usize::MAX, -1);
             }
         });
@@ -1246,7 +1246,7 @@ pub fn visuals(
             let (edited, value, _) =
                 ui.float_input(id, shared_ui, bone.pivot_scale.x, 1., options.clone());
             if edited {
-                events.save_edited_bone(selections.bone_idx);
+                events.save_edited_bone(selections.sel_bone());
                 events.edit_bone(bone.id, &AE::PivotScaleX, value, "", usize::MAX, -1);
             }
 
@@ -1255,7 +1255,7 @@ pub fn visuals(
             let (edited, value, _) =
                 ui.float_input(id, shared_ui, bone.pivot_scale.y, 1., options.clone());
             if edited {
-                events.save_edited_bone(selections.bone_idx);
+                events.save_edited_bone(selections.sel_bone());
                 events.edit_bone(bone.id, &AE::PivotScaleY, value, "", usize::MAX, -1);
             }
         });
@@ -1268,7 +1268,7 @@ pub fn visuals(
                 let (edited, value, _) =
                     ui.float_input(id, shared_ui, bone.pivot_rot, deg_mod, options);
                 if edited {
-                    events.save_edited_bone(selections.bone_idx);
+                    events.save_edited_bone(selections.sel_bone());
                     events.edit_bone(bone.id, &AnimElement::PivotRot, value, "", usize::MAX, -1);
                 }
             });
@@ -1305,7 +1305,7 @@ pub fn visuals(
             ui.float_input("zindex".to_string(), shared_ui, zindex, 1., options);
         if edited {
             let el = &AnimElement::Zindex;
-            events.save_edited_bone(selections.bone_idx);
+            events.save_edited_bone(selections.sel_bone());
             let frame = selections.anim_frame;
             events.edit_bone(bone.id, el, value, "", selections.anim, frame);
         }
@@ -1367,7 +1367,7 @@ pub fn visuals(
             };
             let frame = selections.anim_frame;
             let bone_ids = &selections.bone_ids;
-            events.save_edited_bone(selections.bone_idx);
+            events.save_edited_bone(selections.sel_bone());
             edit_bones(bone_ids, E::TintR, col[0], "", anim_id, frame, events);
             edit_bones(bone_ids, E::TintG, col[1], "", anim_id, frame, events);
             edit_bones(bone_ids, E::TintB, col[2], "", anim_id, frame, events);

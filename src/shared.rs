@@ -688,7 +688,7 @@ pub struct Ui {
     pub lang_import_modal: bool,
     pub lang_input: String,
     pub flash_armature_timer: Option<Instant>,
-    pub prev_selected_bone_idx: usize,
+    pub prev_selected_bone_id: i32,
     pub edited_dragging: bool,
     pub started_edit_dragging: bool,
     pub drag_modifier: f32,
@@ -2650,7 +2650,7 @@ impl EventState {
     event_with_value!(toggle_phys_folded, Events::TogglePhysFolded, toggle, usize);
     event_with_value!(toggle_meshdef_folded, E::ToggleMeshdefFolded, toggle, usize);
     event_with_value!(toggle_effects_folded, E::ToggleEffectsFolded, toggle, usize);
-    event_with_value!(save_edited_bone, Events::SaveEditedBone, bone_idx, usize);
+    event_with_value!(save_edited_bone, Events::SaveEditedBone, bone_id, i32);
     event_with_value!(save_bone, Events::SaveBone, bone_id, i32);
     event_with_value!(toggle_baking_ik, Events::ToggleBakingIk, toggle, usize);
     event_with_value!(toggle_exclude_ik, Events::ToggleExcludeIk, toggle, usize);
@@ -2959,7 +2959,6 @@ impl EventState {
 
 #[derive(Default, Clone)]
 pub struct SelectionState {
-    pub bone_idx: usize,
     pub bone_ids: Vec<i32>,
     pub tex_ids: Vec<i32>,
     pub style_id: i32,
@@ -2976,7 +2975,6 @@ pub struct SelectionState {
 impl SelectionState {
     pub fn init(&mut self) {
         *self = Self {
-            bone_idx: usize::MAX,
             anim: usize::MAX,
             anim_frame: -1,
             vert_ids: vec![],

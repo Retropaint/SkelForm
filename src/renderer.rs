@@ -670,7 +670,7 @@ pub fn render(
 
         // save bone to undo stack
         if !renderer.editing_bone {
-            events.save_edited_bone(selections.bone_idx);
+            events.save_edited_bone(selections.sel_bone());
             renderer.editing_bone = true;
         }
 

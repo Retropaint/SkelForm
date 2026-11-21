@@ -685,7 +685,7 @@ pub fn process_inputs(
 
             // save bone just before beginning the drag
             if !shared_ui.started_edit_dragging {
-                events.save_edited_bone(selections.bone_idx);
+                events.save_edited_bone(selections.sel_bone());
                 shared_ui.started_edit_dragging = true;
             }
         }
@@ -867,10 +867,13 @@ pub fn kb_inputs(
         if selections.bone_ids.len() == 0 {
             idx = armature.bones.len() - 1;
         } else {
-            idx = if selections.bone_idx == 0 {
+            let bones = &armature.bones;
+            let sel_bone_id = selections.sel_bone();
+            let pos = bones.iter().position(|b| b.id == sel_bone_id).unwrap();
+            idx = if pos == 0 {
                 armature.bones.len() - 1
             } else {
-                selections.bone_idx - 1
+                pos - 1
             };
         }
         while armature.is_bone_folded(armature.bones[idx].id) {
