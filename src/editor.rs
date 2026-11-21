@@ -1505,7 +1505,7 @@ fn select_bone(
         }
     } else {
         // add bone to selection (holding cmd/shift)
-        if sel.bone_idx == usize::MAX {
+        if sel.bone_ids.len() == 0 {
             sel.bone_idx = idx;
             sel.bone_ids = vec![armature.bones[idx].id];
         }

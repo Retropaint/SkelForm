@@ -406,7 +406,7 @@ pub fn draw(
         }
     }
 
-    if selections.bone_idx != usize::MAX {
+    if selections.bone_ids.len() > 0 {
         edit_mode_bar(
             context, armature, selections, edit_mode, events, shared_ui, config,
         );
@@ -864,7 +864,7 @@ pub fn kb_inputs(
 
     if input.consume_shortcut(&config.keys.next_bone) && armature.bones.len() > 0 {
         let mut idx;
-        if selections.bone_idx == usize::MAX {
+        if selections.bone_ids.len() == 0 {
             idx = armature.bones.len() - 1;
         } else {
             idx = if selections.bone_idx == 0 {
@@ -884,7 +884,7 @@ pub fn kb_inputs(
 
     if input.consume_shortcut(&config.keys.prev_bone) && armature.bones.len() > 0 {
         let mut idx;
-        if selections.bone_idx == usize::MAX {
+        if selections.bone_ids.len() == 0 {
             idx = 0;
         } else {
             let is_last = selections.bone_idx == armature.bones.len() - 1;

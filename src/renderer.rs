@@ -193,7 +193,7 @@ pub fn render(
         let tb = &renderer.temp_arm.bones[b];
         let selected_mesh = !edit_mode.editing_mesh
             || edit_mode.editing_mesh
-                && sel.bone_idx != usize::MAX
+                && sel.bone_ids.len() > 0
                 && armature.sel_bone(&sel).unwrap().id == tb.id;
         if on_click_id == -1
             && (!input.left_down || input.left_pressed) // allow detection on LMB press
