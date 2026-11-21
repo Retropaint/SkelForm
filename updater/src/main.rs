@@ -39,23 +39,25 @@ fn main() {
 
     // get downloaded zip file
     let resp = ureq::get(version).call().unwrap();
-    let mut ffmpeg_zip = std::fs::File::create(destination).unwrap();
+    let mut zip = std::fs::File::create(destination).unwrap();
     let bytes_result: Result<Vec<u8>, _> = resp.into_body().into_reader().bytes().collect();
     if let Ok(bytes) = bytes_result {
-        _ = ffmpeg_zip.write(&bytes);
+        _ = zip.write(&bytes);
     }
 
     println!("downloaded");
 
-    // extract ffmpeg from zip
+    // extract new program from zip
     let file = File::open(destination).unwrap();
     let mut archive = ZipArchive::new(file).unwrap();
 
     for i in 0..archive.len() {
         let mut entry = archive.by_index(i).unwrap();
-        let Some(relative_path) = entry.enclosed_name() else {
+        let filename = entry.name().unwrap().to_lowercase();
+        if entry.enclosed_name() == None || filename == "updater" {
             continue;
-        };
+        }
+        let relative_path = entry.enclosed_name().unwrap();
 
         let output_path = std::path::Path::new(output).join(relative_path);
 
