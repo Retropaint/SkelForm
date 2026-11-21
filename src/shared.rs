@@ -2651,7 +2651,7 @@ impl EventState {
     event_with_value!(toggle_meshdef_folded, E::ToggleMeshdefFolded, toggle, usize);
     event_with_value!(toggle_effects_folded, E::ToggleEffectsFolded, toggle, usize);
     event_with_value!(save_edited_bone, Events::SaveEditedBone, bone_idx, usize);
-    event_with_value!(save_bone, Events::SaveBone, bone_idx, usize);
+    event_with_value!(save_bone, Events::SaveBone, bone_id, i32);
     event_with_value!(toggle_baking_ik, Events::ToggleBakingIk, toggle, usize);
     event_with_value!(toggle_exclude_ik, Events::ToggleExcludeIk, toggle, usize);
     event_with_value!(set_export_img_format, E::SetExportImgFormat, idx, usize);

@@ -50,7 +50,7 @@ pub fn iterate_events(
             }
             E::ResetVertices | E::CenterBoneVerts | E::DeleteVertex |E::TraceBoneVerts |
             E::NewVertex | E::DeleteTriangle => {
-                undo_states.new_undo_bone(&armature.bones[selections.bone_idx])
+                undo_states.new_undo_bone(&armature.sel_bone(&selections).unwrap())
             }
             _ => {}
         };
@@ -758,7 +758,8 @@ pub fn simple_event(
             armature.animations.push(new_anim);
         }
         Events::SaveBone => {
-            let bone = armature.bones[value as usize].clone();
+            let bone_id = value as i32;
+            let bone = armature.bones.iter().find(|b| b.id == bone_id).unwrap();
             undo_states.new_undo_bone(&bone);
             *ui.saving.lock().unwrap() = Saving::Autosaving;
         }

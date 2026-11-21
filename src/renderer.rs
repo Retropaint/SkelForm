@@ -606,7 +606,7 @@ pub fn render(
         renderer.started_dragging_verts = false;
     } else if sel.vert_ids.len() > 0 && armature.sel_bone(&sel) != None && !camera.on_ui {
         if !renderer.started_dragging_verts {
-            events.save_bone(selections.bone_idx);
+            events.save_bone(selections.bone_ids[0]);
             renderer.started_dragging_verts = true
         }
         for vert_id in &sel.vert_ids {
