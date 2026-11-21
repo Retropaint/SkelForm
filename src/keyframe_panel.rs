@@ -1,9 +1,6 @@
 use ui::EguiUi;
 
-use egui::{
-    epaint::{self},
-    pos2, Color32, Pos2, Rect, Sense, Shape, Stroke, StrokeKind,
-};
+use egui::{pos2, Color32, Pos2, Rect, Sense, Stroke};
 
 use crate::*;
 
