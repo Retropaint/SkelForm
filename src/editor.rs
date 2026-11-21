@@ -327,8 +327,12 @@ pub fn iterate_events(
         events.values.drain(0..=4);
         events.str_values.remove(0);
     } else if event == Events::ToggleBoneFolded {
-        let idx = events.values[0] as usize;
-        armature.bones[idx].folded = events.values[1] == 1.;
+        armature
+            .bones
+            .iter_mut()
+            .find(|b| b.id == events.values[0] as i32)
+            .unwrap()
+            .folded = events.values[1] == 1.;
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::ToggleBoneAnimFolded {

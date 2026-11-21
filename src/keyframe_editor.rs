@@ -441,9 +441,7 @@ pub fn draw_bones_list(
                         // unfold this bone's parent(s) so it appears in the hierarchy
                         let parents = armature.get_all_parents(false, kf.bone_id);
                         for parent in &parents {
-                            let bones = &armature.bones;
-                            let idx = bones.iter().position(|b| b.id == parent.id).unwrap();
-                            events.toggle_bone_folded(idx, false);
+                            events.toggle_bone_folded(parent.id, false);
                         }
                     }
                     last_bone_id = kf.bone_id;

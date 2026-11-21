@@ -408,7 +408,7 @@ pub fn draw_hierarchy(
                     let arrow_offset = Vec2::new(-2., 18.5);
                     bone_label(fold_icon, false, ui, id, arrow_offset, &desc, arrow_col);
                     if border {
-                        events.toggle_bone_folded(idx as usize, !armature.bones[b].folded);
+                        events.toggle_bone_folded(armature.bones[b].id, !armature.bones[b].folded);
                     }
                 }
                 ui.add_space(13.);

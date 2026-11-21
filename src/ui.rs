@@ -903,7 +903,7 @@ pub fn kb_inputs(
     if input.consume_shortcut(&config.keys.toggle_bone_fold) {
         let bone = &armature.sel_bone(selections);
         if *bone != None {
-            events.toggle_bone_folded(selections.bone_idx, !bone.unwrap().folded);
+            events.toggle_bone_folded(selections.bone_ids[0], !bone.unwrap().folded);
         }
     }
 

@@ -2780,9 +2780,9 @@ impl EventState {
         self.values.push(new_idx as f32);
     }
 
-    pub fn toggle_bone_folded(&mut self, bone_idx: usize, folded: bool) {
+    pub fn toggle_bone_folded(&mut self, bone_id: i32, folded: bool) {
         self.events.push(Events::ToggleBoneFolded);
-        self.values.push(bone_idx as f32);
+        self.values.push(bone_id as f32);
         self.values.push(if folded { 1. } else { 0. });
     }
 
