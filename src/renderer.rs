@@ -264,8 +264,15 @@ pub fn render(
         }
 
         // hovering glow animation
-        let idx = selections.bone_idx;
-        let not_selected = idx == usize::MAX || armature.bones[idx].id != hovering_bone_id;
+        let bone_ids = &selections.bone_ids;
+        let not_selected = bone_ids.len() == 0
+            || armature
+                .bones
+                .iter()
+                .find(|b| b.id == bone_ids[0])
+                .unwrap()
+                .id
+                != hovering_bone_id;
         let is_hovering =
             selections.hovering_bone_id == renderer.temp_arm.bones[b].id || parent_selected;
         if is_hovering && not_selected && !renderer.on_point {
@@ -644,12 +651,11 @@ pub fn render(
     }
 
     // editing bone transforms (move, rotate, scale)
-    let idx = sel.bone_idx;
     let input = &input;
     let mouse_moved = input.mouse != input.mouse_prev_left;
     if input.mouse_pressed_on_ui {
         renderer.editing_bone = false;
-    } else if idx != usize::MAX && input.left_down && selections.hovering_bone_id == -1 {
+    } else if sel.bone_ids.len() > 0 && input.left_down && selections.hovering_bone_id == -1 {
         // don't flash edit shortcuts if mouse was just pressed
         if !input.left_pressed {
             events.update_current_editing(0);

@@ -887,8 +887,10 @@ pub fn kb_inputs(
         if selections.bone_ids.len() == 0 {
             idx = 0;
         } else {
-            let is_last = selections.bone_idx == armature.bones.len() - 1;
-            idx = if is_last { 0 } else { selections.bone_idx + 1 };
+            let id = selections.bone_ids[0];
+            let pos = armature.bones.iter().position(|b| b.id == id).unwrap();
+            let is_last = pos == armature.bones.len() - 1;
+            idx = if is_last { 0 } else { pos + 1 };
         }
         while armature.is_bone_folded(armature.bones[idx].id) {
             idx += 1;

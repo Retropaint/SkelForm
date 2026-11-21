@@ -427,9 +427,9 @@ pub fn draw_hierarchy(
                     selected_col += Color::new(20, 20, 20, 0);
                 }
 
-                let id = &armature.bones[idx as usize].id;
-                let is_multi_selected = selections.bone_ids.contains(id);
-                if selections.bone_idx == idx as usize || is_multi_selected {
+                let id = armature.bones[idx as usize].id;
+                let is_multi_selected = selections.bone_ids.contains(&id);
+                if selections.sel_bone() == id || is_multi_selected {
                     selected_col += Color::new(20, 20, 20, 0);
                     cursor = egui::CursorIcon::Default;
                 }

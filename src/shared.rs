@@ -2999,6 +2999,14 @@ impl SelectionState {
         });
         c_bone_ids
     }
+
+    pub fn sel_bone(&self) -> i32 {
+        if self.bone_ids.len() > 0 {
+            self.bone_ids[0]
+        } else {
+            -1
+        }
+    }
 }
 
 #[derive(Default)]
