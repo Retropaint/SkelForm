@@ -1760,10 +1760,10 @@ impl Armature {
 
     // return selected bone based on first bone_ids
     pub fn sel_bone(&self, selections: &SelectionState) -> Option<&Bone> {
-        if selections.bone_idx != usize::MAX {
-            if selections.bone_idx < self.bones.len() {
-                let id = selections.bone_ids[0];
-                return Some(&self.bones.iter().find(|bone| bone.id == id).unwrap());
+        if selections.bone_ids.len() > 0 {
+            let id = selections.bone_ids[0];
+            if let Some(bone) = self.bones.iter().find(|bone| bone.id == id) {
+                return Some(bone);
             } else if self.bones.len() > 0 {
                 // safeguard: select first bone
                 return Some(&self.bones[0]);
@@ -1773,10 +1773,11 @@ impl Armature {
     }
 
     pub fn sel_bone_mut(&mut self, selections: &SelectionState) -> Option<&mut Bone> {
-        if selections.bone_idx != usize::MAX {
-            if selections.bone_idx < self.bones.len() {
-                let id = selections.bone_ids[0];
-                return Some(self.bones.iter_mut().find(|bone| bone.id == id).unwrap());
+        if selections.bone_ids.len() > 0 {
+            let id = selections.bone_ids[0];
+            let has_bone = self.bones.iter().find(|bone| bone.id == id) != None;
+            if has_bone {
+                return self.bones.iter_mut().find(|bone| bone.id == id);
             } else if self.bones.len() > 0 {
                 // safeguard: select first bone
                 return Some(&mut self.bones[0]);
@@ -2559,6 +2560,7 @@ pub enum Events {
     DuplicateTexture,
     NewBonesFromTextures,
     SetArmatureSplit,
+    SelectAllTexturedBones,
 }
 
 enum_string!(Events);
@@ -2626,6 +2628,7 @@ impl EventState {
     generic_event!(toggle_editing_pivot, Events::ToggleEditingPivot);
     generic_event!(toggle_editing_mesh, Events::ToggleEditingMesh);
     generic_event!(restart_anims, Events::RestartAnims);
+    generic_event!(select_all_textured_bones, Events::SelectAllTexturedBones);
     event_with_value!(select_anim, Events::SelectAnim, anim_id, usize);
     event_with_value!(select_style, Events::SelectStyle, style_id, i32);
     event_with_value!(delete_bone, Events::DeleteBone, bone_id, usize);

@@ -1374,6 +1374,14 @@ pub fn simple_event(
             ui.prev_selected_bone_idx = idx;
         }
         Events::SetArmatureSplit => edit_mode.armature_split = value,
+        Events::SelectAllTexturedBones => {
+            let bones = &armature.bones;
+            selections.bone_ids = bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
+            selections.bone_idx = bones
+                .iter()
+                .position(|b| b.id == selections.bone_ids[0])
+                .unwrap();
+        }
         _ => {}
     }
 }

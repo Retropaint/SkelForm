@@ -2,7 +2,7 @@
 use egui::{Color32, Context, Shadow, Stroke};
 use image::DynamicImage;
 use modal::modal_x;
-use utils::world_mouse;
+use utils::{trunc_str, world_mouse};
 
 use crate::*;
 
@@ -992,6 +992,11 @@ fn context_menu_content(
         }
         if ui.context_button("New Parent", &config).clicked() {
             events.create_parent_bone(split[1].parse().unwrap());
+            shared_ui.context_menu.close();
+        }
+        let str = "Select All Textured Bones";
+        if ui.context_button(str, &config).on_hover_text(str).clicked() {
+            events.select_all_textured_bones();
             shared_ui.context_menu.close();
         }
     } else if element_id == "style" {
