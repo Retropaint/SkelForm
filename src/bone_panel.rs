@@ -922,11 +922,11 @@ pub fn mesh_deformation(
                         events.set_hovering_vert_id(bind.verts[w].id);
                     }
                     if slider.drag_started() {
-                        events.save_bone(selections.bone_ids[0]);
+                        events.save_bone(selections.sel_bone());
                     }
                     if new_weight != bind.verts[w].weight {
                         if !slider.dragged() {
-                            events.save_bone(selections.bone_ids[0]);
+                            events.save_bone(selections.sel_bone());
                         }
                         events.set_bind_weight(selections.bind as u32, w, new_weight);
                     }
@@ -958,7 +958,7 @@ pub fn selected_verts_inputs(
             let (edited, value, input) =
                 $ui.float_input($id.to_string(), shared_ui, init_value, 1., options);
             if edited {
-                events.save_bone(selections.bone_ids[0]);
+                events.save_bone(selections.sel_bone());
                 let mut new = $field;
                 if $is_x {
                     new.x = value;
@@ -1013,7 +1013,7 @@ pub fn selected_verts_inputs(
                     ui.add(egui::Slider::new(&mut new_uv.x, (0.)..=1.).update_while_editing(false));
                 slider1dragged = slider.dragged();
                 if slider.drag_started() {
-                    events.save_bone(selections.bone_ids[0]);
+                    events.save_bone(selections.sel_bone());
                 }
                 with_hover!(slider);
             });
@@ -1026,7 +1026,7 @@ pub fn selected_verts_inputs(
                     ui.add(egui::Slider::new(&mut new_uv.y, (0.)..=1.).update_while_editing(false));
                 slider2dragged = slider.dragged();
                 if slider.drag_started() {
-                    events.save_bone(selections.bone_ids[0]);
+                    events.save_bone(selections.sel_bone());
                 }
                 with_hover!(slider);
             });
@@ -1036,7 +1036,7 @@ pub fn selected_verts_inputs(
         // update UV values if the sliders have been edited
         if new_uv != vert.uv {
             if !slider1dragged && !slider2dragged {
-                events.save_bone(selections.bone_ids[0]);
+                events.save_bone(selections.sel_bone());
             }
             events.edit_vertex_uv(id as u32, new_uv.x, new_uv.y);
         }

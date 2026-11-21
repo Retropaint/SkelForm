@@ -411,7 +411,7 @@ pub fn draw_bones_list(
             let bones = &armature.bones;
             let bone = bones.iter().find(|b| b.id == kf.bone_id).unwrap();
             let highlighted =
-                selections.bone_ids.len() != 0 && selections.bone_ids[0] == kf.bone_id;
+                selections.bone_ids.len() != 0 && selections.sel_bone() == kf.bone_id;
 
             // bone header (name label & fold button)
             if last_bone_id != kf.bone_id {

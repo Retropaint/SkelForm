@@ -1761,7 +1761,7 @@ impl Armature {
     // return selected bone based on first bone_ids
     pub fn sel_bone(&self, selections: &SelectionState) -> Option<&Bone> {
         if selections.bone_ids.len() > 0 {
-            let id = selections.bone_ids[0];
+            let id = selections.sel_bone();
             if let Some(bone) = self.bones.iter().find(|bone| bone.id == id) {
                 return Some(bone);
             } else if self.bones.len() > 0 {
@@ -1774,7 +1774,7 @@ impl Armature {
 
     pub fn sel_bone_mut(&mut self, selections: &SelectionState) -> Option<&mut Bone> {
         if selections.bone_ids.len() > 0 {
-            let id = selections.bone_ids[0];
+            let id = selections.sel_bone();
             let has_bone = self.bones.iter().find(|bone| bone.id == id) != None;
             if has_bone {
                 return self.bones.iter_mut().find(|bone| bone.id == id);

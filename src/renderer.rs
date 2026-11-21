@@ -299,7 +299,7 @@ pub fn render(
     }
 
     // set hovering bone, if not already selected
-    let selected = selections.bone_ids.len() > 0 && selections.bone_ids[0] == on_click_id;
+    let selected = selections.bone_ids.len() > 0 && selections.sel_bone() == on_click_id;
     if on_click_id != -1 && selections.hovering_bone_id != on_click_id && !selected {
         events.set_hovering_bone_id(on_click_id);
     } else if selected {
@@ -613,7 +613,7 @@ pub fn render(
         renderer.started_dragging_verts = false;
     } else if sel.vert_ids.len() > 0 && armature.sel_bone(&sel) != None && !camera.on_ui {
         if !renderer.started_dragging_verts {
-            events.save_bone(selections.bone_ids[0]);
+            events.save_bone(selections.sel_bone());
             renderer.started_dragging_verts = true
         }
         for vert_id in &sel.vert_ids {

@@ -47,7 +47,7 @@ pub fn draw(
     if input.global_bone && selections.bone_ids.len() != 0 {
         if let Some(bone) = temp_bones
             .iter()
-            .find(|bone| bone.id == selections.bone_ids[0])
+            .find(|bone| bone.id == selections.sel_bone())
         {
             let area_pos = egui::Pos2::new(0., 0.);
             let area = egui::Area::new("globl_bone".into()).fixed_pos(area_pos);
@@ -255,7 +255,7 @@ pub fn draw(
         selected_bone = armature
             .try_anim_bones()
             .iter()
-            .find(|bone| bone.id == selections.bone_ids[0])
+            .find(|bone| bone.id == selections.sel_bone())
             .unwrap()
             .clone();
     }
@@ -774,7 +774,7 @@ pub fn kb_inputs(
         // delete selected bone(s)
         if last == "bone" {
             events.open_polar_modal(PolarId::DeleteBone, shared_ui.loc("polar.delete_bone"));
-            shared_ui.context_menu.id = format!("bone_{}", selections.bone_ids[0]);
+            shared_ui.context_menu.id = format!("bone_{}", selections.sel_bone());
         } else if last == "anim" {
             events.open_polar_modal(PolarId::DeleteAnim, shared_ui.loc("polar.delete_anim"));
             shared_ui.context_menu.id = format!("anim_{}", selections.anim);
@@ -887,7 +887,7 @@ pub fn kb_inputs(
         if selections.bone_ids.len() == 0 {
             idx = 0;
         } else {
-            let id = selections.bone_ids[0];
+            let id = selections.sel_bone();
             let pos = armature.bones.iter().position(|b| b.id == id).unwrap();
             let is_last = pos == armature.bones.len() - 1;
             idx = if is_last { 0 } else { pos + 1 };
@@ -905,7 +905,7 @@ pub fn kb_inputs(
     if input.consume_shortcut(&config.keys.toggle_bone_fold) {
         let bone = &armature.sel_bone(selections);
         if *bone != None {
-            events.toggle_bone_folded(selections.bone_ids[0], !bone.unwrap().folded);
+            events.toggle_bone_folded(selections.sel_bone(), !bone.unwrap().folded);
         }
     }
 

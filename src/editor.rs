@@ -1346,7 +1346,7 @@ pub fn simple_event(
             adjust_vert_by_bind(vert, true, &bind, &renderer.temp_arm.bones, temp_bone);
 
             // set bone as child of mesh
-            drag_bone(armature, selections.bone_ids[0], &vec![bone_id], false);
+            drag_bone(armature, selections.sel_bone(), &vec![bone_id], false);
         }
         Events::NewBone => {
             // set target bone as either one selected via the event, or currently selected one
@@ -1384,7 +1384,7 @@ pub fn simple_event(
             selections.bone_ids = bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
             selections.bone_idx = bones
                 .iter()
-                .position(|b| b.id == selections.bone_ids[0])
+                .position(|b| b.id == selections.sel_bone())
                 .unwrap();
         }
         _ => {}
@@ -1594,7 +1594,7 @@ pub fn undo_redo(
             if selections.bone_ids.len() == 0 {
                 selections.bone_idx = usize::MAX;
             } else {
-                let sel_id = selections.bone_ids[0];
+                let sel_id = selections.sel_bone();
                 let sel_idx = armature.bones.iter().position(|b| b.id == sel_id);
                 if sel_idx != None {
                     selections.bone_idx = sel_idx.unwrap();
@@ -2320,7 +2320,7 @@ fn paste_bone(
 
     // select pasted bones
     selections.bone_ids = id_refs.into_values().collect();
-    let sel_id = selections.bone_ids[0];
+    let sel_id = selections.sel_bone();
     selections.bone_idx = armature.bones.iter().position(|b| b.id == sel_id).unwrap();
 }
 
