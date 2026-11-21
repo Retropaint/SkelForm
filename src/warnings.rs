@@ -344,8 +344,7 @@ pub fn warning_line(
                         }
                         let egui_str = egui::RichText::new(str).underline();
                         if ui.clickable_label(egui_str).clicked() {
-                            let idx = bones.iter().position(|b| b.id == id as i32).unwrap();
-                            events.select_bone(idx, true);
+                            events.select_bone(id as i32, true);
                         };
                     }
                 });
@@ -433,10 +432,8 @@ fn clickable_bone(
 ) {
     let text = egui::RichText::new(str).color(color).underline();
     if ui.clickable_label(text).clicked() {
-        let bones = &armature.bones;
-        let idx = bones.iter().position(|b| b.id == warning.ids[0] as i32);
         events.unselect_all();
-        events.select_bone(idx.unwrap(), true);
+        events.select_bone(warning.ids[0] as i32, true);
     };
 }
 
@@ -465,8 +462,7 @@ pub fn bone_list(
         }
         let egui_str = egui::RichText::new(str).underline();
         if ui.clickable_label(egui_str).clicked() {
-            let idx = bones.iter().position(|b| b.id == id as i32).unwrap();
-            events.select_bone(idx, true);
+            events.select_bone(id as i32, true);
         };
     }
 }

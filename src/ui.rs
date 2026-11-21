@@ -882,7 +882,7 @@ pub fn kb_inputs(
                 break;
             }
         }
-        events.select_bone(idx, false);
+        events.select_bone(armature.bones[idx].id, false);
     }
 
     if input.consume_shortcut(&config.keys.prev_bone) && armature.bones.len() > 0 {
@@ -902,7 +902,7 @@ pub fn kb_inputs(
                 break;
             }
         }
-        events.select_bone(idx, false);
+        events.select_bone(armature.bones[idx].id, false);
     }
 
     if input.consume_shortcut(&config.keys.toggle_bone_fold) {

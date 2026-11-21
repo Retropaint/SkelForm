@@ -288,7 +288,7 @@ pub fn render(
                 let bones = &armature.bones;
                 let idx = bones.iter().position(|bone| bone.id == on_click_id);
                 if idx != None {
-                    events.select_bone(idx.unwrap(), true);
+                    events.select_bone(on_click_id, true);
                 }
             }
         } else {
@@ -594,7 +594,7 @@ pub fn render(
             }
         }
         if unselect {
-            events.select_bone(usize::MAX, true);
+            events.select_bone(-1, true);
         }
     }
 
@@ -2343,7 +2343,7 @@ pub fn draw_render_points(
             if input.left_pressed {
                 let sel_bone = armature.sel_bone(selections);
                 if sel_bone == None || (sel_bone != None && sel_bone.unwrap().id != bone.id) {
-                    events.select_bone(on_click_id as usize, true);
+                    events.select_bone(on_click_id, true);
                 }
             }
             on_point = true;

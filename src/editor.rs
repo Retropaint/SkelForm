@@ -334,8 +334,10 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::ToggleBoneAnimFolded {
-        let idx = events.values[0] as usize;
-        armature.bones[idx].anim_folded = events.values[1] == 1.;
+        let id = events.values[0] as i32;
+        let bone = &mut armature.bones.iter_mut().find(|b| b.id == id).unwrap();
+        bone.anim_folded = events.values[1] == 1.;
+
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::MoveTexture {
@@ -633,7 +635,7 @@ pub fn simple_event(
         }
         Events::SelectBone => {
             let render = str_value == "t";
-            let val = value as usize;
+            let val = value as i32;
             select_bone(selections, ui, armature, edit_mode, input, val, render);
         }
         Events::SelectAnim => {
@@ -1360,16 +1362,17 @@ pub fn simple_event(
             let idx;
             (_, idx) = armature.new_bone(target_id);
             armature.bones[idx].name = "".to_string();
+            let bone_id = armature.bones[idx].id;
 
             // don't select new bone until user has done it at least once this session
             if ui.selected_bone_first_time {
-                select_bone(selections, ui, armature, edit_mode, input, idx, false);
+                select_bone(selections, ui, armature, edit_mode, input, bone_id, false);
             }
 
-            ui.rename_id = "bone_".to_string() + &armature.bones[idx].id.to_string();
+            ui.rename_id = "bone_".to_string() + &bone_id.to_string();
 
             // mark this bone as selected, so focus isn't taken away from bone name input
-            ui.prev_selected_bone_id = armature.bones[idx].id;
+            ui.prev_selected_bone_id = bone_id;
         }
         Events::SetArmatureSplit => edit_mode.armature_split = value,
         Events::SelectAllTexturedBones => {
@@ -1416,7 +1419,7 @@ fn select_bone(
     armature: &mut Armature,
     edit_mode: &mut EditMode,
     input: &InputStates,
-    idx: usize,
+    id: i32,
     from_renderer: bool,
 ) {
     if ui.atlas_modal || ui.file_elapsed != None {
@@ -1432,7 +1435,7 @@ fn select_bone(
     edit_mode.editing_pivot = false;
     sel.style_id = -1;
 
-    if idx == usize::MAX {
+    if id == -1 {
         sel.bone_ids = vec![];
         sel.bind = -1;
         edit_mode.setting_ik_target = false;
@@ -1442,7 +1445,7 @@ fn select_bone(
 
     // rename bone if already selected and in right-side panel
     let holding_mods = input.holding_mod || input.holding_shift;
-    if sel.sel_bone() == idx as i32 && !from_renderer && ui.last_selected == "bone" && !holding_mods
+    if sel.sel_bone() == id as i32 && !from_renderer && ui.last_selected == "bone" && !holding_mods
     {
         ui.rename_id = "bone_".to_string() + &sel.bone_ids[0].to_string().clone();
         ui.edit_value = Some(armature.sel_bone(&sel).unwrap().name.clone());
@@ -1453,14 +1456,15 @@ fn select_bone(
 
     // set this bone as IK target if in IK target mode
     if edit_mode.setting_ik_target {
-        armature.sel_bone_mut(&sel).unwrap().ik_target_id = armature.bones[idx].id;
+        armature.sel_bone_mut(&sel).unwrap().ik_target_id =
+            armature.bones.iter().find(|b| b.id == id).unwrap().id;
         edit_mode.setting_ik_target = false;
         return;
     }
 
     // set this bone as bind if in bind mode
     if edit_mode.setting_bind_bone {
-        let id = armature.bones[idx].id;
+        let id = armature.bones.iter().find(|b| b.id == id).unwrap().id;
         if let Some(bind) = armature
             .sel_bone_mut(&sel)
             .and_then(|bone| bone.binds.get_mut(sel.bind as usize))
@@ -1472,7 +1476,7 @@ fn select_bone(
     }
 
     sel.bind = -1;
-    let bone_id = armature.bones[idx].id;
+    let bone_id = armature.bones.iter().find(|b| b.id == id).unwrap().id;
     // scroll to this bone in keyframe editor
     if let Some(bone) = ui.bone_tops.tops.iter().find(|b| b.id == bone_id) {
         ui.timeline_offset.y =
@@ -1481,7 +1485,7 @@ fn select_bone(
 
     // select only this bone if not holding modifiers
     if !holding_mods {
-        sel.bone_ids = vec![armature.bones[idx].id];
+        sel.bone_ids = vec![bone_id];
         edit_mode.showing_mesh = false;
 
         // unfold this bone's parents to reveal it in the hierarchy
@@ -1490,23 +1494,23 @@ fn select_bone(
         for p in parents {
             bones.iter_mut().find(|b| b.id == p.id).unwrap().folded = false;
         }
-    } else if sel.bone_ids.contains(&armature.bones[idx].id) {
+    } else if sel.bone_ids.contains(&bone_id) {
         // unselect bone if already part of selection
-        sel.bone_ids.retain(|id| *id != armature.bones[idx].id);
+        sel.bone_ids.retain(|id| *id != bone_id);
     } else {
         // add bone to selection (holding cmd/shift)
         if sel.bone_ids.len() == 0 {
-            sel.bone_ids = vec![armature.bones[idx].id];
+            sel.bone_ids = vec![bone_id];
         }
         if input.holding_mod {
-            let id = armature.bones[idx as usize].id;
+            let id = bone_id;
             sel.bone_ids.push(id);
         } else {
             let bones = &armature.bones;
             let mut first = bones.iter().position(|b| b.id == sel.sel_bone()).unwrap();
-            let mut second = idx as usize;
+            let mut second = bones.iter().position(|b| b.id == id).unwrap();
             if first > second {
-                first = idx as usize;
+                first = bones.iter().position(|b| b.id == id).unwrap();
                 second = bones.iter().position(|b| b.id == sel.sel_bone()).unwrap();
             }
             for i in first..second as usize + 1 {

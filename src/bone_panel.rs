@@ -253,19 +253,19 @@ pub fn draw(
 
     // show 'IK root bone' button if this is a target bone
     let bones = &mut armature.bones.iter();
-    let is_target_of = bones.position(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
-    if let Some(is_target_of) = is_target_of {
+    let root = bones.find(|b| b.ik_family_id != -1 && b.ik_target_id == bone.id);
+    if let Some(root) = root {
         let target_str = shared_ui.loc("bone_panel.target_bone");
         ui.horizontal(|ui| {
             let width = ui.available_width();
-            let name = utils::trunc_str(ui, &armature.bones[is_target_of].name, width);
+            let name = utils::trunc_str(ui, &root.name, width);
             ui.label(target_str);
             let name_label = ui.clickable_label(&name);
             if name_label.hovered() {
-                events.set_hovering_bone_id(armature.bones[is_target_of].id);
+                events.set_hovering_bone_id(root.id);
             }
             if name_label.clicked() {
-                events.select_bone(is_target_of, false);
+                events.select_bone(root.id, false);
             }
         });
         ui.add_space(10.);
@@ -528,8 +528,7 @@ pub fn inverse_kinematics(
                 events.set_hovering_bone_id(root.id);
             }
             if bone_label.clicked() {
-                let idx = bones.iter().position(|b| b.id == root.id).unwrap();
-                events.select_bone(idx, false);
+                events.select_bone(root.id, false);
             }
         });
         return;
@@ -605,10 +604,7 @@ pub fn inverse_kinematics(
                 events.set_hovering_bone_id(bone.ik_target_id);
             }
             if bone_label.clicked() {
-                let bones = &armature.bones;
-                let ik_id = bone.ik_target_id;
-                let idx = bones.iter().position(|b| b.id == ik_id).unwrap();
-                events.select_bone(idx, false);
+                events.select_bone(bone.ik_target_id, false);
             };
         } else {
             ui.label(shared_ui.loc("none"));
@@ -693,9 +689,7 @@ pub fn mesh_deformation(
         ui.horizontal(|ui| {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 if ui.skf_button(str).clicked() {
-                    let bones = &armature.bones;
-                    let idx = bones.iter().position(|b| b.id == mesh_parent_id).unwrap();
-                    events.select_bone(idx, false);
+                    events.select_bone(mesh_parent_id, false);
                 }
             });
         });
@@ -859,9 +853,7 @@ pub fn mesh_deformation(
         let hand = egui::CursorIcon::PointingHand;
         let bone_name = ui.selectable_label(false, bone_name).on_hover_cursor(hand);
         if bone_name.clicked() && bone_id != -1 {
-            let bones = &armature.bones;
-            let idx = bones.iter().position(|b| b.id == bone_id).unwrap();
-            events.select_bone(idx, false);
+            events.select_bone(bone_id, false);
         };
 
         // set bind bone toggle

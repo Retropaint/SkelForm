@@ -410,8 +410,7 @@ pub fn draw_bones_list(
             let kf = &keyframes[i];
             let bones = &armature.bones;
             let bone = bones.iter().find(|b| b.id == kf.bone_id).unwrap();
-            let highlighted =
-                selections.bone_ids.len() != 0 && selections.sel_bone() == kf.bone_id;
+            let highlighted = selections.bone_ids.len() != 0 && selections.sel_bone() == kf.bone_id;
 
             // bone header (name label & fold button)
             if last_bone_id != kf.bone_id {
@@ -433,10 +432,8 @@ pub fn draw_bones_list(
                         .interact(egui::Sense::click());
                     if label.clicked() {
                         // go to bone if clicked
-                        let kf_id = kf.bone_id;
-                        let sel = armature.bones.iter().position(|b| b.id == kf_id);
-                        events.select_bone(sel.unwrap(), false);
-                        events.toggle_bone_anim_folded(sel.unwrap(), false);
+                        events.select_bone(kf.bone_id, false);
+                        events.toggle_bone_anim_folded(kf.bone_id, false);
 
                         // unfold this bone's parent(s) so it appears in the hierarchy
                         let parents = armature.get_all_parents(false, kf.bone_id);
@@ -451,8 +448,8 @@ pub fn draw_bones_list(
                         let fold_icon = if bone.anim_folded { "⏴" } else { "⏷" };
                         let hand = egui::CursorIcon::PointingHand;
                         if ui.label(fold_icon).on_hover_cursor(hand).clicked() {
-                            let idx = bones.iter().position(|bone| bone.id == kf.bone_id).unwrap();
-                            events.toggle_bone_anim_folded(idx, !bone.anim_folded);
+                            events
+                                .toggle_bone_anim_folded(selections.sel_bone(), !bone.anim_folded);
                         }
                     });
                 });

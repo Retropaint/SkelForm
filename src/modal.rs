@@ -199,7 +199,7 @@ pub fn polar_modal(
                     shared_ui.startup_window = false;
                 }
                 PolarId::GoToSameNameBone => {
-                    events.select_bone(ctx0, false);
+                    events.select_bone(ctx0 as i32, false);
                 }
             }
         },

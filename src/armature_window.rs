@@ -106,7 +106,7 @@ pub fn draw(
             // unselect all bones if frame is clicked
             let left_clicked = ui.ctx().input(|i| i.pointer.primary_clicked());
             if area.inner.response.hovered() && left_clicked {
-                events.select_bone(usize::MAX, false);
+                events.select_bone(-1, false);
             }
 
             // open context menu if right clicking on hierarchy frame
@@ -608,7 +608,7 @@ pub fn draw_hierarchy(
                 }
 
                 if button.clicked() {
-                    events.select_bone(idx as usize, false);
+                    events.select_bone(armature.bones[b].id, false);
                 }
                 if button.secondary_clicked() {
                     shared_ui.context_menu.show(&context_id);

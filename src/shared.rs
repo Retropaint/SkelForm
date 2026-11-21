@@ -2697,7 +2697,7 @@ impl EventState {
         self.str_values.push(headline.to_string());
     }
 
-    pub fn select_bone(&mut self, bone_id: usize, from_renderer: bool) {
+    pub fn select_bone(&mut self, bone_id: i32, from_renderer: bool) {
         self.events.push(Events::SelectBone);
         self.values.push(bone_id as f32);
         self.str_values.push(if from_renderer {
@@ -2786,9 +2786,9 @@ impl EventState {
         self.values.push(if folded { 1. } else { 0. });
     }
 
-    pub fn toggle_bone_anim_folded(&mut self, bone_idx: usize, folded: bool) {
+    pub fn toggle_bone_anim_folded(&mut self, bone_id: i32, folded: bool) {
         self.events.push(Events::ToggleBoneAnimFolded);
-        self.values.push(bone_idx as f32);
+        self.values.push(bone_id as f32);
         self.values.push(if folded { 1. } else { 0. });
     }
 
