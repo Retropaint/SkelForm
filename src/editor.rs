@@ -509,7 +509,9 @@ pub fn simple_event(
                 ui.polar_modal = true;
                 ui.headline = ui.loc("polar.same_name_bone");
             } else {
-                armature.bones[value as usize].name = str_value;
+                let bones = &mut armature.bones;
+                let id = value as i32;
+                bones.iter_mut().find(|b| b.id == id).unwrap().name = str_value;
             }
             ui.warnings = warnings::check_warnings(&armature);
         }

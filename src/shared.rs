@@ -2707,9 +2707,9 @@ impl EventState {
         });
     }
 
-    pub fn rename_bone(&mut self, bone_idx: usize, new_name: String) {
+    pub fn rename_bone(&mut self, bone_id: i32, new_name: String) {
         self.events.push(Events::RenameBone);
-        self.values.push(bone_idx as f32);
+        self.values.push(bone_id as f32);
         self.str_values.push(new_name);
     }
 

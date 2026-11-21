@@ -458,7 +458,7 @@ pub fn draw_hierarchy(
                     );
                     if edited && value != armature.bones[b].name {
                         events.save_bone(armature.bones[b].id);
-                        events.rename_bone(idx as usize, value);
+                        events.rename_bone(armature.bones[b].id, value);
                     }
                     return;
                 }
