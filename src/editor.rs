@@ -1203,7 +1203,10 @@ pub fn simple_event(
         }
         Events::CreateParentBone => {
             // either get the bone ID from event, or selected bones if more than 1
-            let mut bones_to_copy = vec![armature.bones[value as usize].id];
+            let bones = &armature.bones;
+            let id = bones.iter().find(|b| b.id == value as i32).unwrap().id;
+            let mut bones_to_copy = vec![id];
+
             if selections.bone_ids.len() > 1 {
                 bones_to_copy = selections.bone_ids.clone();
             }
@@ -1224,8 +1227,10 @@ pub fn simple_event(
 
             // activate renaming for new bone
             armature.find_bone_mut(parent.id).unwrap().name = "".to_string();
-            let bones = &armature.bones;
             ui.rename_id = format!("bone_{}", parent.id);
+
+            // mark this bone as selected, so focus isn't taken away from bone name input
+            ui.prev_selected_bone_id = parent.id;
 
             // select new parent
             selections.bone_ids = vec![parent.id];
