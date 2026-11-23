@@ -15,6 +15,7 @@ fn main() {
     let os = &args[1];
     if os != "windows" && os != "macos" && os != "linux" {
         println!("Not a valid OS string.");
+        return;
     }
 
     let url = "https://skelform.org/versions.json";
