@@ -301,6 +301,7 @@ fn timeline_editor(
         shared_ui.bone_tops = BoneTops::default();
 
         let sel = selections.clone();
+        let mut bones_list_height = 0.;
 
         // draw animated bones list
         if armature.sel_anim(&sel).unwrap().keyframes.len() > 0 {
@@ -320,7 +321,8 @@ fn timeline_editor(
                 });
                 frame.show(ui, |ui| {
                     ui.vertical(|ui| {
-                        draw_bones_list(ui, selections, armature, config, shared_ui, events);
+                        bones_list_height =
+                            draw_bones_list(ui, selections, armature, config, shared_ui, events);
                     });
                 });
             });
@@ -371,8 +373,9 @@ fn timeline_editor(
                 draw_bottom_bar(
                     ui, selections, &config, &armature, shared_ui, events, edit_mode,
                 );
+                let blh = bones_list_height;
                 draw_timeline_graph(
-                    ui, width, hitbox, shared_ui, config, selections, armature, events, input,
+                    ui, width, hitbox, shared_ui, config, selections, armature, events, input, blh,
                 );
             });
 
@@ -388,12 +391,13 @@ pub fn draw_bones_list(
     config: &Config,
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
-) {
+) -> f32 {
     let sel = &selections;
     let scroll_area = egui::ScrollArea::vertical()
         .id_salt("bones_list")
         .vertical_scroll_offset(shared_ui.timeline_offset.y)
         .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysHidden);
+    let mut height = 0.;
     let response = scroll_area.show(ui, |ui| {
         // sort keyframes by element & bone
         let mut keyframes = armature.sel_anim(sel).unwrap().keyframes.clone();
@@ -448,8 +452,7 @@ pub fn draw_bones_list(
                         let fold_icon = if bone.anim_folded { "⏴" } else { "⏷" };
                         let hand = egui::CursorIcon::PointingHand;
                         if ui.label(fold_icon).on_hover_cursor(hand).clicked() {
-                            events
-                                .toggle_bone_anim_folded(selections.sel_bone(), !bone.anim_folded);
+                            events.toggle_bone_anim_folded(bone.id, !bone.anim_folded);
                         }
                     });
                 });
@@ -491,11 +494,15 @@ pub fn draw_bones_list(
         }
 
         ui.add_space(20.);
+
+        height = ui.min_rect().height();
     });
 
     if ui.ui_contains_pointer() {
         shared_ui.timeline_offset.y = response.state.offset.y;
     }
+
+    height
 }
 
 pub fn draw_top_bar(
@@ -692,6 +699,7 @@ pub fn draw_timeline_graph(
     armature: &Armature,
     events: &mut EventState,
     input: &InputStates,
+    bone_list_height: f32,
 ) {
     let layout = egui::Layout::left_to_right(egui::Align::Center);
     ui.with_layout(layout, |ui| {
@@ -713,7 +721,10 @@ pub fn draw_timeline_graph(
             let mut cursor = Vec2::new(0., 0.);
             let response = area.show(ui, |ui| {
                 ui.set_width(width);
-                ui.set_height(ui.available_height());
+                let height = ui.available_height();
+
+                // height should extend to bones list, to allow scrolling all the way
+                ui.set_height(ui.available_height().max(bone_list_height));
 
                 cursor = get_cursor(ui);
                 // keep cursor on the frame
@@ -723,8 +734,11 @@ pub fn draw_timeline_graph(
 
                 if shared_ui.anim_transitions {
                     let anim = armature.sel_anim(&selections).unwrap();
-                    draw_transitions(ui, anim, shared_ui, config, events, input, selections);
+                    draw_transitions(
+                        ui, anim, shared_ui, config, events, input, selections, height,
+                    );
                 } else {
+                    ui.set_height(ui.available_height().max(bone_list_height));
                     draw_frame_lines(
                         ui, shared_ui, armature, config, input, selections, events, hitbox, cursor,
                     );
@@ -744,6 +758,7 @@ pub fn draw_transitions(
     events: &mut EventState,
     input: &InputStates,
     selections: &SelectionState,
+    viewport_height: f32,
 ) {
     let mut prev_frame = 0;
     let mut current_frame = 0;
@@ -767,11 +782,11 @@ pub fn draw_transitions(
         let ui_rect = ui.min_rect();
         let pos = egui::Pos2::new(
             ui_rect.left() + shared_ui.lines_x[prev_frame],
-            ui_rect.top(),
+            ui_rect.top() + shared_ui.timeline_offset.y,
         );
         let size = egui::Vec2::new(
             shared_ui.lines_x[current_frame] - shared_ui.lines_x[prev_frame],
-            ui.available_height(),
+            viewport_height,
         );
         let rect = egui::Rect::from_min_size(pos, size);
 
@@ -1009,7 +1024,7 @@ fn draw_frame_lines(
 
         // several checks for whether frameline can/is being hovered on
         let below_top_bar = cursor.y < ui.min_rect().height() - 13.;
-        let in_ui = cursor.y > -25. && !ui.ctx().is_using_pointer();
+        let in_ui = (cursor.y > -25. && !ui.ctx().is_using_pointer()) || ui.ui_contains_pointer();
         let can_hover =
             in_ui && !shared_ui.modal && !shared_ui.settings_modal && !shared_ui.export_modal;
         let cur = cursor;
