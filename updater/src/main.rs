@@ -7,6 +7,7 @@ use std::path::Path;
 use zip::ZipArchive;
 
 fn main() {
+    std::fs::remove_file("./update.log").unwrap();
     // set up panic hooks, for crash logs and the like
     #[cfg(not(target_arch = "wasm32"))]
     {
