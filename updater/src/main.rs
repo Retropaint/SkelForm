@@ -7,24 +7,30 @@ use std::path::Path;
 use zip::ZipArchive;
 
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() == 1 {
+        println!("To update manually, run again with:\nwindows\nmacos\nlinux");
+        return;
+    }
+    let os = &args[1];
+    if os != "windows" && os != "macos" && os != "linux" {
+        println!("Not a valid OS string.");
+    }
+
     let url = "https://skelform.org/versions.json";
     let request = ureq::get(url).header("Example-Header", "header value");
 
-    let destination = if cfg!(target_os = "macos") {
+    let destination = if os == "macos" {
         "../../../skf.zip"
     } else {
         "../skf.zip"
     };
 
-    let output = if cfg!(target_os = "macos") {
-        "../../../"
-    } else {
-        "../"
-    };
+    let output = if os == "macos" { "../../../" } else { "../" };
 
-    let version = if cfg!(target_os = "macos") {
+    let version = if os == "macos" {
         "https://github.com/Retropaint/SkelForm/releases/latest/download/SkelForm.app.zip"
-    } else if cfg!(target_os = "windows") {
+    } else if os == "windows" {
         "https://github.com/Retropaint/SkelForm/releases/latest/download/skelform_windows.zip"
     } else {
         "https://github.com/Retropaint/SkelForm/releases/latest/download/skelform_linux.zip"
