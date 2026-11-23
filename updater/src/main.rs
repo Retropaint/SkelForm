@@ -7,14 +7,27 @@ use std::path::Path;
 use zip::ZipArchive;
 
 fn main() {
+    // set up panic hooks, for crash logs and the like
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        //std::env::set_var("RUST_BACKTRACE", "1");
+    }
+    #[cfg(all(not(debug_assertions), not(target_arch = "wasm32")))]
+    install_panic_handler();
+    #[cfg(target_arch = "wasm32")]
+    {
+        std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+        console_log::init().expect("Failed to initialize logger!");
+    }
+
     let args: Vec<String> = std::env::args().collect();
     if args.len() == 1 {
-        println!("To update manually, run again with:\nwindows\nmacos\nlinux");
+        write("To update manually, run again with:\nwindows\nmacos\nlinux");
         return;
     }
     let os = &args[1];
     if os != "windows" && os != "macos" && os != "linux" {
-        println!("Not a valid OS string.");
+        write("Not a valid OS string.");
         return;
     }
 
@@ -37,7 +50,7 @@ fn main() {
         "https://github.com/Retropaint/SkelForm/releases/latest/download/skelform_linux.zip"
     };
 
-    println!("started");
+    write("started");
 
     let manifest: serde_json::Value = match request.call() {
         Ok(mut data) => serde_json::from_str(&data.body_mut().read_to_string().unwrap()).unwrap(),
@@ -52,7 +65,7 @@ fn main() {
         _ = zip.write(&bytes);
     }
 
-    println!("downloaded");
+    write("downloaded");
 
     // extract new program from zip
     let file = File::open(destination).unwrap();
@@ -90,7 +103,9 @@ fn main() {
         }
     }
 
-    println!("extracted");
+    write("extracted");
+
+    std::process::Command::new("./SkelForm").spawn().unwrap();
 
     //move_contents(Path::new("../../../"));
 }
@@ -105,4 +120,34 @@ fn move_contents(dir: &Path) {
     }
 
     fs::remove_dir(dir).unwrap();
+}
+
+pub fn write(content: &str) {
+    if let Ok(mut file) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("update.log")
+    {
+        let _ = writeln!(file, "{content}");
+    }
+}
+
+pub fn install_panic_handler() {
+    pub fn install_panic_handler() {
+        std::panic::set_hook(Box::new(|panic_info| {
+            // print error message and file loc to console
+            eprintln!("{}", panic_info);
+
+            // write error and backtrace to log file
+            if let Ok(mut file) = std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open("update.log")
+            {
+                let _ = writeln!(file, "Panic: {panic_info}");
+                let bt = std::backtrace::Backtrace::force_capture();
+                let _ = writeln!(file, "{bt}");
+            }
+        }));
+    }
 }

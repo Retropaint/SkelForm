@@ -1768,75 +1768,8 @@ pub fn shortest_angle_delta(from: f32, to: f32) -> f32 {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn self_update() {
-    let url = "https://skelform.org/versions.json";
-    let request = ureq::get(url).header("Example-Header", "header value");
-
-    let destination = if cfg!(target_os = "macos") {
-        bin_path().join("../../../skf.zip")
-    } else {
-        bin_path().join("../skf.zip")
-    };
-
-    let output = if cfg!(target_os = "macos") {
-        bin_path().join("../../../")
-    } else {
-        bin_path().join("../")
-    };
-
-    let version = if cfg!(target_os = "macos") {
-        "https://github.com/Retropaint/SkelForm/releases/latest/download/SkelForm.app.zip"
-    } else if cfg!(target_os = "windows") {
-        "https://github.com/Retropaint/SkelForm/releases/latest/download/skelform_windows.zip"
-    } else {
-        "https://github.com/Retropaint/SkelForm/releases/latest/download/skelform_linux.zip"
-    };
-
-    let _manifest: serde_json::Value = match request.call() {
-        Ok(mut data) => serde_json::from_str(&data.body_mut().read_to_string().unwrap()).unwrap(),
-        Err(_) => serde_json::Value::default(),
-    };
-
-    // get downloaded zip file
-    let resp = ureq::get(version).call().unwrap();
-    let mut ffmpeg_zip = std::fs::File::create(&destination).unwrap();
-    let bytes_result: Result<Vec<u8>, _> = resp.into_body().into_reader().bytes().collect();
-    if let Ok(bytes) = bytes_result {
-        _ = ffmpeg_zip.write(&bytes);
-    }
-
-    // extract ffmpeg from zip
-    let file = File::open(&destination).unwrap();
-    let mut archive = zip::ZipArchive::new(file).unwrap();
-
-    for i in 0..archive.len() {
-        let mut entry = archive.by_index(i).unwrap();
-        let Some(relative_path) = entry.enclosed_name() else {
-            continue;
-        };
-
-        let output_path = std::path::Path::new(&output).join(relative_path);
-
-        if entry.is_dir() {
-            continue;
-        }
-
-        // create this file's directories first
-        if let Some(parent) = output_path.parent() {
-            fs::create_dir_all(parent).unwrap();
-        }
-
-        // create file
-        let mut output_file = File::create(&output_path).unwrap();
-        std::io::copy(&mut entry, &mut output_file).unwrap();
-
-        // set unix permissions
-        #[cfg(unix)]
-        {
-            if let Some(mode) = entry.unix_mode() {
-                fs::set_permissions(&output_path, std::fs::Permissions::from_mode(mode)).unwrap();
-            }
-        }
-    }
+    // call updater binary
+    Command::new("./updater").args(["macos"]).spawn().unwrap();
 }
 
 pub fn newer_version(mut v1: String, mut v2: String) -> bool {

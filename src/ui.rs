@@ -220,7 +220,8 @@ pub fn draw(
         } else if dl_links != "" {
             let ver_str = dl_links["version"].as_str().unwrap();
             let this_ver_str = format!("v{}", env!("CARGO_PKG_VERSION"));
-            if utils::newer_version(ver_str.trim().to_string(), this_ver_str.trim().to_string()) {
+            //if utils::newer_version(ver_str.trim().to_string(), this_ver_str.trim().to_string()) {
+            if true {
                 let loc = "startup.update_available";
                 let str = shared_ui.loc(loc).replace("$ver", ver_str);
                 events.open_polar_modal(PolarId::NewUpdate, str);
