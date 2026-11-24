@@ -31,6 +31,7 @@ pub fn draw(
     edit_mode: &EditMode,
     camera: &Camera,
     armature: &Armature,
+    armature_names: &Vec<String>,
     copy_buffer: &CopyBuffer,
     temp_bones: &Vec<Bone>,
 ) {
@@ -237,6 +238,14 @@ pub fn draw(
     let buffer = &copy_buffer;
     style_once!(top_panel(
         context, config, shared_ui, events, selections, armature, camera, edit_mode, buffer
+    ));
+
+    style_once!(armature_panel(
+        context,
+        config,
+        armature_names,
+        shared_ui,
+        events
     ));
 
     // render keyframe editor if in Animation mode
@@ -1308,6 +1317,60 @@ fn top_panel(
             })
         });
 
+        shared_ui.top_panel_rect = Some(ui.min_rect());
+    });
+}
+
+fn armature_panel(
+    egui_ctx: &egui::Context,
+    config: &Config,
+    armature_names: &Vec<String>,
+    shared_ui: &mut crate::Ui,
+    events: &mut EventState,
+) {
+    let panel = egui::TopBottomPanel::top("top_bar").frame(egui::Frame {
+        fill: config.colors.main.into(),
+        stroke: Stroke::new(0., config.colors.main),
+        inner_margin: egui::Margin::default(),
+        outer_margin: egui::Margin::default(),
+        ..Default::default()
+    });
+    panel.show(egui_ctx, |ui| {
+        let max_width = ui.available_width();
+        ui.horizontal(|ui| {
+            let mut hovering = false;
+            ui.style_mut().spacing.item_spacing = egui::Vec2::new(0., 0.);
+            for n in 0..armature_names.len() {
+                let color = if shared_ui.hovering_armature == n as i32 {
+                    config.colors.dark_accent
+                } else {
+                    config.colors.main
+                };
+                let frame = egui::Frame::new().fill(color.into());
+                let button = frame
+                    .show(ui, |ui| {
+                        ui.set_width(max_width / armature_names.len() as f32);
+                        let layout =
+                            egui::Layout::centered_and_justified(egui::Direction::LeftToRight);
+                        ui.with_layout(layout, |ui| {
+                            ui.label(&armature_names[n]);
+                        });
+                    })
+                    .response
+                    .on_hover_cursor(egui::CursorIcon::PointingHand)
+                    .interact(egui::Sense::click_and_drag());
+                if button.hovered() {
+                    hovering = true;
+                    shared_ui.hovering_armature = n as i32;
+                }
+                if button.clicked() {
+                    events.switch_to_armature(n);
+                }
+            }
+            if !hovering {
+                shared_ui.hovering_armature = -1;
+            }
+        });
         shared_ui.top_panel_rect = Some(ui.min_rect());
     });
 }

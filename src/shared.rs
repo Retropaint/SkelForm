@@ -586,6 +586,7 @@ pub struct Ui {
     pub hovering_setting: Option<shared::SettingsState>,
     pub hovering_render_toggle: i32,
     pub hovering_startup_file: i32,
+    pub hovering_armature: i32,
 
     // used with renderer's is_hovering_bone to determine whether a
     // bone is being hovered on either the armature window, or renderer
@@ -1365,6 +1366,7 @@ enum_string!(InverseKinematicsMode);
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 #[serde(default)]
 pub struct Armature {
+    pub name: String,
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,

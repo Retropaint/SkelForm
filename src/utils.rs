@@ -1052,6 +1052,7 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     let mut temp_arm = shared::Armature {
+        name: "armature".to_string(),
         bones: root.bones.clone(),
         animations: root.animations.clone(),
         styles: root.styles.clone(),

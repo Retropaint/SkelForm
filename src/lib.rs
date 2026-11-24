@@ -396,11 +396,20 @@ impl ApplicationHandler for App {
                 );
 
                 // ui logic handled in ui.rs
-                #[rustfmt::skip]
+                let names: Vec<String> = s.armatures.iter().map(|arm| arm.name.clone()).collect();
                 ui::draw(
-                    gui_state.egui_ctx(), &mut s.ui, &mut s.input, &mut s.selections,
-                    &mut s.config, &mut s.events, &mut s.edit_mode, &s.camera,
-                    &mut s.armatures[sel_arm], &s.copy_buffer, &s.renderer.temp_arm.bones
+                    gui_state.egui_ctx(),
+                    &mut s.ui,
+                    &mut s.input,
+                    &mut s.selections,
+                    &mut s.config,
+                    &mut s.events,
+                    &mut s.edit_mode,
+                    &s.camera,
+                    &mut s.armatures[sel_arm],
+                    &names,
+                    &s.copy_buffer,
+                    &s.renderer.temp_arm.bones,
                 );
 
                 // backend egui stuff
