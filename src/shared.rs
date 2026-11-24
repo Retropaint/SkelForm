@@ -2561,6 +2561,7 @@ pub enum Events {
     NewBonesFromTextures,
     SetArmatureSplit,
     SelectAllTexturedBones,
+    SwitchToArmature,
 }
 
 enum_string!(Events);
@@ -2684,6 +2685,7 @@ impl EventState {
     event_with_value!(create_bind_bone, Events::CreateBindBone, vert_id, i32);
     event_with_value!(new_bone, Events::NewBone, target_id, i32);
     event_with_value!(set_armature_split, Events::SetArmatureSplit, value, f32);
+    event_with_value!(switch_to_armature, Events::SwitchToArmature, value, usize);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -2970,6 +2972,7 @@ pub struct SelectionState {
     pub hovering_tri_dur: i32,
     pub hovering_line_dur: i32,
     pub hovering_bone_id: i32,
+    pub sel_arm: usize,
 }
 
 impl SelectionState {
@@ -3010,7 +3013,6 @@ impl SelectionState {
 
 #[derive(Default)]
 pub struct Shared {
-    pub armature: Armature,
     pub input: InputStates,
     pub ui: Ui,
     pub undo_states: UndoStates,
@@ -3025,10 +3027,19 @@ pub struct Shared {
     pub screenshot_res: Vec2,
 
     pub armatures: Vec<Armature>,
-    pub sel_arm: usize,
 
     // buffered armature from imported PSD
     pub psd_armature: Armature,
+}
+
+impl Shared {
+    pub fn sel_arm(&self) -> &Armature {
+        &self.armatures[self.selections.sel_arm]
+    }
+
+    pub fn sel_arm_mut(&mut self) -> &mut Armature {
+        &mut self.armatures[self.selections.sel_arm]
+    }
 }
 
 // generate non-clashing id

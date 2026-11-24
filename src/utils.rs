@@ -1273,7 +1273,7 @@ pub fn import<R: Read + std::io::Seek>(
         }
     }
 
-    shared.armature = temp_arm.clone();
+    //shared.armature = temp_arm.clone();
 
     // add armature to list
     let mut replaced = false;
@@ -1290,7 +1290,7 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     // update warnings for this armature
-    shared.ui.warnings = check_warnings(&shared.armature);
+    shared.ui.warnings = check_warnings(&shared.sel_arm());
     shared.renderer.gridline_buffer.dirty = true;
     shared.renderer.point_buffer.dirty = true;
     shared.renderer.kite_buffer.dirty = true;

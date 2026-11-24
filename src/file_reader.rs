@@ -35,7 +35,7 @@ pub fn read(
     if let Some((images, names)) = read_image_loaders(shared) {
         add_images_as_textures(
             &shared.selections,
-            &mut shared.armature,
+            &mut shared.armatures[shared.selections.sel_arm],
             &mut shared.undo_states,
             &mut shared.events,
             &images,
@@ -206,21 +206,33 @@ pub fn add_pending_textures(
     ctx: Option<&egui::Context>,
 ) {
     // get last texture of selected style (will be the atlas)
-    let sel = &shared.selections;
-    let style = shared.armature.sel_style(sel).unwrap();
+    let style = shared.sel_arm().sel_style(&shared.selections).unwrap();
     let textures = style.textures.last().unwrap().clone();
-    let image = shared.armature.tex_data(&textures).unwrap().image.clone();
+    let image = shared.sel_arm().tex_data(&textures).unwrap().image.clone();
 
     // now that we have the atlas, remove it from the list
-    shared.armature.sel_style_mut(sel).unwrap().textures.pop();
-    shared.armature.tex_data.pop();
+    let selections = shared.selections.clone();
+    shared
+        .sel_arm_mut()
+        .sel_style_mut(&selections)
+        .unwrap()
+        .textures
+        .pop();
+    shared.sel_arm_mut().tex_data.pop();
 
     for tex in &shared.ui.pending_textures {
         #[rustfmt::skip]
         let crop = image.crop_imm(tex.offset.x as u32, tex.offset.y as u32, tex.size.x as u32, tex.size.y as u32);
         let crop_size = Vec2::new(crop.width() as f32, crop.height() as f32);
-        #[rustfmt::skip]
-        add_texture(crop.clone(), shared.selections.style_id, crop_size, &tex.name, &mut shared.armature, backend_renderer, ctx);
+        add_texture(
+            crop.clone(),
+            shared.selections.style_id,
+            crop_size,
+            &tex.name,
+            &mut shared.armatures[shared.selections.sel_arm],
+            backend_renderer,
+            ctx,
+        );
     }
 
     shared.ui.pending_textures = vec![];
@@ -235,12 +247,13 @@ pub fn read_psd(
     let psd = psd::Psd::from_bytes(&bytes).unwrap();
 
     // save armature to undo stack
-    shared.undo_states.new_undo_armature(&shared.armature);
+    let armature = &shared.armatures[shared.selections.sel_arm];
+    shared.undo_states.new_undo_armature(armature);
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.psd_armature.bones = vec![];
-    shared.psd_armature.styles = shared.armature.styles.clone();
-    shared.psd_armature.tex_data = shared.armature.tex_data.clone();
+    shared.psd_armature.styles = shared.sel_arm().styles.clone();
+    shared.psd_armature.tex_data = shared.sel_arm().tex_data.clone();
 
     // create root bone, where all except targets will go
     shared.psd_armature.new_bone(-1);
@@ -571,8 +584,8 @@ pub fn read_psd(
 
     // immediately import textures to real armature
     shared.psd_armature.styles.reverse();
-    shared.armature.styles = shared.psd_armature.styles.clone();
-    shared.armature.tex_data = shared.psd_armature.tex_data.clone();
+    shared.sel_arm_mut().styles = shared.psd_armature.styles.clone();
+    shared.sel_arm_mut().tex_data = shared.psd_armature.tex_data.clone();
 
     // show polar modal to replace real armature bones as well
     let str = shared.ui.loc("psd_imported");

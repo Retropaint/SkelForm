@@ -755,6 +755,10 @@ pub fn kb_inputs(
         return;
     }
 
+    if input.consume_key(egui::Modifiers::NONE, egui::Key::Space) {
+        events.switch_to_armature(1);
+    }
+
     if input.consume_shortcut(&config.keys.undo) {
         events.undo();
     }

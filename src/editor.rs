@@ -1384,6 +1384,9 @@ pub fn simple_event(
             let bones = &armature.bones;
             selections.bone_ids = bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
         }
+        Events::SwitchToArmature => {
+            selections.sel_arm = value as usize;
+        }
         _ => {}
     }
 }
