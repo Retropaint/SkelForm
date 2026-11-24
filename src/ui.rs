@@ -240,13 +240,17 @@ pub fn draw(
         context, config, shared_ui, events, selections, armature, camera, edit_mode, buffer
     ));
 
-    style_once!(armature_panel(
-        context,
-        config,
-        armature_names,
-        shared_ui,
-        events
-    ));
+    if armature_names.len() > 1 {
+        style_once!(armature_panel(
+            context,
+            config,
+            armature_names,
+            shared_ui,
+            events,
+            input,
+            selections
+        ));
+    }
 
     // render keyframe editor if in Animation mode
     if edit_mode.anim_open {
@@ -1327,6 +1331,8 @@ fn armature_panel(
     armature_names: &Vec<String>,
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
+    input: &InputStates,
+    selections: &SelectionState,
 ) {
     let panel = egui::TopBottomPanel::top("top_bar").frame(egui::Frame {
         fill: config.colors.main.into(),
@@ -1342,7 +1348,7 @@ fn armature_panel(
             ui.horizontal(|ui| {
                 let mut hovering = false;
                 ui.style_mut().spacing.item_spacing = egui::Vec2::new(0., 0.);
-                let mut idx = -1;
+                let mut idx: i32 = -1;
                 for n in 0..armature_names.len() {
                     idx += 1;
 
@@ -1354,11 +1360,14 @@ fn armature_panel(
                         opacity = 0.5;
                     }
 
-                    let color = if shared_ui.hovering_armature == n as i32 {
-                        config.colors.dark_accent
-                    } else {
-                        config.colors.main
-                    };
+                    let mut color = config.colors.main;
+                    if shared_ui.hovering_armature == n as i32 {
+                        color += Color::new(20, 20, 20, 0);
+                    }
+                    if selections.sel_arm == idx as usize {
+                        color += Color::new(20, 20, 20, 0);
+                    }
+
                     let button = ui
                         .dnd_drag_source(id, idx, |ui| {
                             let frame = egui::Frame::new()
@@ -1372,10 +1381,20 @@ fn armature_panel(
                                 ui.with_layout(layout, |ui| {
                                     ui.label(&armature_names[n]);
                                 });
-                            })
+                                if shared_ui.hovering_armature == idx {
+                                    let layout = egui::Layout::right_to_left(egui::Align::Center);
+                                    ui.with_layout(layout, |ui| {
+                                        ui.add_space(10.);
+                                        if ui.label("X").contains_pointer() && input.left_clicked {
+                                            events.remove_armature_in_tab(idx as usize);
+                                        };
+                                    });
+                                }
+                            });
                         })
                         .response
-                        .on_hover_cursor(egui::CursorIcon::PointingHand);
+                        .on_hover_cursor(egui::CursorIcon::PointingHand)
+                        .interact(egui::Sense::click_and_drag());
                     let pointer = ui.input(|i| i.pointer.interact_pos());
                     if button.contains_pointer() {
                         if shared_ui.dragging_element != dragging_id {

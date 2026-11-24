@@ -2572,6 +2572,7 @@ pub enum Events {
     SelectAllTexturedBones,
     SwitchToArmature,
     MoveArmatureInTab,
+    RemoveArmatureInTab,
 }
 
 enum_string!(Events);
@@ -2696,6 +2697,7 @@ impl EventState {
     event_with_value!(new_bone, Events::NewBone, target_id, i32);
     event_with_value!(set_armature_split, Events::SetArmatureSplit, value, f32);
     event_with_value!(switch_to_armature, Events::SwitchToArmature, value, usize);
+    #[rustfmt::skip]    event_with_value!(remove_armature_in_tab, Events::RemoveArmatureInTab, idx, usize);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);

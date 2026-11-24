@@ -1410,6 +1410,12 @@ pub fn simple_event(
             unselect_all(selections, edit_mode, ui);
             ui.warnings = check_warnings(&armatures[value as usize]);
         }
+        Events::RemoveArmatureInTab => {
+            armatures.remove(value as usize);
+            if selections.sel_arm > armatures.len() - 1 {
+                selections.sel_arm -= 1;
+            }
+        }
         _ => {}
     }
 }
