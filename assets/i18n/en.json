@@ -378,6 +378,7 @@
       "prev_bone": "Previous Bone",
       "toggle_bone_fold": "Toggle Bone Fold",
       "toggle_edit_vertices": "Toggle Editing Vertices",
+      "switch_armature_mode": "Switch Armature Mode",
       "sections": {
         "general": "General",
         "editing": "Editing",

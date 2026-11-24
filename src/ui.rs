@@ -950,6 +950,25 @@ pub fn kb_inputs(
     } else if !edit_mode.editing_pivot && edit_mode.editing_pivot {
         events.toggle_edit_alt(0);
     }
+
+    // switch armatures with ctrl/cmd-1/2/3
+    let modifier = config.keys.switch_armature_mode.modifiers;
+    let armature_shortcuts = vec![
+        egui::KeyboardShortcut::new(modifier, egui::Key::Num1),
+        egui::KeyboardShortcut::new(modifier, egui::Key::Num2),
+        egui::KeyboardShortcut::new(modifier, egui::Key::Num3),
+        egui::KeyboardShortcut::new(modifier, egui::Key::Num4),
+        egui::KeyboardShortcut::new(modifier, egui::Key::Num5),
+        egui::KeyboardShortcut::new(modifier, egui::Key::Num6),
+        egui::KeyboardShortcut::new(modifier, egui::Key::Num7),
+        egui::KeyboardShortcut::new(modifier, egui::Key::Num8),
+        egui::KeyboardShortcut::new(modifier, egui::Key::Num9),
+    ];
+    for s in 0..armature_shortcuts.len() {
+        if input.consume_shortcut(&armature_shortcuts[s]) {
+            events.switch_to_armature(s);
+        }
+    }
 }
 
 pub fn mouse_button_as_key(

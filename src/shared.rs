@@ -968,6 +968,7 @@ pub struct KeyboardConfig {
     pub prev_bone: egui::KeyboardShortcut,
     pub toggle_bone_fold: egui::KeyboardShortcut,
     pub toggle_edit_vertices: egui::KeyboardShortcut,
+    pub switch_armature_mode: egui::KeyboardShortcut,
 }
 
 pub trait Display {
@@ -1060,6 +1061,7 @@ impl Default for KeyboardConfig {
             prev_bone:            regular_key!(egui::Key::X),
             toggle_bone_fold:     regular_key!(egui::Key::C),
             toggle_edit_vertices: regular_key!(egui::Key::V),
+            switch_armature_mode: shortcut_key!(egui::Modifiers::COMMAND, egui::Key::F30),
         }
     }
 }

@@ -581,19 +581,20 @@ fn keyboard(ui: &mut egui::Ui, shared_ui: &mut crate::Ui) {
     #[rustfmt::skip]
     {
         ui.heading(shared_ui.loc("settings_modal.keyboard.sections.general"));
-        key!("zoom_camera_in",  keys.zoom_in_camera,  true);
-        key!("zoom_camera_out", keys.zoom_out_camera, true);
-        key!("undo",            keys.undo,            true);
-        key!("redo",            keys.redo,            true);
-        key!("save",            keys.save,            true);
-        key!("save_as",         keys.save_as,         true);
-        key!("export",          keys.export,          true);
-        key!("open",            keys.open,            true);
-        key!("cancel",          keys.cancel,          true);
-        key!("delete",          keys.delete,          true);
-        key!("polar_yes",       keys.polar_yes,       true);
-        key!("copy",            keys.copy,            true);
-        key!("paste",           keys.paste,           true);
+        key!("zoom_camera_in",       keys.zoom_in_camera,       true);
+        key!("zoom_camera_out",      keys.zoom_out_camera,      true);
+        key!("undo",                 keys.undo,                 true);
+        key!("redo",                 keys.redo,                 true);
+        key!("save",                 keys.save,                 true);
+        key!("save_as",              keys.save_as,              true);
+        key!("export",               keys.export,               true);
+        key!("open",                 keys.open,                 true);
+        key!("cancel",               keys.cancel,               true);
+        key!("delete",               keys.delete,               true);
+        key!("polar_yes",            keys.polar_yes,            true);
+        key!("copy",                 keys.copy,                 true);
+        key!("paste",                keys.paste,                true);
+        key!("switch_armature_mode", keys.switch_armature_mode, false);
         ui.add_space(10.);
         ui.heading(shared_ui.loc("settings_modal.keyboard.sections.editing"));
         alt_col = true;
