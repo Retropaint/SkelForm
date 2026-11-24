@@ -13,7 +13,7 @@ pub fn draw(
     egui_ctx: &egui::Context,
     shared_ui: &mut crate::Ui,
     input: &InputStates,
-    armature: &mut Armature,
+    armature: &Armature,
     config: &Config,
     selections: &SelectionState,
     events: &mut EventState,
@@ -282,7 +282,7 @@ fn draw_animations_list(
 fn timeline_editor(
     ui: &mut egui::Ui,
     selections: &SelectionState,
-    armature: &mut Armature,
+    armature: &Armature,
     events: &mut EventState,
     shared_ui: &mut crate::Ui,
     config: &Config,

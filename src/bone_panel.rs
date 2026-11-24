@@ -32,7 +32,7 @@ pub fn draw(
     ui: &mut egui::Ui,
     selections: &SelectionState,
     shared_ui: &mut crate::Ui,
-    armature: &mut Armature,
+    armature: &Armature,
     config: &Config,
     events: &mut EventState,
     edit_mode: &EditMode,
@@ -158,7 +158,7 @@ pub fn draw(
         let sel_bone_name = armature.sel_bone(&sel).unwrap().name.clone();
         let (edited, value, _) = ui.text_input("Name".to_string(), shared_ui, sel_bone_name, None);
         if edited {
-            armature.sel_bone_mut(&sel).unwrap().name = value;
+            events.rename_bone(sel.sel_bone(), value);
         }
     });
 
@@ -638,7 +638,7 @@ pub fn mesh_deformation(
     events: &mut EventState,
     config: &Config,
     selections: &SelectionState,
-    armature: &mut Armature,
+    armature: &Armature,
     edit_mode: &EditMode,
 ) -> bool {
     let str_heading = &shared_ui.loc("bone_panel.mesh_deformation.heading").clone();
