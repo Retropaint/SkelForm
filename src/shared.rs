@@ -2571,6 +2571,7 @@ pub enum Events {
     SetArmatureSplit,
     SelectAllTexturedBones,
     SwitchToArmature,
+    MoveArmatureInTab,
 }
 
 enum_string!(Events);
@@ -2965,6 +2966,12 @@ impl EventState {
         self.values.push(kites as i32 as f32);
         self.values.push(mesh as i32 as f32);
         self.values.push(rects as i32 as f32);
+    }
+
+    pub fn move_armature_in_tab(&mut self, og_idx: i32, target_idx: i32) {
+        self.events.push(Events::MoveArmatureInTab);
+        self.values.push(og_idx as f32);
+        self.values.push(target_idx as f32);
     }
 }
 

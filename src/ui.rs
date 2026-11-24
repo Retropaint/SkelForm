@@ -1337,40 +1337,81 @@ fn armature_panel(
     });
     panel.show(egui_ctx, |ui| {
         let max_width = ui.available_width();
-        ui.horizontal(|ui| {
-            let mut hovering = false;
-            ui.style_mut().spacing.item_spacing = egui::Vec2::new(0., 0.);
-            for n in 0..armature_names.len() {
-                let color = if shared_ui.hovering_armature == n as i32 {
-                    config.colors.dark_accent
-                } else {
-                    config.colors.main
-                };
-                let frame = egui::Frame::new().fill(color.into());
-                let button = frame
-                    .show(ui, |ui| {
-                        ui.set_width(max_width / armature_names.len() as f32);
-                        let layout =
-                            egui::Layout::centered_and_justified(egui::Direction::LeftToRight);
-                        ui.with_layout(layout, |ui| {
-                            ui.label(&armature_names[n]);
-                        });
-                    })
-                    .response
-                    .on_hover_cursor(egui::CursorIcon::PointingHand)
-                    .interact(egui::Sense::click_and_drag());
-                if button.hovered() {
-                    hovering = true;
-                    shared_ui.hovering_armature = n as i32;
+        let frame = egui::Frame::new();
+        ui.dnd_drop_zone::<usize, _>(frame, |ui| {
+            ui.horizontal(|ui| {
+                let mut hovering = false;
+                ui.style_mut().spacing.item_spacing = egui::Vec2::new(0., 0.);
+                let mut idx = -1;
+                for n in 0..armature_names.len() {
+                    idx += 1;
+
+                    let id = egui::Id::new(("arm", idx, 0));
+                    let dragging_id = format!("armature_{}", idx).to_string();
+                    let mut opacity = 1.;
+                    if ui.ctx().dragged_id() != None && ui.ctx().dragged_id().unwrap() == id {
+                        shared_ui.dragging_element = dragging_id.clone();
+                        opacity = 0.5;
+                    }
+
+                    let color = if shared_ui.hovering_armature == n as i32 {
+                        config.colors.dark_accent
+                    } else {
+                        config.colors.main
+                    };
+                    let button = ui
+                        .dnd_drag_source(id, idx, |ui| {
+                            let frame = egui::Frame::new()
+                                .fill(color.into())
+                                .multiply_with_opacity(opacity);
+                            frame.show(ui, |ui| {
+                                ui.set_width(max_width / armature_names.len() as f32);
+                                let layout = egui::Layout::centered_and_justified(
+                                    egui::Direction::LeftToRight,
+                                );
+                                ui.with_layout(layout, |ui| {
+                                    ui.label(&armature_names[n]);
+                                });
+                            })
+                        })
+                        .response
+                        .on_hover_cursor(egui::CursorIcon::PointingHand);
+                    let pointer = ui.input(|i| i.pointer.interact_pos());
+                    if button.contains_pointer() {
+                        if shared_ui.dragging_element != dragging_id {
+                            hovering = true;
+                            shared_ui.hovering_armature = n as i32;
+                        }
+                        if ui.ctx().dragged_id() != None {
+                            let stroke = egui::Stroke::new(1.0, Color32::WHITE);
+                            let rect = button.rect;
+                            if pointer.unwrap().x < button.rect.center().x {
+                                ui.painter().vline(rect.left(), rect.y_range(), stroke);
+                            } else {
+                                ui.painter().vline(rect.right(), rect.y_range(), stroke);
+                            }
+                        }
+                    }
+                    if button.clicked() {
+                        events.switch_to_armature(n);
+                    }
+
+                    if button.hovered()
+                        && ui.ctx().drag_stopped_id() != None
+                        && shared_ui.dragging_element.contains("armature")
+                    {
+                        let split: Vec<&str> = shared_ui.dragging_element.split('_').collect();
+                        let is_left = pointer.unwrap().x < button.rect.center().x;
+                        let offset = if is_left { 0 } else { 1 };
+                        events.move_armature_in_tab(split[1].parse().unwrap(), idx + offset);
+                    }
                 }
-                if button.clicked() {
-                    events.switch_to_armature(n);
+                if !hovering {
+                    shared_ui.hovering_armature = -1;
                 }
-            }
-            if !hovering {
-                shared_ui.hovering_armature = -1;
-            }
+            });
         });
+
         shared_ui.top_panel_rect = Some(ui.min_rect());
     });
 }

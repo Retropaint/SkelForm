@@ -58,7 +58,19 @@ pub fn iterate_events(
         };
     }
 
-    if event == Events::UpdateRenderOptions {
+    if event == Events::MoveArmatureInTab {
+        let mut remove_idx = events.values[0] as usize;
+        armatures.insert(
+            events.values[1] as usize,
+            armatures[events.values[0] as usize].clone(),
+        );
+        if events.values[0] > events.values[1] {
+            remove_idx += 1;
+        }
+        armatures.remove(remove_idx);
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::UpdateRenderOptions {
         edit_mode.render_options.textures = events.values[0] == 1.;
         edit_mode.render_options.points = events.values[1] == 1.;
         edit_mode.render_options.kites = events.values[2] == 1.;
