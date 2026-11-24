@@ -1396,6 +1396,7 @@ pub fn simple_event(
             ui.changed_window_name = false;
             ui.save_path = Some(armatures[value as usize].path.clone());
             unselect_all(selections, edit_mode, ui);
+            ui.warnings = check_warnings(&armatures[value as usize]);
         }
         _ => {}
     }
