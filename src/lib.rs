@@ -365,9 +365,7 @@ impl ApplicationHandler for App {
                         let file = if self.shared.ui.save_path == None {
                             "SkelForm".to_string()
                         } else {
-                            let path = self.shared.ui.save_path.clone().unwrap();
-                            let filename = path.as_path().file_name().unwrap();
-                            filename.to_str().unwrap().to_string()
+                            self.shared.sel_arm().filename()
                         };
 
                         // show asterisk after name if unsaved
@@ -396,7 +394,7 @@ impl ApplicationHandler for App {
                 );
 
                 // ui logic handled in ui.rs
-                let names: Vec<String> = s.armatures.iter().map(|arm| arm.name.clone()).collect();
+                let names: Vec<String> = s.armatures.iter().map(|arm| arm.filename()).collect();
                 ui::draw(
                     gui_state.egui_ctx(),
                     &mut s.ui,
@@ -1305,13 +1303,14 @@ impl BackendRenderer {
         let saving_type = shared.ui.saving.lock().unwrap().clone();
         match saving_type {
             Saving::CustomPath => {
-                let path = &shared.ui.file_paths.lock().unwrap()[0];
+                let path = shared.ui.file_paths.lock().unwrap()[0].clone();
                 save_path = path.as_path().to_str().unwrap().to_string();
                 shared.ui.changed_window_name = false;
                 shared.events.open_modal("saving", true);
                 *shared.ui.save_finished.lock().unwrap() = false;
                 shared.ui.save_path = Some(path.clone());
                 shared.ui.can_quit = false;
+                shared.sel_arm_mut().path = path;
                 if !shared.ui.recent_file_paths.contains(&save_path) {
                     shared.ui.recent_file_paths.push(save_path.clone());
                 }

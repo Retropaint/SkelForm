@@ -53,13 +53,13 @@ pub fn read(
     }
 
     // read other file imports
-    if let Some((file, filename, filepath)) = read_import(shared) {
+    if let Some((file, filepath)) = read_import(shared) {
         // reset editor state
         shared.selections.init();
         shared.ui.last_selected = "".to_string();
 
         let br = &backend_renderer.as_ref();
-        import_file(&filename, &filepath, shared, file, br, &Some(context));
+        import_file(&filepath, shared, file, br, &Some(context));
 
         // don't replicate new user behavior for imported files
         shared.ui.selected_bone_first_time = true;
@@ -666,10 +666,9 @@ pub fn add_texture(
     });
 }
 
-pub fn read_import(_shared: &mut Shared) -> Option<(Vec<u8>, String, String)> {
+pub fn read_import(_shared: &mut Shared) -> Option<(Vec<u8>, PathBuf)> {
     let file;
-    let filename: String;
-    let filepath: String;
+    let filepath: PathBuf;
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -677,22 +676,27 @@ pub fn read_import(_shared: &mut Shared) -> Option<(Vec<u8>, String, String)> {
             return None;
         }
         *_shared.ui.file_type.lock().unwrap() = ImportedFileType::None;
-        let raw_filepath = &_shared.ui.file_paths.lock().unwrap()[0];
 
-        filepath = raw_filepath.as_path().to_str().unwrap().to_string();
-        let raw_file = File::open(filepath.to_string());
+        filepath = _shared.ui.file_paths.lock().unwrap()[0].clone();
+        let raw_file = File::open(filepath.as_path().to_str().unwrap().to_string());
         if let Err(err) = raw_file {
             _shared.events.open_file_err_modal(err.to_string());
             return None;
         }
 
-        let raw_filename = raw_filepath.as_path().file_name();
-        filename = raw_filename.unwrap().to_str().unwrap().to_string();
         file = raw_file.unwrap().bytes().map(|b| b.unwrap()).collect();
 
         // skf files starting with _ shouldn't be saved
-        if filename.chars().next() != Some('_') {
-            _shared.ui.save_path = Some(raw_filepath.clone());
+        if filepath
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .chars()
+            .next()
+            != Some('_')
+        {
+            _shared.ui.save_path = Some(filepath.clone());
         }
     }
 
@@ -706,18 +710,24 @@ pub fn read_import(_shared: &mut Shared) -> Option<(Vec<u8>, String, String)> {
         file = getFile();
     }
 
-    Some((file, filename, filepath))
+    Some((file, filepath))
 }
 
 pub fn import_file(
-    filename: &String,
-    _filepath: &String,
+    filepath: &PathBuf,
     shared: &mut Shared,
     file: Vec<u8>,
     backend_renderer: &Option<&BackendRenderer>,
     context: &Option<&egui::Context>,
 ) {
-    let ext = filename.split('.').last().unwrap();
+    let ext = filepath
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split('.')
+        .last()
+        .unwrap();
     match ext {
         "swf" => {
             shared.events.open_modal("import_swf", false);
@@ -730,14 +740,14 @@ pub fn import_file(
             }
             #[cfg(not(target_arch = "wasm32"))]
             {
-                utils::import(cursor, shared, backend_renderer, *context);
-                utils::add_to_recent_paths(_filepath, &mut shared.ui.recent_file_paths);
+                utils::import(cursor, shared, backend_renderer, *context, &filepath);
+                utils::add_to_recent_paths(filepath, &mut shared.ui.recent_file_paths);
             }
         }
         "psd" => {
             #[cfg(not(target_arch = "wasm32"))]
             {
-                let file = std::fs::read(_filepath).unwrap();
+                let file = std::fs::read(filepath).unwrap();
                 read_psd(file, shared, backend_renderer, *context);
             }
             #[cfg(target_arch = "wasm32")]

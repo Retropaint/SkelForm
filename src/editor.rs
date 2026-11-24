@@ -1386,6 +1386,7 @@ pub fn simple_event(
         }
         Events::SwitchToArmature => {
             selections.sel_arm = value as usize;
+            ui.changed_window_name = false;
         }
         _ => {}
     }

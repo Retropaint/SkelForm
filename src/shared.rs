@@ -1366,7 +1366,7 @@ enum_string!(InverseKinematicsMode);
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 #[serde(default)]
 pub struct Armature {
-    pub name: String,
+    pub path: PathBuf,
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
@@ -1834,6 +1834,13 @@ impl Armature {
 
     pub fn is_any_anim_playing(&self) -> bool {
         self.animations.iter().find(|anim| anim.elapsed != None) != None
+    }
+
+    pub fn filename(&self) -> String {
+        if !self.path.exists() {
+            return "".to_string();
+        }
+        self.path.file_name().unwrap().to_str().unwrap().to_string()
     }
 }
 

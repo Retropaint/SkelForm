@@ -1020,6 +1020,7 @@ pub fn import<R: Read + std::io::Seek>(
     shared: &mut crate::Shared,
     backend_renderer: &Option<&BackendRenderer>,
     context: Option<&egui::Context>,
+    path: &PathBuf,
 ) {
     let mut zip = zip::ZipArchive::new(data);
     if let Err(_) = zip {
@@ -1052,7 +1053,7 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     let mut temp_arm = shared::Armature {
-        name: "armature".to_string(),
+        path: path.clone(),
         bones: root.bones.clone(),
         animations: root.animations.clone(),
         styles: root.styles.clone(),
@@ -1278,16 +1279,18 @@ pub fn import<R: Read + std::io::Seek>(
 
     // add armature to list
     let mut replaced = false;
-    for armature in &mut shared.armatures {
+    for a in 0..shared.armatures.len() {
         // replace existing empty armatures
-        if *armature == Armature::default() {
-            *armature = temp_arm.clone();
+        if shared.armatures[a] == Armature::default() {
+            shared.armatures[a] = temp_arm.clone();
+            shared.selections.sel_arm = a;
             replaced = true;
             break;
         }
     }
     if !replaced {
         shared.armatures.push(temp_arm);
+        shared.selections.sel_arm = shared.armatures.len() - 1;
     }
 
     // update warnings for this armature
@@ -1317,14 +1320,15 @@ pub fn save_recent_paths(mut paths: Vec<String>) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn add_to_recent_paths(to_add: &String, paths: &mut Vec<String>) {
-    if !paths.contains(&to_add) {
-        paths.push(to_add.clone());
+pub fn add_to_recent_paths(to_add: &PathBuf, paths: &mut Vec<String>) {
+    let to_add_str = to_add.to_str().unwrap().to_string();
+    if !paths.contains(&to_add_str.clone()) {
+        paths.push(to_add_str.clone());
     } else {
-        let idx = &paths.iter().position(|p| p == to_add).unwrap();
+        let idx = &paths.iter().position(|p| *p == to_add_str.clone()).unwrap();
         paths.remove(*idx);
         let len = paths.len();
-        let fp = to_add.clone();
+        let fp = to_add_str.clone();
 
         // check for autosave, and move it to first in the recent list
         let autosave = "autosave".to_string();
