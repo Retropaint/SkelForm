@@ -513,12 +513,11 @@ impl ApplicationHandler for App {
                     }
 
                     // all other events go here
-                    let sel_arm = shared.selections.sel_arm;
                     let s = &mut self.shared;
                     #[rustfmt::skip]
                     editor::iterate_events(
                         &s.input, &mut s.config, &mut s.events, &mut s.camera, &mut s.edit_mode, &mut s.selections,
-                        &mut s.undo_states, &mut s.armatures[sel_arm], &mut s.psd_armature, &mut s.copy_buffer, &mut s.ui, &mut s.renderer
+                        &mut s.undo_states, &mut s.armatures, &mut s.psd_armature, &mut s.copy_buffer, &mut s.ui, &mut s.renderer
                     );
                 }
 

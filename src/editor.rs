@@ -16,7 +16,7 @@ pub fn iterate_events(
     edit_mode: &mut EditMode,
     selections: &mut SelectionState,
     undo_states: &mut UndoStates,
-    armature: &mut Armature,
+    armatures: &mut Vec<Armature>,
     psd_armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
@@ -25,6 +25,8 @@ pub fn iterate_events(
     let mut last_event = Events::None;
     let event = events.events[0].clone();
     type E = Events;
+
+    let armature = &mut armatures[selections.sel_arm];
 
     // set buffers dirty (to be updated later) based on the event
     set_buffers_dirty(renderer, &event);
@@ -443,7 +445,7 @@ pub fn iterate_events(
         #[rustfmt::skip]
         editor::simple_event(
             event, value, str_value, camera, &input, edit_mode, selections,
-            undo_states, armature, psd_armature, copy_buffer, ui, renderer, config
+            undo_states, armatures, psd_armature, copy_buffer, ui, renderer, config
         );
 
         events.events.remove(0);
@@ -462,13 +464,15 @@ pub fn simple_event(
     edit_mode: &mut EditMode,
     selections: &mut SelectionState,
     undo_states: &mut UndoStates,
-    armature: &mut Armature,
+    armatures: &mut Vec<Armature>,
     psd_armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
     renderer: &mut crate::Renderer,
     config: &mut crate::Config,
 ) {
+    let armature = &mut armatures[selections.sel_arm];
+
     match event {
         Events::CamZoomIn => {
             let old_zoom = camera.zoom;
@@ -1385,8 +1389,13 @@ pub fn simple_event(
             selections.bone_ids = bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
         }
         Events::SwitchToArmature => {
+            if value as usize == selections.sel_arm {
+                return;
+            }
             selections.sel_arm = value as usize;
             ui.changed_window_name = false;
+            ui.save_path = Some(armatures[value as usize].path.clone());
+            unselect_all(selections, edit_mode, ui);
         }
         _ => {}
     }
