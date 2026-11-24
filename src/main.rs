@@ -159,6 +159,8 @@ fn init_shared(shared: &mut Shared) {
     shared.ui.adjusting_anim_speed = -999.;
     shared.edit_mode.armature_split = 0.5;
 
+    shared.armatures.push(Armature::default());
+
     shared.ui.video_clear_bg = shared.config.colors.background;
     shared.ui.exporting_video_type = ExportVideoType::Mp4;
     shared.ui.exporting_anims = vec![];

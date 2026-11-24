@@ -3024,6 +3024,9 @@ pub struct Shared {
     pub last_autosave: f32,
     pub screenshot_res: Vec2,
 
+    pub armatures: Vec<Armature>,
+    pub sel_arm: usize,
+
     // buffered armature from imported PSD
     pub psd_armature: Armature,
 }

@@ -1273,7 +1273,21 @@ pub fn import<R: Read + std::io::Seek>(
         }
     }
 
-    shared.armature = temp_arm;
+    shared.armature = temp_arm.clone();
+
+    // add armature to list
+    let mut replaced = false;
+    for armature in &mut shared.armatures {
+        // replace existing empty armatures
+        if *armature == Armature::default() {
+            *armature = temp_arm.clone();
+            replaced = true;
+            break;
+        }
+    }
+    if !replaced {
+        shared.armatures.push(temp_arm);
+    }
 
     // update warnings for this armature
     shared.ui.warnings = check_warnings(&shared.armature);

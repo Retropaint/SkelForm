@@ -273,7 +273,7 @@ impl ApplicationHandler for App {
         }
 
         // repeatedly redraw if any of the following are true
-        let is_any_anim_playing = self.shared.armature.is_any_anim_playing();
+        let is_any_anim_playing = self.shared.armatures[self.shared.sel_arm].is_any_anim_playing();
         let something_being_renamed = self.shared.ui.rename_id != "";
         if is_any_anim_playing || something_being_renamed {
             window.request_redraw();
@@ -391,7 +391,7 @@ impl ApplicationHandler for App {
                 #[rustfmt::skip]
                 ui::process_inputs(
                     gui_state.egui_ctx(), &mut s.input, &mut s.ui, &s.config,
-                    &mut s.edit_mode, &mut s.events, &s.camera, &s.selections, &mut s.armature
+                    &mut s.edit_mode, &mut s.events, &s.camera, &s.selections, &mut s.armatures[s.sel_arm]
                 );
 
                 // ui logic handled in ui.rs
@@ -399,7 +399,7 @@ impl ApplicationHandler for App {
                 ui::draw(
                     gui_state.egui_ctx(), &mut s.ui, &mut s.input, &mut s.selections,
                     &mut s.config, &mut s.events, &mut s.edit_mode, &s.camera,
-                    &mut s.armature, &s.copy_buffer, &s.renderer.temp_arm.bones
+                    &mut s.armatures[s.sel_arm], &s.copy_buffer, &s.renderer.temp_arm.bones
                 );
 
                 // backend egui stuff
