@@ -517,6 +517,9 @@ pub fn simple_event(
             if let Ok(data) = serde_json::from_str(&utils::color_str()) {
                 config.colors = data;
             }
+            if let Ok(data) = serde_json::from_str(&utils::config_keys_str()) {
+                config.keys = data;
+            }
         }
         Events::RenameBone => {
             let idx = armature.bones.iter().position(|b| b.name == str_value);
