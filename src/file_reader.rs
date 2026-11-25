@@ -145,7 +145,6 @@ pub fn add_images_as_textures(
     backend_renderer: &Option<&BackendRenderer>,
     ctx: Option<&egui::Context>,
 ) {
-    let style = tab.armature.sel_style(&selections).unwrap().clone();
     tab.new_undo_style(selections.style_id);
     for i in 0..images.len() {
         if images[i].clone().into_rgba8().to_vec().len() == 0 {
@@ -679,6 +678,7 @@ pub fn add_texture(
 
 pub fn read_import(_shared: &mut Shared) -> Option<(Vec<u8>, PathBuf)> {
     let file;
+    #[allow(unused_mut)]
     let mut filepath: PathBuf;
 
     #[cfg(not(target_arch = "wasm32"))]

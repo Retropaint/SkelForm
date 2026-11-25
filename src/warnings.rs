@@ -281,7 +281,7 @@ pub fn warning_line(
             let str = shared_ui
                 .loc("warnings.NoIkTarget")
                 .replace("$bone", &bone.unwrap().name);
-            clickable_bone(ui, armature, str, events, warning, warn_color);
+            clickable_bone(ui, str, events, warning, warn_color);
         }
         W::UnboundBind => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
@@ -289,7 +289,7 @@ pub fn warning_line(
                 .loc("warnings.UnboundBind")
                 .replace("$bind", &warning.value.to_string())
                 .replace("$bone", &bone.unwrap().name);
-            clickable_bone(ui, armature, str, events, warning, warn_color);
+            clickable_bone(ui, str, events, warning, warn_color);
         }
         W::NoVertsInBind => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
@@ -297,14 +297,14 @@ pub fn warning_line(
                 .loc("warnings.NoVertsInBind")
                 .replace("$bind", &warning.value.to_string())
                 .replace("$bone", &bone.unwrap().name);
-            clickable_bone(ui, armature, str, events, warning, warn_color);
+            clickable_bone(ui, str, events, warning, warn_color);
         }
         W::OnlyPath => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
             let str = shared_ui
                 .loc("warnings.OnlyPath")
                 .replace("$bone", &bone.unwrap().name);
-            clickable_bone(ui, armature, str, events, warning, warn_color);
+            clickable_bone(ui, str, events, warning, warn_color);
         }
         W::OnlyIk => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
@@ -312,7 +312,7 @@ pub fn warning_line(
                 .loc("warnings.OnlyIk")
                 .replace("$bone", &bone.unwrap().name)
                 .replace("$ik_family_id", &bone.unwrap().ik_family_id.to_string());
-            clickable_bone(ui, armature, str, events, warning, warn_color);
+            clickable_bone(ui, str, events, warning, warn_color);
         }
         W::NoWeights => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
@@ -320,7 +320,7 @@ pub fn warning_line(
                 .loc("warnings.NoWeights")
                 .replace("$bone", &bone.unwrap().name)
                 .replace("$bind", &warning.value.to_string());
-            clickable_bone(ui, armature, str, events, warning, warn_color);
+            clickable_bone(ui, str, events, warning, warn_color);
         }
         W::BoneOutOfFamily => {
             let bone = &bones.iter().find(|b| b.id == warning.ids[0] as i32);
@@ -424,7 +424,6 @@ pub fn warning_line(
 
 fn clickable_bone(
     ui: &mut egui::Ui,
-    armature: &Armature,
     str: String,
     events: &mut EventState,
     warning: &Warning,

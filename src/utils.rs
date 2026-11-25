@@ -17,7 +17,6 @@ use warnings::check_warnings;
 pub use web::*;
 
 #[cfg(not(target_arch = "wasm32"))]
-use fs::File;
 use image::{GenericImage, ImageEncoder};
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::Mutex;
@@ -25,9 +24,6 @@ use std::{collections::HashMap, path::PathBuf};
 use zip::read::ZipFile;
 
 use std::io::{Read, Write};
-
-#[cfg(unix)]
-use std::os::unix::fs::PermissionsExt;
 
 /// Convert a point from screen to world space.
 pub fn screen_to_world_space(pos: Vec2, window: Vec2) -> Vec2 {
