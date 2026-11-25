@@ -2306,64 +2306,6 @@ pub struct UndoStates {
     pub temp_actions: Vec<Action>,
 }
 
-impl UndoStates {
-    pub fn new_undo_bone(&mut self, bone: &Bone) {
-        self.undo_actions.push(Action {
-            action: ActionType::Bone,
-            bones: vec![bone.clone()],
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_anim(&mut self, anims: &Animation) {
-        self.undo_actions.push(Action {
-            action: ActionType::Animation,
-            animations: vec![anims.clone()],
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_style(&mut self, style: &Style) {
-        self.undo_actions.push(Action {
-            action: ActionType::Style,
-            styles: vec![style.clone()],
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_bones(&mut self, bones: &Vec<Bone>) {
-        self.undo_actions.push(Action {
-            action: ActionType::Bones,
-            bones: bones.clone(),
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_anims(&mut self, animations: &Vec<Animation>) {
-        self.undo_actions.push(Action {
-            action: ActionType::Animations,
-            animations: animations.clone(),
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_styles(&mut self, styles: &Vec<Style>) {
-        self.undo_actions.push(Action {
-            action: ActionType::Styles,
-            styles: styles.clone(),
-            ..Default::default()
-        });
-    }
-
-    pub fn new_undo_armature(&mut self, armature: &Armature) {
-        self.undo_actions.push(Action {
-            action: ActionType::Armature,
-            armatures: vec![armature.clone()],
-            ..Default::default()
-        });
-    }
-}
-
 #[derive(Default, Clone)]
 pub struct RenderBuffer {
     pub vertex: Option<wgpu::Buffer>,
@@ -3043,6 +2985,76 @@ impl SelectionState {
 pub struct ArmatureTab {
     pub armature: Armature,
     pub undo_states: UndoStates,
+}
+
+impl ArmatureTab {
+    pub fn new_undo_bone(&mut self, bone_id: i32) {
+        self.undo_states.undo_actions.push(Action {
+            action: ActionType::Bone,
+            bones: vec![self
+                .armature
+                .bones
+                .iter()
+                .find(|b| b.id == bone_id)
+                .unwrap()
+                .clone()],
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_anim(&mut self, anim_idx: usize) {
+        self.undo_states.undo_actions.push(Action {
+            action: ActionType::Animation,
+            animations: vec![self.armature.animations[anim_idx].clone()],
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_style(&mut self, style_id: i32) {
+        self.undo_states.undo_actions.push(Action {
+            action: ActionType::Style,
+            styles: vec![self
+                .armature
+                .styles
+                .iter()
+                .find(|s| s.id == style_id)
+                .unwrap()
+                .clone()],
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_bones(&mut self) {
+        self.undo_states.undo_actions.push(Action {
+            action: ActionType::Bones,
+            bones: self.armature.bones.clone(),
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_anims(&mut self) {
+        self.undo_states.undo_actions.push(Action {
+            action: ActionType::Animations,
+            animations: self.armature.animations.clone(),
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_styles(&mut self) {
+        self.undo_states.undo_actions.push(Action {
+            action: ActionType::Styles,
+            styles: self.armature.styles.clone(),
+            ..Default::default()
+        });
+    }
+
+    pub fn new_undo_armature(&mut self) {
+        self.undo_states.undo_actions.push(Action {
+            action: ActionType::Armature,
+            armatures: vec![self.armature.clone()],
+            ..Default::default()
+        });
+    }
 }
 
 #[derive(Default)]

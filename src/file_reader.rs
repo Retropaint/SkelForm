@@ -143,7 +143,7 @@ pub fn add_images_as_textures(
     ctx: Option<&egui::Context>,
 ) {
     let style = tab.armature.sel_style(&selections).unwrap().clone();
-    tab.undo_states.new_undo_style(&style);
+    tab.new_undo_style(selections.style_id);
     for i in 0..images.len() {
         if images[i].clone().into_rgba8().to_vec().len() == 0 {
             // this image is empty; something went wrong

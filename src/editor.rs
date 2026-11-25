@@ -15,7 +15,6 @@ pub fn iterate_events(
     camera: &mut Camera,
     edit_mode: &mut EditMode,
     selections: &mut SelectionState,
-    undo_states: &mut UndoStates,
     tabs: &mut Vec<ArmatureTab>,
     psd_armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
@@ -25,8 +24,6 @@ pub fn iterate_events(
     let mut last_event = Events::None;
     let event = events.events[0].clone();
     type E = Events;
-
-    let armature = &mut tabs[selections.sel_tab].armature;
 
     // set buffers dirty (to be updated later) based on the event
     set_buffers_dirty(renderer, &event);
@@ -40,23 +37,25 @@ pub fn iterate_events(
         match last_event {
             E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone | E::RaiseGlobalZindex |
             E::CreateBindBone | E::NewBonesFromTextures | E::CreateParentBone => {
-                undo_states.new_undo_bones(&armature.bones)
+                tabs[selections.sel_tab].new_undo_bones()
             }
-            E::NewAnimation | E::DeleteAnim => undo_states.new_undo_anims(&armature.animations),
-            E::DeleteSelectedTextures       => undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()),
-            E::DeleteStyle | E::NewStyle    => undo_states.new_undo_styles(&armature.styles),
-            E::RenameStyle => if !ui.just_made_style { undo_states.new_undo_style(&armature.sel_style(&selections).unwrap()); ui.just_made_style = false }
+            E::NewAnimation | E::DeleteAnim => tabs[selections.sel_tab].new_undo_anims(),
+            E::DeleteSelectedTextures       => tabs[selections.sel_tab].new_undo_style(selections.style_id),
+            E::DeleteStyle | E::NewStyle    => tabs[selections.sel_tab].new_undo_styles(),
+            E::RenameStyle => if !ui.just_made_style { tabs[selections.sel_tab].new_undo_style(selections.style_id); ui.just_made_style = false }
             E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::PasteKeyframesOnFrame |
             E::AdjustKeyframesByFPS | E::AdjustKeyframesBySpeed => {
-                undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap())
+                tabs[selections.sel_tab].new_undo_anim(selections.anim)
             }
             E::ResetVertices | E::CenterBoneVerts | E::DeleteVertex |E::TraceBoneVerts |
             E::NewVertex | E::DeleteTriangle => {
-                undo_states.new_undo_bone(&armature.sel_bone(&selections).unwrap())
+                tabs[selections.sel_tab].new_undo_bone(selections.sel_bone())
             }
             _ => {}
         };
     }
+
+    let armature = &mut tabs[selections.sel_tab].armature;
 
     if event == Events::MoveArmatureInTab {
         let mut remove_idx = events.values[0] as usize;
@@ -457,7 +456,7 @@ pub fn iterate_events(
         #[rustfmt::skip]
         editor::simple_event(
             event, value, str_value, camera, &input, edit_mode, selections,
-            undo_states, tabs, psd_armature, copy_buffer, ui, renderer, config
+            tabs, psd_armature, copy_buffer, ui, renderer, config
         );
 
         events.events.remove(0);
@@ -475,7 +474,6 @@ pub fn simple_event(
     input: &InputStates,
     edit_mode: &mut EditMode,
     selections: &mut SelectionState,
-    undo_states: &mut UndoStates,
     tabs: &mut Vec<ArmatureTab>,
     psd_armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
@@ -501,13 +499,15 @@ pub fn simple_event(
         Events::EditModeScale => edit_mode.current = EditModes::Scale,
         Events::UnselectAll => unselect_all(selections, edit_mode, ui),
         Events::Undo => {
-            undo_redo(true, undo_states, armature, selections);
+            undo_redo(true, &mut tabs[selections.sel_tab], selections);
             ui.changed_window_name = false;
+            let armature = &tabs[selections.sel_tab].armature;
             ui.warnings = check_warnings(armature);
         }
         Events::Redo => {
-            undo_redo(false, undo_states, armature, selections);
+            undo_redo(false, &mut tabs[selections.sel_tab], selections);
             ui.changed_window_name = false;
+            let armature = &tabs[selections.sel_tab].armature;
             ui.warnings = check_warnings(armature);
         }
         Events::ResetConfig => {
@@ -538,9 +538,9 @@ pub fn simple_event(
         }
         Events::RenameAnim => {
             if !ui.just_made_anim {
-                undo_states.new_undo_anim(&armature.animations[value as usize]);
+                tabs[selections.sel_tab].new_undo_anim(value as usize);
             }
-            armature.animations[value as usize].name = str_value;
+            tabs[selections.sel_tab].armature.animations[value as usize].name = str_value;
             ui.just_made_anim = false;
         }
         Events::PointerOnUi => camera.on_ui = value == 1.,
@@ -688,9 +688,15 @@ pub fn simple_event(
                 }
             }
 
-            undo_states.new_undo_anims(&armature.animations);
-            undo_states.undo_actions.last_mut().unwrap().continued = true;
+            tabs[selections.sel_tab].new_undo_anims();
+            tabs[selections.sel_tab]
+                .undo_states
+                .undo_actions
+                .last_mut()
+                .unwrap()
+                .continued = true;
 
+            let armature = &mut tabs[selections.sel_tab].armature;
             for id in ids_to_delete {
                 let bone;
                 if let Some(result) = armature.bones.iter().find(|b| b.id == id) {
@@ -772,9 +778,7 @@ pub fn simple_event(
             armature.animations.push(new_anim);
         }
         Events::SaveBone => {
-            let bone_id = value as i32;
-            let bone = armature.bones.iter().find(|b| b.id == bone_id).unwrap();
-            undo_states.new_undo_bone(&bone);
+            tabs[selections.sel_tab].new_undo_bone(value as i32);
             *ui.saving.lock().unwrap() = Saving::Autosaving;
         }
         Events::SaveEditedBone => {
@@ -787,14 +791,13 @@ pub fn simple_event(
             let bones = &armature.bones;
             let bone = bones.iter().find(|b| b.id == value as i32).unwrap().clone();
             if ui.is_animating(&edit_mode, &selections) && !bone.locked {
-                let anim = armature.animations[selections.anim as usize].clone();
-                undo_states.new_undo_anim(&anim);
+                tabs[selections.sel_tab].new_undo_anim(selections.anim as usize);
             } else {
                 // save all bones, if multiple were edited
                 if selections.bone_ids.len() > 0 {
-                    undo_states.new_undo_bones(&armature.bones);
+                    tabs[selections.sel_tab].new_undo_bones();
                 } else {
-                    undo_states.new_undo_bone(&bone);
+                    tabs[selections.sel_tab].new_undo_bone(value as i32);
                 }
             }
             *ui.saving.lock().unwrap() = Saving::Autosaving;
@@ -947,12 +950,13 @@ pub fn simple_event(
         }
         Events::NewVertex => {
             // remove drag vertex action, since it's always triggered
-            undo_states.undo_actions.pop();
-            undo_states.new_undo_bone(&armature.sel_bone(&selections).unwrap());
+            tabs[selections.sel_tab].undo_states.undo_actions.pop();
+            tabs[selections.sel_tab].new_undo_bone(selections.sel_bone());
 
             let sel = &selections;
 
             // give unique ID to vertex
+            let armature = &mut tabs[selections.sel_tab].armature;
             let bone_verts = &mut armature.sel_bone_mut(sel).unwrap().vertices;
             bone_verts.push(renderer.new_vert.unwrap());
             let ids: Vec<i32> = bone_verts.iter().map(|v| v.id as i32).collect();
@@ -1123,7 +1127,7 @@ pub fn simple_event(
             copy_selected_keyframes(copy_buffer, ui);
         }
         Events::SaveAnimation => {
-            undo_states.new_undo_anim(&armature.sel_anim(&selections).unwrap());
+            tabs[selections.sel_tab].new_undo_anim(selections.anim as usize);
         }
         Events::SetTemporaryEditMode => {
             if value == 3. {
@@ -1261,7 +1265,9 @@ pub fn simple_event(
                 return;
             }
 
-            undo_states.new_undo_anim(&armature.sel_anim(&selections).unwrap());
+            tabs[selections.sel_tab].new_undo_anim(selections.anim as usize);
+
+            let armature = &mut tabs[selections.sel_tab].armature;
             let sel_anim = &mut armature.sel_anim_mut(&selections).unwrap();
 
             for skf in &mut ui.selected_keyframes {
@@ -1297,13 +1303,15 @@ pub fn simple_event(
         },
         Events::GlobalPaste => match ui.last_selected.as_str() {
             "keyframe" => {
-                undo_states.new_undo_anim(armature.sel_anim(&selections).unwrap());
+                tabs[selections.sel_tab].new_undo_anim(selections.anim as usize);
+                let armature = &mut tabs[selections.sel_tab].armature;
                 paste_keyframes_on_frame(copy_buffer, armature, selections, selections.anim_frame);
             }
             "bone" => {
-                undo_states.new_undo_bones(&armature.bones);
+                tabs[selections.sel_tab].new_undo_bones();
                 let sbi = &selections.bone_ids;
                 let bone_id = if sbi.len() > 0 { sbi[0] } else { i32::MAX };
+                let armature = &mut tabs[selections.sel_tab].armature;
                 paste_bone(copy_buffer, selections, armature, bone_id);
             }
             _ => {}
@@ -1575,23 +1583,18 @@ fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode, ui: &
     ui.last_selected = "".to_string();
 }
 
-pub fn undo_redo(
-    undo: bool,
-    undo_states: &mut UndoStates,
-    armature: &mut Armature,
-    selections: &mut SelectionState,
-) {
+pub fn undo_redo(undo: bool, tab: &mut ArmatureTab, selections: &mut SelectionState) {
     let action: Action;
     if undo {
-        if undo_states.undo_actions.last() == None {
+        if tab.undo_states.undo_actions.last() == None {
             return;
         }
-        action = undo_states.undo_actions.last().unwrap().clone();
+        action = tab.undo_states.undo_actions.last().unwrap().clone();
     } else {
-        if undo_states.redo_actions.last() == None {
+        if tab.undo_states.redo_actions.last() == None {
             return;
         }
-        action = undo_states.redo_actions.last().unwrap().clone();
+        action = tab.undo_states.redo_actions.last().unwrap().clone();
     }
 
     // store the state prior to undoing/redoing the action,
@@ -1600,7 +1603,7 @@ pub fn undo_redo(
 
     match &action.action {
         ActionType::Bone => {
-            let bone = armature.find_bone_mut(action.bones[0].id).unwrap();
+            let bone = tab.armature.find_bone_mut(action.bones[0].id).unwrap();
             new_action.bones = vec![bone.clone()];
             *bone = action.bones[0].clone();
             // remove selected vertices that no longer exist
@@ -1608,73 +1611,73 @@ pub fn undo_redo(
             selections.vert_ids.retain(|id| vert_ids.contains(id));
         }
         ActionType::Bones => {
-            new_action.bones = armature.bones.clone();
-            armature.bones = action.bones.clone();
+            new_action.bones = tab.armature.bones.clone();
+            tab.armature.bones = action.bones.clone();
         }
         ActionType::Animation => {
             let anim_id = action.animations[0].id;
-            let animations = &mut armature.animations;
+            let animations = &mut tab.armature.animations;
             let anim = animations.iter_mut().find(|a| a.id == anim_id).unwrap();
             new_action.animations = vec![anim.clone()];
             *anim = action.animations[0].clone();
         }
         ActionType::Animations => {
-            new_action.animations = armature.animations.clone();
-            armature.animations = action.animations.clone();
-            let animations = &mut armature.animations;
+            new_action.animations = tab.armature.animations.clone();
+            tab.armature.animations = action.animations.clone();
+            let animations = &mut tab.armature.animations;
             if animations.len() == 0 || selections.anim > animations.len() - 1 {
                 selections.anim = usize::MAX;
             }
         }
         ActionType::Style => {
             let id = action.styles[0].id;
-            let style = armature.styles.iter_mut().find(|a| a.id == id).unwrap();
+            let style = tab.armature.styles.iter_mut().find(|a| a.id == id).unwrap();
             new_action.styles = vec![style.clone()];
             *style = action.styles[0].clone();
         }
         ActionType::Styles => {
-            new_action.styles = armature.styles.clone();
-            armature.styles = action.styles.clone();
-            let style_ids: Vec<i32> = armature.styles.iter().map(|s| s.id).collect();
+            new_action.styles = tab.armature.styles.clone();
+            tab.armature.styles = action.styles.clone();
+            let style_ids: Vec<i32> = tab.armature.styles.iter().map(|s| s.id).collect();
             if !style_ids.contains(&selections.style_id) {
                 selections.style_id = -1;
             }
         }
         ActionType::Armature => {
-            new_action.armatures = vec![armature.clone()];
-            *armature = action.armatures[0].clone();
+            new_action.armatures = vec![tab.armature.clone()];
+            tab.armature = action.armatures[0].clone();
         }
         _ => {}
     }
 
     // add action(s) to opposing stack
-    undo_states.temp_actions.push(new_action);
+    tab.undo_states.temp_actions.push(new_action);
     if undo {
-        undo_states.undo_actions.pop();
+        tab.undo_states.undo_actions.pop();
         if !action.continued {
             // reverse list to restore order of actions
-            undo_states.temp_actions.reverse();
-            let temp_actions = &mut undo_states.temp_actions;
-            undo_states.redo_actions.append(temp_actions);
-            undo_states.temp_actions = vec![];
+            tab.undo_states.temp_actions.reverse();
+            let temp_actions = &mut tab.undo_states.temp_actions;
+            tab.undo_states.redo_actions.append(temp_actions);
+            tab.undo_states.temp_actions = vec![];
         }
     } else {
-        undo_states.redo_actions.pop();
+        tab.undo_states.redo_actions.pop();
         if !action.continued {
             // ditto
-            undo_states.temp_actions.reverse();
-            let temp_actions = &mut undo_states.temp_actions;
-            undo_states.undo_actions.append(temp_actions);
-            undo_states.temp_actions = vec![];
+            tab.undo_states.temp_actions.reverse();
+            let temp_actions = &mut tab.undo_states.temp_actions;
+            tab.undo_states.undo_actions.append(temp_actions);
+            tab.undo_states.temp_actions = vec![];
         }
     }
 
-    undo_states.prev_undo_actions = undo_states.undo_actions.len();
-    undo_states.unsaved_undo_actions = undo_states.undo_actions.len();
+    tab.undo_states.prev_undo_actions = tab.undo_states.undo_actions.len();
+    tab.undo_states.unsaved_undo_actions = tab.undo_states.undo_actions.len();
 
     // actions tagged with `continue` are part of an action chain
     if action.continued {
-        undo_redo(undo, undo_states, armature, selections);
+        undo_redo(undo, tab, selections);
     }
 }
 
