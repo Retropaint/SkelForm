@@ -1404,12 +1404,13 @@ pub fn simple_event(
             selections.bone_ids = bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
         }
         Events::SwitchToArmature => {
-            if value as usize == selections.sel_arm {
+            let new_sel_arm = value as usize;
+            if new_sel_arm == selections.sel_arm || new_sel_arm > armatures.len() - 1 {
                 return;
             }
-            selections.sel_arm = value as usize;
+            selections.sel_arm = new_sel_arm;
             ui.changed_window_name = false;
-            ui.save_path = armatures[value as usize].path.clone();
+            ui.save_path = armatures[new_sel_arm].path.clone();
             unselect_all(selections, edit_mode, ui);
             ui.warnings = check_warnings(&armatures[value as usize]);
         }
