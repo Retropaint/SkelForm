@@ -1351,19 +1351,27 @@ fn armature_panel(
     input: &InputStates,
     selections: &SelectionState,
 ) {
-    let panel = egui::TopBottomPanel::top("top_bar").frame(egui::Frame {
-        fill: config.colors.main.into(),
-        stroke: Stroke::new(0., config.colors.main),
-        inner_margin: egui::Margin::default(),
-        outer_margin: egui::Margin::default(),
-        ..Default::default()
-    });
+    let panel = egui::TopBottomPanel::top("top_bar")
+        .frame(egui::Frame {
+            fill: config.colors.main.into(),
+            stroke: Stroke::new(0., config.colors.main),
+            inner_margin: egui::Margin::default(),
+            outer_margin: egui::Margin::default(),
+            ..Default::default()
+        })
+        .min_height(25.)
+        .max_height(60.);
     panel.show(egui_ctx, |ui| {
         let new_button_width = 30.;
-        let max_width = ui.available_width() - new_button_width;
+        let max_size = Vec2::new(
+            ui.available_width() - new_button_width,
+            ui.available_height(),
+        );
         let frame = egui::Frame::new();
         ui.dnd_drop_zone::<usize, _>(frame, |ui| {
+            ui.set_height(max_size.y);
             ui.horizontal(|ui| {
+                ui.set_height(max_size.y);
                 let mut hovering = false;
                 ui.style_mut().spacing.item_spacing = egui::Vec2::new(0., 0.);
                 let mut idx: i32 = -1;
@@ -1388,11 +1396,13 @@ fn armature_panel(
 
                     let button = ui
                         .dnd_drag_source(id, idx, |ui| {
+                            ui.set_height(max_size.y);
                             let frame = egui::Frame::new()
                                 .fill(color.into())
                                 .multiply_with_opacity(opacity);
                             frame.show(ui, |ui| {
-                                ui.set_width(max_width / armature_names.len() as f32);
+                                ui.set_height(max_size.y);
+                                ui.set_width(max_size.x / armature_names.len() as f32);
                                 let layout = egui::Layout::centered_and_justified(
                                     egui::Direction::LeftToRight,
                                 );
