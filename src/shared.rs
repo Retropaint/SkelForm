@@ -3061,7 +3061,6 @@ impl ArmatureTab {
 pub struct Shared {
     pub input: InputStates,
     pub ui: Ui,
-    pub undo_states: UndoStates,
     pub renderer: Renderer,
     pub events: EventState,
     pub camera: Camera,
