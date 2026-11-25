@@ -1280,22 +1280,25 @@ pub fn import<R: Read + std::io::Seek>(
 
     // add armature to list
     let mut replaced = false;
-    for a in 0..shared.armatures.len() {
+    for a in 0..shared.tabs.len() {
         // replace existing empty armatures
-        if shared.armatures[a] == Armature::default() {
-            shared.armatures[a] = temp_arm.clone();
+        if shared.tabs[a].armature == Armature::default() {
+            shared.tabs[a].armature = temp_arm.clone();
             shared.events.switch_to_armature(a);
             replaced = true;
             break;
         }
     }
     if !replaced {
-        shared.armatures.push(temp_arm);
-        shared.events.switch_to_armature(shared.armatures.len() - 1);
+        shared.tabs.push(ArmatureTab {
+            armature: temp_arm,
+            undo_states: UndoStates::default(),
+        });
+        shared.events.switch_to_armature(shared.tabs.len() - 1);
     }
 
     // update warnings for this armature
-    shared.ui.warnings = check_warnings(&shared.sel_arm());
+    shared.ui.warnings = check_warnings(&shared.sel_arm().armature);
     shared.renderer.gridline_buffer.dirty = true;
     shared.renderer.point_buffer.dirty = true;
     shared.renderer.kite_buffer.dirty = true;

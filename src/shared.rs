@@ -3039,6 +3039,12 @@ impl SelectionState {
     }
 }
 
+#[derive(Clone)]
+pub struct ArmatureTab {
+    pub armature: Armature,
+    pub undo_states: UndoStates,
+}
+
 #[derive(Default)]
 pub struct Shared {
     pub input: InputStates,
@@ -3054,19 +3060,19 @@ pub struct Shared {
     pub last_autosave: f32,
     pub screenshot_res: Vec2,
 
-    pub armatures: Vec<Armature>,
+    pub tabs: Vec<ArmatureTab>,
 
     // buffered armature from imported PSD
     pub psd_armature: Armature,
 }
 
 impl Shared {
-    pub fn sel_arm(&self) -> &Armature {
-        &self.armatures[self.selections.sel_arm]
+    pub fn sel_arm(&self) -> &ArmatureTab {
+        &self.tabs[self.selections.sel_arm]
     }
 
-    pub fn sel_arm_mut(&mut self) -> &mut Armature {
-        &mut self.armatures[self.selections.sel_arm]
+    pub fn sel_arm_mut(&mut self) -> &mut ArmatureTab {
+        &mut self.tabs[self.selections.sel_arm]
     }
 }
 

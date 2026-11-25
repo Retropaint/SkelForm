@@ -16,7 +16,7 @@ pub fn iterate_events(
     edit_mode: &mut EditMode,
     selections: &mut SelectionState,
     undo_states: &mut UndoStates,
-    armatures: &mut Vec<Armature>,
+    tabs: &mut Vec<ArmatureTab>,
     psd_armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
@@ -26,7 +26,7 @@ pub fn iterate_events(
     let event = events.events[0].clone();
     type E = Events;
 
-    let armature = &mut armatures[selections.sel_arm];
+    let armature = &mut tabs[selections.sel_arm].armature;
 
     // set buffers dirty (to be updated later) based on the event
     set_buffers_dirty(renderer, &event);
@@ -60,14 +60,14 @@ pub fn iterate_events(
 
     if event == Events::MoveArmatureInTab {
         let mut remove_idx = events.values[0] as usize;
-        armatures.insert(
+        tabs.insert(
             events.values[1] as usize,
-            armatures[events.values[0] as usize].clone(),
+            tabs[events.values[0] as usize].clone(),
         );
         if events.values[0] > events.values[1] {
             remove_idx += 1;
         }
-        armatures.remove(remove_idx);
+        tabs.remove(remove_idx);
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::UpdateRenderOptions {
@@ -457,7 +457,7 @@ pub fn iterate_events(
         #[rustfmt::skip]
         editor::simple_event(
             event, value, str_value, camera, &input, edit_mode, selections,
-            undo_states, armatures, psd_armature, copy_buffer, ui, renderer, config
+            undo_states, tabs, psd_armature, copy_buffer, ui, renderer, config
         );
 
         events.events.remove(0);
@@ -476,14 +476,14 @@ pub fn simple_event(
     edit_mode: &mut EditMode,
     selections: &mut SelectionState,
     undo_states: &mut UndoStates,
-    armatures: &mut Vec<Armature>,
+    tabs: &mut Vec<ArmatureTab>,
     psd_armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
     ui: &mut crate::Ui,
     renderer: &mut crate::Renderer,
     config: &mut crate::Config,
 ) {
-    let armature = &mut armatures[selections.sel_arm];
+    let armature = &mut tabs[selections.sel_arm].armature;
 
     match event {
         Events::CamZoomIn => {
@@ -625,15 +625,11 @@ pub fn simple_event(
             camera.zoom = 2000.;
             ui.save_path = None;
             ui.changed_window_name = false;
-            armatures.push(Armature::default().clone());
-            switch_to_armature(
-                armatures.len() - 1,
-                selections,
-                armatures,
-                undo_states,
-                edit_mode,
-                ui,
-            );
+            tabs.push(ArmatureTab {
+                armature: Armature::default().clone(),
+                undo_states: UndoStates::default(),
+            });
+            switch_to_armature(tabs.len() - 1, selections, tabs, edit_mode, ui);
         }
         Events::NewStyle => {
             let ids = armature.styles.iter().map(|set| set.id).collect();
@@ -1406,26 +1402,12 @@ pub fn simple_event(
             selections.bone_ids = bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
         }
         Events::SwitchToArmature => {
-            switch_to_armature(
-                value as usize,
-                selections,
-                armatures,
-                undo_states,
-                edit_mode,
-                ui,
-            );
+            switch_to_armature(value as usize, selections, tabs, edit_mode, ui);
         }
         Events::RemoveArmatureInTab => {
-            armatures.remove(value as usize);
-            if selections.sel_arm > armatures.len() - 1 {
-                switch_to_armature(
-                    selections.sel_arm - 1,
-                    selections,
-                    armatures,
-                    undo_states,
-                    edit_mode,
-                    ui,
-                );
+            tabs.remove(value as usize);
+            if selections.sel_arm > tabs.len() - 1 {
+                switch_to_armature(selections.sel_arm - 1, selections, tabs, edit_mode, ui);
             }
         }
         _ => {}
@@ -2511,29 +2493,17 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
 pub fn switch_to_armature(
     new_sel_arm: usize,
     selections: &mut SelectionState,
-    armatures: &mut Vec<Armature>,
-    undo_states: &mut UndoStates,
+    tabs: &mut Vec<ArmatureTab>,
     edit_mode: &mut EditMode,
     ui: &mut crate::Ui,
 ) {
-    if new_sel_arm == selections.sel_arm || new_sel_arm > armatures.len() - 1 {
+    if new_sel_arm == selections.sel_arm || new_sel_arm > tabs.len() - 1 {
         return;
-    }
-
-    // save global undo state to this armature
-    if selections.sel_arm < armatures.len() {
-        armatures[selections.sel_arm].undo_states = Some(undo_states.clone());
     }
 
     selections.sel_arm = new_sel_arm;
 
-    // carry over armature data to global state
-    ui.save_path = armatures[new_sel_arm].path.clone();
-    if let Some(arm_undo) = armatures[new_sel_arm].undo_states.clone() {
-        *undo_states = arm_undo;
-    }
-
     unselect_all(selections, edit_mode, ui);
-    ui.warnings = check_warnings(&armatures[new_sel_arm]);
+    ui.warnings = check_warnings(&tabs[new_sel_arm].armature);
     ui.changed_window_name = false;
 }

@@ -35,8 +35,7 @@ pub fn read(
     if let Some((images, names)) = read_image_loaders(shared) {
         add_images_as_textures(
             &shared.selections,
-            &mut shared.armatures[shared.selections.sel_arm],
-            &mut shared.undo_states,
+            &mut shared.tabs[shared.selections.sel_arm],
             &mut shared.events,
             &images,
             &names,
@@ -136,16 +135,15 @@ pub fn read_image_loaders(_shared: &mut Shared) -> Option<(Vec<image::DynamicIma
 
 pub fn add_images_as_textures(
     selections: &SelectionState,
-    armature: &mut Armature,
-    undo_states: &mut UndoStates,
+    tab: &mut ArmatureTab,
     events: &mut EventState,
     images: &Vec<image::DynamicImage>,
     names: &Vec<String>,
     backend_renderer: &Option<&BackendRenderer>,
     ctx: Option<&egui::Context>,
 ) {
-    let style = armature.sel_style(&selections).unwrap().clone();
-    undo_states.new_undo_style(&style);
+    let style = tab.armature.sel_style(&selections).unwrap().clone();
+    tab.undo_states.new_undo_style(&style);
     for i in 0..images.len() {
         if images[i].clone().into_rgba8().to_vec().len() == 0 {
             // this image is empty; something went wrong
@@ -160,7 +158,7 @@ pub fn add_images_as_textures(
             selections.style_id,
             dims,
             &names[i],
-            armature,
+            &mut tab.armature,
             backend_renderer,
             ctx,
         );
@@ -206,19 +204,30 @@ pub fn add_pending_textures(
     ctx: Option<&egui::Context>,
 ) {
     // get last texture of selected style (will be the atlas)
-    let style = shared.sel_arm().sel_style(&shared.selections).unwrap();
+    let style = shared
+        .sel_arm()
+        .armature
+        .sel_style(&shared.selections)
+        .unwrap();
     let textures = style.textures.last().unwrap().clone();
-    let image = shared.sel_arm().tex_data(&textures).unwrap().image.clone();
+    let image = shared
+        .sel_arm()
+        .armature
+        .tex_data(&textures)
+        .unwrap()
+        .image
+        .clone();
 
     // now that we have the atlas, remove it from the list
     let selections = shared.selections.clone();
     shared
         .sel_arm_mut()
+        .armature
         .sel_style_mut(&selections)
         .unwrap()
         .textures
         .pop();
-    shared.sel_arm_mut().tex_data.pop();
+    shared.sel_arm_mut().armature.tex_data.pop();
 
     for tex in &shared.ui.pending_textures {
         #[rustfmt::skip]
@@ -229,7 +238,7 @@ pub fn add_pending_textures(
             shared.selections.style_id,
             crop_size,
             &tex.name,
-            &mut shared.armatures[shared.selections.sel_arm],
+            &mut shared.tabs[shared.selections.sel_arm].armature,
             backend_renderer,
             ctx,
         );
@@ -247,13 +256,13 @@ pub fn read_psd(
     let psd = psd::Psd::from_bytes(&bytes).unwrap();
 
     // save armature to undo stack
-    let armature = &shared.armatures[shared.selections.sel_arm];
-    shared.undo_states.new_undo_armature(armature);
+    //let armature = &shared.tabs[shared.selections.sel_arm].armature;
+    //shared.sel_arm_mut().undo_states.new_undo_armature(armature);
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.psd_armature.bones = vec![];
-    shared.psd_armature.styles = shared.sel_arm().styles.clone();
-    shared.psd_armature.tex_data = shared.sel_arm().tex_data.clone();
+    shared.psd_armature.styles = shared.sel_arm().armature.styles.clone();
+    shared.psd_armature.tex_data = shared.sel_arm().armature.tex_data.clone();
 
     // create root bone, where all except targets will go
     shared.psd_armature.new_bone(-1);
@@ -584,8 +593,8 @@ pub fn read_psd(
 
     // immediately import textures to real armature
     shared.psd_armature.styles.reverse();
-    shared.sel_arm_mut().styles = shared.psd_armature.styles.clone();
-    shared.sel_arm_mut().tex_data = shared.psd_armature.tex_data.clone();
+    shared.sel_arm_mut().armature.styles = shared.psd_armature.styles.clone();
+    shared.sel_arm_mut().armature.tex_data = shared.psd_armature.tex_data.clone();
 
     // show polar modal to replace real armature bones as well
     let str = shared.ui.loc("psd_imported");
