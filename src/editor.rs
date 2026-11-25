@@ -626,12 +626,7 @@ pub fn simple_event(
             ui.save_path = None;
             ui.changed_window_name = false;
             armatures.push(Armature::default().clone());
-
-            // reset undo stack (clears previous armature)
-            undo_states.undo_actions = vec![];
-            undo_states.redo_actions = vec![];
-            undo_states.prev_undo_actions = 0;
-            undo_states.unsaved_undo_actions = 0;
+            selections.sel_arm = armatures.len() - 1;
         }
         Events::NewStyle => {
             let ids = armature.styles.iter().map(|set| set.id).collect();

@@ -75,16 +75,8 @@ fn left(
         // New button
         let empty = "".to_string();
         if leftside_button("+", &shared_ui.loc("new"), ui, None, None, empty, conf).clicked() {
-            if !shared_ui.is_unsaved {
-                events.new_armature();
-                shared_ui.startup_window = false;
-            } else {
-                // prevent new armature if current is unsaved
-                events.open_polar_modal(
-                    PolarId::StartNewWhileUnsaved,
-                    shared_ui.loc("startup.unsaved_new"),
-                );
-            }
+            events.new_armature();
+            shared_ui.startup_window = false;
         }
 
         ui.add_space(padding);
