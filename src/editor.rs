@@ -625,7 +625,7 @@ pub fn simple_event(
             camera.zoom = 2000.;
             ui.save_path = None;
             ui.changed_window_name = false;
-            *armature = Armature::default();
+            armatures.push(Armature::default().clone());
 
             // reset undo stack (clears previous armature)
             undo_states.undo_actions = vec![];
@@ -1409,7 +1409,7 @@ pub fn simple_event(
             }
             selections.sel_arm = value as usize;
             ui.changed_window_name = false;
-            ui.save_path = Some(armatures[value as usize].path.clone());
+            ui.save_path = armatures[value as usize].path.clone();
             unselect_all(selections, edit_mode, ui);
             ui.warnings = check_warnings(&armatures[value as usize]);
         }

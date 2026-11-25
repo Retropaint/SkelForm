@@ -1398,7 +1398,12 @@ fn armature_panel(
                                     egui::Direction::LeftToRight,
                                 );
                                 ui.with_layout(layout, |ui| {
-                                    ui.label(&armature_names[n]);
+                                    let str = if armature_names[n] != "" {
+                                        armature_names[n].to_string()
+                                    } else {
+                                        "Unsaved Armature".to_string()
+                                    };
+                                    ui.label(&str);
                                 });
                                 if shared_ui.hovering_armature == idx {
                                     let layout = egui::Layout::right_to_left(egui::Align::Center);

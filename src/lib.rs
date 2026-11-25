@@ -1309,7 +1309,7 @@ impl BackendRenderer {
                 *shared.ui.save_finished.lock().unwrap() = false;
                 shared.ui.save_path = Some(path.clone());
                 shared.ui.can_quit = false;
-                shared.sel_arm_mut().path = path;
+                shared.sel_arm_mut().path = Some(path);
                 if !shared.ui.recent_file_paths.contains(&save_path) {
                     shared.ui.recent_file_paths.push(save_path.clone());
                 }
