@@ -264,15 +264,15 @@ pub fn draw(
     ));
 
     // get current properties of selected bone, including animations
-    let mut selected_bone = Bone::default();
-    if selections.bone_ids.len() != 0 {
-        selected_bone = armature
-            .try_anim_bones()
-            .iter()
-            .find(|bone| bone.id == selections.sel_bone())
-            .unwrap()
-            .clone();
-    }
+    let selected_bone = if let Some(bone) = armature
+        .try_anim_bones()
+        .iter()
+        .find(|bone| bone.id == selections.sel_bone())
+    {
+        bone.clone()
+    } else {
+        Bone::default()
+    };
 
     let min_default_size = 210.;
     let max_size = 250.;
@@ -2100,6 +2100,10 @@ fn bone_pivot_bar(
     shared_ui: &mut crate::Ui,
     config: &Config,
 ) {
+    if armature.sel_bone(&selections) == None {
+        return;
+    }
+
     let bone = armature.sel_bone(&selections).unwrap();
 
     if bone.tex == "" {

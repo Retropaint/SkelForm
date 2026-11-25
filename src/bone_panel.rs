@@ -1189,7 +1189,8 @@ pub fn visuals(
     // don't show other options if not all selected bones have textures
     let mut all_have_tex = true;
     for id in &selections.bone_ids {
-        if armature.bones.iter().find(|b| b.id == *id).unwrap().tex == "" {
+        let bone = armature.bones.iter().find(|b| b.id == *id);
+        if bone == None || bone.unwrap().tex == "" {
             all_have_tex = false;
             break;
         }
