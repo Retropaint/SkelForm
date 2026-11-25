@@ -335,7 +335,9 @@ impl ApplicationHandler for App {
             }
 
             // redraw window and reset action time if user input was detected
-            WindowEvent::KeyboardInput { .. } | WindowEvent::CursorMoved { .. } => {
+            WindowEvent::KeyboardInput { .. }
+            | WindowEvent::CursorMoved { .. }
+            | WindowEvent::MouseWheel { .. } => {
                 self.last_action_time = Some(Instant::now());
                 window.request_redraw();
             }
