@@ -166,7 +166,7 @@ pub fn polar_modal(
                     events.delete_style(ctx0);
                 }
                 PolarId::NewUpdate => {
-                    utils::self_update();
+                    //utils::self_update();
                     shared_ui.confirmed_exit = true;
                     return;
                     //#[cfg(not(target_arch = "wasm32"))]

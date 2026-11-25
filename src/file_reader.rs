@@ -677,7 +677,7 @@ pub fn add_texture(
 
 pub fn read_import(_shared: &mut Shared) -> Option<(Vec<u8>, PathBuf)> {
     let file;
-    let filepath: PathBuf;
+    let mut filepath: PathBuf;
 
     #[cfg(not(target_arch = "wasm32"))]
     {
@@ -711,9 +711,9 @@ pub fn read_import(_shared: &mut Shared) -> Option<(Vec<u8>, PathBuf)> {
 
     #[cfg(target_arch = "wasm32")]
     {
-        filepath = "".to_string();
-        filename = getFileName();
-        if filename == "" {
+        filepath = PathBuf::new();
+        filepath.push(getFileName());
+        if getFileName() == "" {
             return None;
         }
         file = getFile();
@@ -745,7 +745,7 @@ pub fn import_file(
             let cursor = std::io::Cursor::new(file);
             #[cfg(target_arch = "wasm32")]
             {
-                utils::import(cursor, shared, backend_renderer, *context);
+                utils::import(cursor, shared, backend_renderer, *context, &filepath);
             }
             #[cfg(not(target_arch = "wasm32"))]
             {

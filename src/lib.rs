@@ -911,8 +911,9 @@ impl BackendRenderer {
             {
                 let saving_type = shared.ui.saving.lock().unwrap().clone();
                 if saving_type == Saving::CustomPath || saving_type == Saving::Exporting {
+                    let sel_tab = shared.selections.sel_tab;
                     #[rustfmt::skip]
-                    utils::save_web(&shared.armature, &shared.camera, &shared.edit_mode, saving_type);
+                    utils::save_web(&shared.tabs[sel_tab].armature, &shared.camera, &shared.edit_mode, saving_type);
                 }
             }
 
@@ -1131,7 +1132,7 @@ impl BackendRenderer {
                 #[cfg(not(target_arch = "wasm32"))]
                 self.skf_native_spritesheet(&shared.tabs[sel_tab].armature, &mut shared.ui);
                 #[cfg(target_arch = "wasm32")]
-                self.skf_web_spritesheet(&shared.armatures[sel_tab], &mut shared.ui);
+                self.skf_web_spritesheet(&shared.tabs[sel_tab].armature, &mut shared.ui);
             }
 
             shared.ui.spritesheet_elapsed = None;

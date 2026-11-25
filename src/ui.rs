@@ -2,7 +2,7 @@
 use egui::{Color32, Context, Shadow, Stroke};
 use image::DynamicImage;
 use modal::modal_x;
-use utils::{trunc_str, world_mouse};
+use utils::world_mouse;
 
 use crate::*;
 
