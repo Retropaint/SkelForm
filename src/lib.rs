@@ -1302,17 +1302,23 @@ impl BackendRenderer {
         let saving_type = shared.ui.saving.lock().unwrap().clone();
         match saving_type {
             Saving::CustomPath => {
+                // saving to a path set by user file dialog
                 let path = shared.ui.file_paths.lock().unwrap()[0].clone();
                 save_path = path.as_path().to_str().unwrap().to_string();
                 shared.ui.changed_window_name = false;
                 shared.events.open_modal("saving", true);
                 *shared.ui.save_finished.lock().unwrap() = false;
-                shared.ui.save_path = Some(path.clone());
-                shared.ui.can_quit = false;
-                shared.sel_arm_mut().path = Some(path);
+
                 if !shared.ui.recent_file_paths.contains(&save_path) {
                     shared.ui.recent_file_paths.push(save_path.clone());
                 }
+
+                // user shouldn't be allowed to quit SkelForm until saving is done
+                shared.ui.can_quit = false;
+
+                // save this path
+                shared.ui.save_path = Some(path.clone());
+                shared.sel_arm_mut().path = Some(path);
             }
             Saving::Exporting => {
                 let path = &shared.ui.file_paths.lock().unwrap()[0];

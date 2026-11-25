@@ -626,7 +626,14 @@ pub fn simple_event(
             ui.save_path = None;
             ui.changed_window_name = false;
             armatures.push(Armature::default().clone());
-            selections.sel_arm = armatures.len() - 1;
+            switch_to_armature(
+                armatures.len() - 1,
+                selections,
+                armatures,
+                undo_states,
+                edit_mode,
+                ui,
+            );
         }
         Events::NewStyle => {
             let ids = armature.styles.iter().map(|set| set.id).collect();
@@ -1399,20 +1406,26 @@ pub fn simple_event(
             selections.bone_ids = bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
         }
         Events::SwitchToArmature => {
-            let new_sel_arm = value as usize;
-            if new_sel_arm == selections.sel_arm || new_sel_arm > armatures.len() - 1 {
-                return;
-            }
-            selections.sel_arm = new_sel_arm;
-            ui.changed_window_name = false;
-            ui.save_path = armatures[new_sel_arm].path.clone();
-            unselect_all(selections, edit_mode, ui);
-            ui.warnings = check_warnings(&armatures[value as usize]);
+            switch_to_armature(
+                value as usize,
+                selections,
+                armatures,
+                undo_states,
+                edit_mode,
+                ui,
+            );
         }
         Events::RemoveArmatureInTab => {
             armatures.remove(value as usize);
             if selections.sel_arm > armatures.len() - 1 {
-                selections.sel_arm -= 1;
+                switch_to_armature(
+                    selections.sel_arm - 1,
+                    selections,
+                    armatures,
+                    undo_states,
+                    edit_mode,
+                    ui,
+                );
             }
         }
         _ => {}
@@ -2493,4 +2506,34 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         }
         _ => {}
     }
+}
+
+pub fn switch_to_armature(
+    new_sel_arm: usize,
+    selections: &mut SelectionState,
+    armatures: &mut Vec<Armature>,
+    undo_states: &mut UndoStates,
+    edit_mode: &mut EditMode,
+    ui: &mut crate::Ui,
+) {
+    if new_sel_arm == selections.sel_arm || new_sel_arm > armatures.len() - 1 {
+        return;
+    }
+
+    // save global undo state to this armature
+    if selections.sel_arm < armatures.len() {
+        armatures[selections.sel_arm].undo_states = Some(undo_states.clone());
+    }
+
+    selections.sel_arm = new_sel_arm;
+
+    // carry over armature data to global state
+    ui.save_path = armatures[new_sel_arm].path.clone();
+    if let Some(arm_undo) = armatures[new_sel_arm].undo_states.clone() {
+        *undo_states = arm_undo;
+    }
+
+    unselect_all(selections, edit_mode, ui);
+    ui.warnings = check_warnings(&armatures[new_sel_arm]);
+    ui.changed_window_name = false;
 }

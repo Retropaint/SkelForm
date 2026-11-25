@@ -1368,6 +1368,8 @@ enum_string!(InverseKinematicsMode);
 #[serde(default)]
 pub struct Armature {
     pub path: Option<PathBuf>,
+    #[serde(skip)]
+    pub undo_states: Option<UndoStates>,
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
@@ -2295,7 +2297,7 @@ pub struct Startup {
     pub resources: Vec<StartupResourceItem>,
 }
 
-#[derive(Default)]
+#[derive(Default, Clone, PartialEq)]
 pub struct UndoStates {
     pub undo_actions: Vec<Action>,
     pub redo_actions: Vec<Action>,
