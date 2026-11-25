@@ -261,13 +261,8 @@ pub fn render(
         // hovering glow animation
         let bone_ids = &selections.bone_ids;
         let not_selected = bone_ids.len() == 0
-            || armature
-                .bones
-                .iter()
-                .find(|b| b.id == bone_ids[0])
-                .unwrap()
-                .id
-                != hovering_bone_id;
+            || (armature.sel_bone(selections) != None
+                && armature.sel_bone(selections).unwrap().id != hovering_bone_id);
         let is_hovering =
             selections.hovering_bone_id == renderer.temp_arm.bones[b].id || parent_selected;
         if is_hovering && not_selected && !renderer.on_point {

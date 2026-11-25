@@ -240,17 +240,15 @@ pub fn draw(
         context, config, shared_ui, events, selections, armature, camera, edit_mode, buffer
     ));
 
-    if armature_names.len() > 1 {
-        style_once!(armature_panel(
-            context,
-            config,
-            armature_names,
-            shared_ui,
-            events,
-            input,
-            selections
-        ));
-    }
+    style_once!(armature_panel(
+        context,
+        config,
+        armature_names,
+        shared_ui,
+        events,
+        input,
+        selections
+    ));
 
     // render keyframe editor if in Animation mode
     if edit_mode.anim_open {

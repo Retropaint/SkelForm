@@ -53,8 +53,11 @@ pub fn read(
 
     // read other file imports
     if let Some((file, filepath)) = read_import(shared) {
-        // reset editor state
+        // reset editor state, but keep selected tab
+        let sel_tab = shared.selections.sel_tab;
         shared.selections.init();
+        shared.selections.sel_tab = sel_tab;
+
         shared.ui.last_selected = "".to_string();
 
         let br = &backend_renderer.as_ref();
@@ -256,8 +259,7 @@ pub fn read_psd(
     let psd = psd::Psd::from_bytes(&bytes).unwrap();
 
     // save armature to undo stack
-    //let armature = &shared.tabs[shared.selections.sel_tab].armature;
-    //shared.sel_tab_mut().undo_states.new_undo_armature(armature);
+    shared.sel_tab_mut().new_undo_armature();
 
     // reset armature (but not all of it) to make way for the psd rig
     shared.psd_armature.bones = vec![];
