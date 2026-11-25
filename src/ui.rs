@@ -762,6 +762,11 @@ pub fn kb_inputs(
             events.unselect_all();
         }
         shared_ui.context_menu.id = "".to_string();
+
+        // allow closing startup window if it wasn't the initial one
+        if shared_ui.startup_window && !shared_ui.first_startup {
+            shared_ui.startup_window = false;
+        }
     }
 
     if shared_ui.feedback_modal {
@@ -1361,7 +1366,8 @@ fn armature_panel(
         ..Default::default()
     });
     panel.show(egui_ctx, |ui| {
-        let max_width = ui.available_width();
+        let new_button_width = 30.;
+        let max_width = ui.available_width() - new_button_width;
         let frame = egui::Frame::new();
         ui.dnd_drop_zone::<usize, _>(frame, |ui| {
             ui.horizontal(|ui| {
@@ -1449,6 +1455,34 @@ fn armature_panel(
                         events.move_armature_in_tab(split[1].parse().unwrap(), idx + offset);
                     }
                 }
+
+                ui.push_id("arm_new", |ui| {
+                    let mut color = config.colors.main;
+                    if shared_ui.hovering_armature == i32::MAX {
+                        color += Color::new(20, 20, 20, 0);
+                    }
+                    let frame = egui::Frame::new().fill(color.into());
+                    let button = frame
+                        .show(ui, |ui| {
+                            let layout =
+                                egui::Layout::centered_and_justified(egui::Direction::LeftToRight);
+                            ui.with_layout(layout, |ui| {
+                                ui.label("+");
+                            });
+                        })
+                        .response
+                        .on_hover_cursor(egui::CursorIcon::PointingHand)
+                        .interact(egui::Sense::click());
+                    if button.hovered() {
+                        hovering = true;
+                        shared_ui.hovering_armature = i32::MAX;
+                    }
+                    if button.clicked() {
+                        shared_ui.first_startup = false;
+                        shared_ui.startup_window = true;
+                    }
+                });
+
                 if !hovering {
                     shared_ui.hovering_armature = -1;
                 }
