@@ -1284,14 +1284,14 @@ pub fn import<R: Read + std::io::Seek>(
         // replace existing empty armatures
         if shared.armatures[a] == Armature::default() {
             shared.armatures[a] = temp_arm.clone();
-            shared.selections.sel_arm = a;
+            shared.events.switch_to_armature(a);
             replaced = true;
             break;
         }
     }
     if !replaced {
         shared.armatures.push(temp_arm);
-        shared.selections.sel_arm = shared.armatures.len() - 1;
+        shared.events.switch_to_armature(shared.armatures.len() - 1);
     }
 
     // update warnings for this armature
