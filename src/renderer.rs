@@ -91,16 +91,12 @@ pub fn render(
     let mut selected_bone_ids = vec![];
     if armature.sel_bone(&sel) != None {
         for id in &selections.bone_ids {
-            let bone = renderer
-                .temp_arm
-                .bones
-                .iter()
-                .find(|bone| bone.id == *id)
-                .unwrap();
-            let mut children = vec![bone.clone()];
-            armature_window::get_all_children(&renderer.temp_arm.bones, &mut children, &bone);
-            for child in children {
-                selected_bone_ids.push(child.id);
+            if let Some(bone) = renderer.temp_arm.bones.iter().find(|bone| bone.id == *id) {
+                let mut children = vec![bone.clone()];
+                armature_window::get_all_children(&renderer.temp_arm.bones, &mut children, &bone);
+                for child in children {
+                    selected_bone_ids.push(child.id);
+                }
             }
         }
     }
@@ -111,9 +107,8 @@ pub fn render(
             continue;
         }
         let parent_id = &renderer.temp_arm.bones[b].parent_id;
-        let parent = renderer.temp_arm.bones.iter().find(|b| b.id == *parent_id);
-        if parent != None {
-            renderer.temp_arm.bones[b].group_color = parent.unwrap().group_color;
+        if let Some(parent) = renderer.temp_arm.bones.iter().find(|b| b.id == *parent_id) {
+            renderer.temp_arm.bones[b].group_color = parent.group_color;
         }
     }
 
