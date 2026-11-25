@@ -301,7 +301,7 @@ impl ApplicationHandler for App {
             WindowEvent::CloseRequested => {
                 let sel_tab = self.shared.selections.sel_tab;
                 utils::attempt_exit(
-                    &mut self.shared.tabs[sel_tab].undo_states,
+                    &self.shared.tabs[sel_tab].undo_states,
                     &self.shared.config,
                     &mut self.shared.ui,
                 );
@@ -544,14 +544,17 @@ impl ApplicationHandler for App {
             let pressing_w = event.id() == self.shared.input.mod_w.unwrap().id();
             let pressing_q = event.id() == self.shared.input.mod_q.unwrap().id();
             if (pressing_w || pressing_q) && self.shared.ui.can_quit {
-                let shared = &mut self.shared;
-                utils::attempt_exit(&mut shared.undo_states, &shared.config, &mut shared.ui);
+                utils::attempt_exit(
+                    &self.shared.tabs[self.shared.selections.sel_tab].undo_states,
+                    &self.shared.config,
+                    &mut self.shared.ui,
+                );
             }
         }
 
         // if an exit was attemped, first show unsaved changes modal if appropriate
         if self.shared.ui.exiting {
-            let undo = &self.shared.undo_states;
+            let undo = &self.shared.sel_tab().undo_states;
             if undo.unsaved_undo_actions != undo.undo_actions.len() {
                 let str_del = self.shared.ui.loc("polar.unsaved").clone().to_string();
                 let exiting = PolarId::Exiting;
@@ -882,8 +885,10 @@ impl BackendRenderer {
 
         if *shared.ui.save_finished.lock().unwrap() {
             // stuff to do when saving has been completed
-            shared.undo_states.unsaved_undo_actions = shared.undo_states.undo_actions.len();
-            shared.undo_states.prev_undo_actions = shared.undo_states.undo_actions.len();
+            shared.sel_tab_mut().undo_states.unsaved_undo_actions =
+                shared.sel_tab().undo_states.undo_actions.len();
+            shared.sel_tab_mut().undo_states.prev_undo_actions =
+                shared.sel_tab().undo_states.undo_actions.len();
             shared.ui.changed_window_name = false;
             shared.ui.modal = false;
             shared.ui.can_quit = true;
