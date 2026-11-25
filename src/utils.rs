@@ -1298,7 +1298,7 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     // update warnings for this armature
-    shared.ui.warnings = check_warnings(&shared.sel_arm().armature);
+    shared.ui.warnings = check_warnings(&shared.sel_tab().armature);
     shared.renderer.gridline_buffer.dirty = true;
     shared.renderer.point_buffer.dirty = true;
     shared.renderer.kite_buffer.dirty = true;

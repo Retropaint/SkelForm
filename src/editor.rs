@@ -26,7 +26,7 @@ pub fn iterate_events(
     let event = events.events[0].clone();
     type E = Events;
 
-    let armature = &mut tabs[selections.sel_arm].armature;
+    let armature = &mut tabs[selections.sel_tab].armature;
 
     // set buffers dirty (to be updated later) based on the event
     set_buffers_dirty(renderer, &event);
@@ -483,7 +483,7 @@ pub fn simple_event(
     renderer: &mut crate::Renderer,
     config: &mut crate::Config,
 ) {
-    let armature = &mut tabs[selections.sel_arm].armature;
+    let armature = &mut tabs[selections.sel_tab].armature;
 
     match event {
         Events::CamZoomIn => {
@@ -1406,8 +1406,8 @@ pub fn simple_event(
         }
         Events::RemoveArmatureInTab => {
             tabs.remove(value as usize);
-            if selections.sel_arm > tabs.len() - 1 {
-                switch_to_armature(selections.sel_arm - 1, selections, tabs, edit_mode, ui);
+            if selections.sel_tab > tabs.len() - 1 {
+                switch_to_armature(selections.sel_tab - 1, selections, tabs, edit_mode, ui);
             }
         }
         _ => {}
@@ -2491,19 +2491,19 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
 }
 
 pub fn switch_to_armature(
-    new_sel_arm: usize,
+    new_sel_tab: usize,
     selections: &mut SelectionState,
     tabs: &mut Vec<ArmatureTab>,
     edit_mode: &mut EditMode,
     ui: &mut crate::Ui,
 ) {
-    if new_sel_arm == selections.sel_arm || new_sel_arm > tabs.len() - 1 {
+    if new_sel_tab == selections.sel_tab || new_sel_tab > tabs.len() - 1 {
         return;
     }
 
-    selections.sel_arm = new_sel_arm;
+    selections.sel_tab = new_sel_tab;
 
     unselect_all(selections, edit_mode, ui);
-    ui.warnings = check_warnings(&tabs[new_sel_arm].armature);
+    ui.warnings = check_warnings(&tabs[new_sel_tab].armature);
     ui.changed_window_name = false;
 }

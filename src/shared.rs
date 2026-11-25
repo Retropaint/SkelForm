@@ -3000,7 +3000,7 @@ pub struct SelectionState {
     pub hovering_tri_dur: i32,
     pub hovering_line_dur: i32,
     pub hovering_bone_id: i32,
-    pub sel_arm: usize,
+    pub sel_tab: usize,
 }
 
 impl SelectionState {
@@ -3067,12 +3067,12 @@ pub struct Shared {
 }
 
 impl Shared {
-    pub fn sel_arm(&self) -> &ArmatureTab {
-        &self.tabs[self.selections.sel_arm]
+    pub fn sel_tab(&self) -> &ArmatureTab {
+        &self.tabs[self.selections.sel_tab]
     }
 
-    pub fn sel_arm_mut(&mut self) -> &mut ArmatureTab {
-        &mut self.tabs[self.selections.sel_arm]
+    pub fn sel_tab_mut(&mut self) -> &mut ArmatureTab {
+        &mut self.tabs[self.selections.sel_tab]
     }
 }
 

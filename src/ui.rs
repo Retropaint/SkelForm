@@ -1385,7 +1385,7 @@ fn armature_panel(
                     if shared_ui.hovering_armature == n as i32 {
                         color += Color::new(20, 20, 20, 0);
                     }
-                    if selections.sel_arm == idx as usize {
+                    if selections.sel_tab == idx as usize {
                         color += Color::new(20, 20, 20, 0);
                     }
 
