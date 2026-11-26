@@ -653,14 +653,27 @@ pub fn simple_event(
             tabs[ui.sel_tab].camera.zoom = 2000.;
             ui.save_path = None;
             ui.changed_window_name = false;
-            tabs.push(ArmatureTab {
-                armature: Armature::default().clone(),
-                undo_states: UndoStates::default(),
-                selections: SelectionState::init(),
-                camera: Camera::default(),
-                bone_buffer: RenderBuffer::default(),
-            });
-            switch_to_armature(tabs.len() - 1, tabs, ui, &config);
+
+            // add armature to list
+            let mut replaced = false;
+            for a in 0..tabs.len() {
+                // replace existing empty armatures
+                if tabs[a].armature == Armature::default() {
+                    switch_to_armature(tabs.len() - 1, tabs, ui, &config, false);
+                    replaced = true;
+                    break;
+                }
+            }
+            if !replaced {
+                tabs.push(ArmatureTab {
+                    armature: Armature::default().clone(),
+                    undo_states: UndoStates::default(),
+                    selections: SelectionState::init(),
+                    camera: Camera::default(),
+                    bone_buffer: RenderBuffer::default(),
+                });
+                switch_to_armature(tabs.len() - 1, tabs, ui, &config, false);
+            }
         }
         Events::NewStyle => {
             let ids = tabs[ui.sel_tab]
@@ -1491,12 +1504,12 @@ pub fn simple_event(
                 bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
         }
         Events::SwitchToArmature => {
-            switch_to_armature(value as usize, tabs, ui, &config);
+            switch_to_armature(value as usize, tabs, ui, &config, false);
         }
         Events::RemoveTab => {
             tabs.remove(value as usize);
             if ui.sel_tab > tabs.len() - 1 {
-                switch_to_armature(ui.sel_tab - 1, tabs, ui, &config);
+                switch_to_armature(ui.sel_tab - 1, tabs, ui, &config, true);
             }
         }
         _ => {}
@@ -2599,6 +2612,7 @@ pub fn switch_to_armature(
     tabs: &mut Vec<ArmatureTab>,
     ui: &mut crate::Ui,
     config: &Config,
+    deleted: bool,
 ) {
     if new_sel_tab == ui.sel_tab || new_sel_tab > tabs.len() - 1 {
         return;
@@ -2607,7 +2621,7 @@ pub fn switch_to_armature(
     let prev_tab = ui.sel_tab;
     ui.sel_tab = new_sel_tab;
 
-    if config.global_camera {
+    if config.global_camera && !deleted {
         tabs[ui.sel_tab].camera = tabs[prev_tab].camera.clone();
     }
 
