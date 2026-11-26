@@ -495,8 +495,6 @@ pub fn simple_event(
     renderer: &mut crate::Renderer,
     config: &mut crate::Config,
 ) {
-    let armature = &mut tabs[ui.sel_tab].armature;
-
     match event {
         Events::CamZoomIn => {
             let old_zoom = tabs[ui.sel_tab].camera.zoom;
@@ -536,7 +534,11 @@ pub fn simple_event(
             }
         }
         Events::RenameBone => {
-            let idx = armature.bones.iter().position(|b| b.name == str_value);
+            let idx = tabs[ui.sel_tab]
+                .armature
+                .bones
+                .iter()
+                .position(|b| b.name == str_value);
             if idx != None && !config.allow_same_name {
                 // there's another bone with the same name
                 ui.context_menu.id = format!("bone_{}", idx.unwrap());
@@ -544,11 +546,11 @@ pub fn simple_event(
                 ui.polar_modal = true;
                 ui.headline = ui.loc("polar.same_name_bone");
             } else {
-                let bones = &mut armature.bones;
+                let bones = &mut tabs[ui.sel_tab].armature.bones;
                 let id = value as i32;
                 bones.iter_mut().find(|b| b.id == id).unwrap().name = str_value;
             }
-            ui.warnings = warnings::check_warnings(&armature);
+            ui.warnings = warnings::check_warnings(&tabs[ui.sel_tab].armature);
         }
         Events::RenameAnim => {
             if !ui.just_made_anim {
@@ -618,12 +620,13 @@ pub fn simple_event(
             _ = tabs[ui.sel_tab].sel_style_mut().unwrap().textures.pop()
         }
         Events::DeleteAnim => {
-            if let Some(idx) = armature
+            if let Some(idx) = tabs[ui.sel_tab]
+                .armature
                 .animations
                 .iter()
                 .position(|anim| anim.id == value as i32)
             {
-                _ = armature.animations.remove(idx);
+                _ = tabs[ui.sel_tab].armature.animations.remove(idx);
                 tabs[ui.sel_tab].selections.anim = usize::MAX
             }
         }
@@ -647,14 +650,20 @@ pub fn simple_event(
             switch_to_armature(tabs.len() - 1, tabs, ui);
         }
         Events::NewStyle => {
-            let ids = armature.styles.iter().map(|set| set.id).collect();
-            armature.styles.push(crate::Style {
+            let ids = tabs[ui.sel_tab]
+                .armature
+                .styles
+                .iter()
+                .map(|set| set.id)
+                .collect();
+            tabs[ui.sel_tab].armature.styles.push(crate::Style {
                 id: generate_id(ids),
                 name: "".to_string(),
                 textures: vec![],
                 active: true,
             });
-            ui.rename_id = "style_".to_string() + &(armature.styles.len() - 1).to_string();
+            ui.rename_id =
+                "style_".to_string() + &(tabs[ui.sel_tab].armature.styles.len() - 1).to_string();
             ui.just_made_style = true;
         }
         Events::DeleteSelectedKeyframes => {
@@ -781,18 +790,18 @@ pub fn simple_event(
         Events::CopyBone => copy_bone(copy_buffer, &mut tabs[ui.sel_tab], value as i32),
         Events::PasteBone => paste_bone(copy_buffer, &mut tabs[ui.sel_tab], value as i32),
         Events::NewAnimation => {
-            armature.new_animation();
-            let idx = armature.animations.len() - 1;
+            tabs[ui.sel_tab].armature.new_animation();
+            let idx = tabs[ui.sel_tab].armature.animations.len() - 1;
             ui.rename_id = format!("anim_{}", idx.to_string());
             ui.edit_value = Some("".to_string());
         }
         Events::DuplicateAnim => {
-            let anims = &armature.animations;
+            let anims = &tabs[ui.sel_tab].armature.animations;
             let id = anims.iter().position(|a| a.id == value as i32).unwrap();
             let mut new_anim = anims[id].clone();
             let ids: Vec<i32> = anims.iter().map(|anim| anim.id).collect();
             new_anim.id = generate_id(ids);
-            armature.animations.push(new_anim);
+            tabs[ui.sel_tab].armature.animations.push(new_anim);
         }
         Events::SaveBone => {
             tabs[ui.sel_tab].new_undo_bone(value as i32);
@@ -805,7 +814,7 @@ pub fn simple_event(
                 return;
             }
 
-            let bones = &armature.bones;
+            let bones = &tabs[ui.sel_tab].armature.bones;
             let bone = bones.iter().find(|b| b.id == value as i32).unwrap().clone();
             if ui.is_animating(&edit_mode, &tabs[ui.sel_tab].selections) && !bone.locked {
                 let anim = tabs[ui.sel_tab].selections.anim;
@@ -1134,7 +1143,7 @@ pub fn simple_event(
         Events::OpenExportModal => {
             ui.export_modal = true;
             ui.exporting_anims = vec![];
-            for _ in &armature.animations {
+            for _ in &tabs[ui.sel_tab].armature.animations {
                 ui.exporting_anims.push({
                     #[cfg(target_arch = "wasm32")]
                     {
@@ -1188,14 +1197,14 @@ pub fn simple_event(
             }
         }
         Events::RaiseGlobalZindex => {
-            let bones = &armature.bones;
+            let bones = &tabs[ui.sel_tab].armature.bones;
             let zindex = bones.iter().find(|b| b.id == value as i32).unwrap().zindex;
-            for bone in &mut armature.bones {
+            for bone in &mut tabs[ui.sel_tab].armature.bones {
                 if bone.zindex > zindex && bone.tex != "" {
                     bone.zindex += 1;
                 }
             }
-            let bones = &mut armature.bones;
+            let bones = &mut tabs[ui.sel_tab].armature.bones;
             let bone = bones.iter_mut().find(|b| b.id == value as i32).unwrap();
             bone.zindex += 1;
         }
@@ -1249,14 +1258,14 @@ pub fn simple_event(
         Events::SetHoveringBoneId => tabs[ui.sel_tab].selections.hovering_bone_id = value as i32,
         Events::SetHoveringLine => tabs[ui.sel_tab].selections.hovering_line_dur = value as i32,
         Events::ImportPsdArmature => {
-            armature.bones = psd_armature.bones.clone();
-            armature.styles = psd_armature.styles.clone();
-            armature.tex_data = psd_armature.tex_data.clone();
+            tabs[ui.sel_tab].armature.bones = psd_armature.bones.clone();
+            tabs[ui.sel_tab].armature.styles = psd_armature.styles.clone();
+            tabs[ui.sel_tab].armature.tex_data = psd_armature.tex_data.clone();
             *psd_armature = Armature::default();
         }
         Events::CreateParentBone => {
             // either get the bone ID from event, or selected bones if more than 1
-            let bones = &armature.bones;
+            let bones = &tabs[ui.sel_tab].armature.bones;
             let id = bones.iter().find(|b| b.id == value as i32).unwrap().id;
             let mut bones_to_copy = vec![id];
 
@@ -1367,14 +1376,14 @@ pub fn simple_event(
         },
         Events::ToggleEditingPivot => edit_mode.editing_pivot = !edit_mode.editing_pivot,
         Events::ReduceGlobalIkFamilyIds => {
-            for bone in &mut armature.bones {
+            for bone in &mut tabs[ui.sel_tab].armature.bones {
                 if bone.ik_family_id > value as i32 {
                     bone.ik_family_id -= 1;
                 }
             }
         }
         Events::RestartAnims => {
-            for anim in &mut armature.animations {
+            for anim in &mut tabs[ui.sel_tab].armature.animations {
                 if anim.elapsed != None {
                     anim.elapsed = Some(Instant::now());
                 }
@@ -1389,7 +1398,7 @@ pub fn simple_event(
         }
         Events::CreateBindBone => {
             // create new bone
-            let (_, new_idx) = armature.new_bone(-1);
+            let (_, new_idx) = tabs[ui.sel_tab].armature.new_bone(-1);
             let camera = tabs[ui.sel_tab].camera.clone();
             tabs[ui.sel_tab].armature.bones[new_idx].pos =
                 utils::world_mouse(ui.context_menu.last_mouse_pos, &camera).1;
@@ -1463,7 +1472,7 @@ pub fn simple_event(
         }
         Events::SetArmatureSplit => edit_mode.armature_split = value,
         Events::SelectAllTexturedBones => {
-            let bones = &armature.bones;
+            let bones = &tabs[ui.sel_tab].armature.bones;
             tabs[ui.sel_tab].selections.bone_ids =
                 bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
         }
