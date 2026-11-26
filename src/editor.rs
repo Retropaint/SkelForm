@@ -2530,7 +2530,8 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         | E::UpdateConfig
         | E::SelectBone
         | E::SwitchToArmature
-        | E::RemoveTab => {
+        | E::RemoveTab
+        | E::MoveTab => {
             renderer.gridline_buffer.dirty = true;
         }
         _ => {}
@@ -2559,7 +2560,8 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         | E::SelectBone
         | E::DeleteBone
         | E::SwitchToArmature
-        | E::RemoveTab => {
+        | E::RemoveTab
+        | E::MoveTab => {
             renderer.point_buffer.dirty = true;
             renderer.kite_buffer.dirty = true;
             renderer.bone_buffer.dirty = true;
@@ -2584,7 +2586,8 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         | E::SelectBone
         | E::SetHoveringBoneId
         | E::SwitchToArmature
-        | E::RemoveTab => {
+        | E::RemoveTab
+        | E::MoveTab => {
             renderer.bone_buffer.dirty = true;
         }
         _ => {}
