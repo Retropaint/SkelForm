@@ -18,6 +18,7 @@ pub trait EguiUi {
     fn context_rename(&mut self, shared_ui: &mut crate::Ui, config: &Config);
     fn context_delete(&mut self, shared_ui: &mut crate::Ui, config: &Config, events: &mut EventState, loc_code: &str, polar_id: PolarId);
     fn context_button(&mut self, text: &str, config: &Config) -> egui::Response;
+    fn context_button_img(&mut self, text: &str, img: &egui::TextureHandle, config: &Config) -> egui::Response;
 }
 
 /// The `main` of this module.
@@ -1240,6 +1241,31 @@ fn context_menu_content(
         button!("Sine-Out", HandlePreset::SineOut);
         button!("Sine-In-Out", HandlePreset::SineInOut);
         button!("Snap", HandlePreset::Snap);
+    } else if element_id == "newarmature" {
+        if ui.context_button("New", config).clicked() {
+            events.new_armature();
+            shared_ui.context_menu.close();
+        }
+        if ui.context_button("Import", config).clicked() {
+            #[cfg(target_arch = "wasm32")]
+            crate::clickFileInput(false);
+            #[cfg(not(target_arch = "wasm32"))]
+            utils::open_import_dialog(&shared_ui.file_paths, &shared_ui.file_type);
+        }
+        ui.add_space(5.);
+        for file in &shared_ui.recent_file_paths {
+            let filename = file.file_name().unwrap().to_str().unwrap();
+            let img = shared_ui.thumb_ui_tex.get(filename).unwrap();
+            let button = ui.context_button_img(filename, img, config);
+            if button.clicked() {
+                let mut buf = PathBuf::new();
+                buf.push(file.clone());
+                *shared_ui.file_paths.lock().unwrap() = vec![buf.clone()];
+                *shared_ui.file_type.lock().unwrap() = ImportedFileType::Other;
+                shared_ui.changed_window_name = false;
+                shared_ui.context_menu.close();
+            }
+        }
     }
 }
 
@@ -1576,8 +1602,7 @@ fn armature_panel(
                         shared_ui.hovering_armature = i32::MAX;
                     }
                     if button.clicked() {
-                        shared_ui.first_startup = false;
-                        shared_ui.startup_window = true;
+                        shared_ui.context_menu.show(&"newarmature".to_string());
                     }
                 });
 
@@ -1653,6 +1678,43 @@ impl EguiUi for egui::Ui {
                     ui.set_height(20.);
                     ui.horizontal(|ui| {
                         ui.add_space(5.);
+                        ui.label(text);
+                        ui.add_space(5.);
+                    });
+                });
+            })
+            .response
+            .interact(egui::Sense::click());
+
+        button
+    }
+
+    fn context_button_img(
+        &mut self,
+        text: &str,
+        img: &egui::TextureHandle,
+        config: &Config,
+    ) -> egui::Response {
+        let self_width = self.available_width();
+        let button = self
+            .allocate_ui([0., 0.].into(), |ui| {
+                ui.set_min_width(self_width);
+                ui.set_height(20.);
+                let width = ui.available_width();
+                let mut col = config.colors.main;
+                if ui.ui_contains_pointer() {
+                    col = config.colors.light_accent;
+                }
+                egui::Frame::new().fill(col.into()).show(ui, |ui| {
+                    ui.style_mut().interaction.selectable_labels = false;
+                    ui.set_min_width(width);
+                    ui.set_height(20.);
+                    ui.horizontal(|ui| {
+                        let pos: egui::Vec2 = ui.min_rect().left_top() - egui::Pos2::new(0., 9.);
+                        let rect =
+                            egui::Rect::from_min_size([pos.x, pos.y].into(), [20., 20.].into());
+                        egui::Image::new(img).paint_at(ui, rect);
+                        ui.add_space(25.);
                         ui.label(text);
                         ui.add_space(5.);
                     });

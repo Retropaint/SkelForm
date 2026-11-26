@@ -1321,18 +1321,17 @@ impl BackendRenderer {
 
     #[cfg(not(target_arch = "wasm32"))]
     pub fn save(&mut self, shared: &mut Shared) {
-        let mut save_path = "".to_string();
+        let mut save_path = PathBuf::new();
         let saving_type = shared.ui.saving.lock().unwrap().clone();
         match saving_type {
             Saving::CustomPath => {
                 // saving to a path set by user file dialog
-                let path = shared.ui.file_paths.lock().unwrap()[0].clone();
-                save_path = path.as_path().to_str().unwrap().to_string();
+                save_path = shared.ui.file_paths.lock().unwrap()[0].clone();
                 shared.ui.changed_window_name = false;
                 shared.events.open_modal("saving", true);
                 *shared.ui.save_finished.lock().unwrap() = false;
 
-                if !shared.ui.recent_file_paths.contains(&save_path) {
+                if !shared.ui.recent_file_paths.contains(&save_path.clone()) {
                     shared.ui.recent_file_paths.push(save_path.clone());
                 }
 
@@ -1340,20 +1339,19 @@ impl BackendRenderer {
                 shared.ui.can_quit = false;
 
                 // save this path
-                shared.ui.save_path = Some(path.clone());
-                shared.sel_tab_mut().armature.path = Some(path);
+                shared.ui.save_path = Some(save_path.clone());
+                shared.sel_tab_mut().armature.path = Some(save_path.clone());
             }
             Saving::Exporting => {
-                let path = &shared.ui.file_paths.lock().unwrap()[0];
-                save_path = path.as_path().to_str().unwrap().to_string();
+                save_path = shared.ui.file_paths.lock().unwrap()[0].clone();
                 shared.events.open_modal("exporting", true);
                 *shared.ui.export_finished.lock().unwrap() = false;
                 shared.ui.can_quit = false;
             }
             Saving::Autosaving => {
                 let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
-                let dir = dir_init.unwrap().data_dir().to_str().unwrap().to_string();
-                save_path = dir + "/autosave.skf";
+                save_path = dir_init.unwrap().data_dir().into();
+                save_path.push("/autosave.skf");
                 let freq = shared.config.autosave_frequency as f32;
                 let in_cooldown = shared.edit_mode.time - shared.last_autosave < freq;
                 if in_cooldown {
@@ -1439,7 +1437,8 @@ impl BackendRenderer {
 
             zip.finish().unwrap();
 
-            let _ = std::fs::copy(save_path.clone(), save_path + "~");
+            let path_str: &str = save_path.to_str().unwrap();
+            let _ = std::fs::copy(save_path.clone(), path_str.to_owned() + "~");
 
             // trigger saving modal if manually saving
             if !autosaving {

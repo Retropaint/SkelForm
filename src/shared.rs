@@ -635,7 +635,7 @@ pub struct Ui {
     pub cursor_icon: egui::CursorIcon,
     pub last_pressed: Option<egui::Key>,
 
-    pub recent_file_paths: Vec<String>,
+    pub recent_file_paths: Vec<PathBuf>,
 
     pub file_paths: Arc<Mutex<Vec<PathBuf>>>,
 
@@ -2981,6 +2981,7 @@ impl SelectionState {
     }
 }
 
+// Each armature tab stores this data individually.
 #[derive(Clone)]
 pub struct ArmatureTab {
     pub armature: Armature,
@@ -3116,6 +3117,8 @@ impl ArmatureTab {
 
 #[derive(Default)]
 pub struct Shared {
+    pub tabs: Vec<ArmatureTab>,
+
     pub input: InputStates,
     pub ui: Ui,
     pub renderer: Renderer,
@@ -3126,8 +3129,6 @@ pub struct Shared {
     pub copy_buffer: CopyBuffer,
     pub last_autosave: f32,
     pub screenshot_res: Vec2,
-
-    pub tabs: Vec<ArmatureTab>,
 
     // buffered armature from imported PSD
     pub psd_armature: Armature,

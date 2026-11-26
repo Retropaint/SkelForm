@@ -1305,7 +1305,7 @@ pub fn import<R: Read + std::io::Seek>(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn save_recent_paths(mut paths: Vec<String>) {
+pub fn save_recent_paths(mut paths: Vec<PathBuf>) {
     // clean up paths and remove any that start with _
     paths.retain(|path| {
         let filename = std::path::Path::new(path).file_name().unwrap();
@@ -1321,19 +1321,20 @@ pub fn save_recent_paths(mut paths: Vec<String>) {
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn add_to_recent_paths(to_add: &PathBuf, paths: &mut Vec<String>) {
-    let to_add_str = to_add.to_str().unwrap().to_string();
-    if !paths.contains(&to_add_str.clone()) {
-        paths.push(to_add_str.clone());
+pub fn add_to_recent_paths(to_add: &PathBuf, paths: &mut Vec<PathBuf>) {
+    if !paths.contains(&to_add) {
+        paths.push(to_add.clone());
     } else {
-        let idx = &paths.iter().position(|p| *p == to_add_str.clone()).unwrap();
+        let idx = &paths.iter().position(|p| p == to_add).unwrap();
         paths.remove(*idx);
         let len = paths.len();
-        let fp = to_add_str.clone();
+        let fp = to_add.clone();
 
         // check for autosave, and move it to first in the recent list
         let autosave = "autosave".to_string();
-        let as_idx = paths.iter().position(|p| p.contains(&autosave));
+        let as_idx = paths
+            .iter()
+            .position(|p| p.to_str().unwrap().contains(&autosave));
         if let Some(as_idx) = as_idx {
             let autosave_path = paths[as_idx].clone();
             paths.remove(as_idx);
