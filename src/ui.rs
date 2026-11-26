@@ -1253,7 +1253,9 @@ fn context_menu_content(
             #[cfg(not(target_arch = "wasm32"))]
             utils::open_import_dialog(&shared_ui.file_paths, &shared_ui.file_type);
         }
-        ui.add_space(5.);
+        if shared_ui.recent_file_paths.len() > 0 {
+            ui.add_space(5.);
+        }
         for file in &shared_ui.recent_file_paths {
             let filename = file.file_name().unwrap().to_str().unwrap_or_default();
             let button;
