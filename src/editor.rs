@@ -59,7 +59,13 @@ pub fn iterate_events(
 
     let armature = &mut tabs[ui.sel_tab].armature;
 
-    if event == Events::MoveTab {
+    if event == Events::LoadFile {
+        *ui.file_paths.lock().unwrap() = vec![PathBuf::from(events.str_values[0].clone())];
+        *ui.file_type.lock().unwrap() = ImportedFileType::Other;
+        ui.changed_window_name = false;
+        events.events.remove(0);
+        events.str_values.pop();
+    } else if event == Events::MoveTab {
         let mut remove_idx = events.values[0] as usize;
         tabs.insert(
             events.values[1] as usize,

@@ -604,11 +604,7 @@ pub fn skf_file_button(
 
         // load file by importing it
         if button.clicked() {
-            let mut buf = PathBuf::new();
-            buf.push(path.clone());
-            *shared_ui.file_paths.lock().unwrap() = vec![buf.clone()];
-            *shared_ui.file_type.lock().unwrap() = ImportedFileType::Other;
-            shared_ui.changed_window_name = false;
+            events.load_file(path.clone());
         }
 
         let line = egui::Rect::from_min_size(

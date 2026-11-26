@@ -448,6 +448,7 @@ pub enum PolarId {
     ImportedPsd,
     GoToSameNameBone,
     RemoveTab,
+    OpenSameArmature,
 }
 enum_string!(PolarId);
 
@@ -2543,6 +2544,7 @@ pub enum Events {
     SwitchToArmature,
     MoveTab,
     RemoveTab,
+    LoadFile,
 }
 
 enum_string!(Events);
@@ -2944,6 +2946,11 @@ impl EventState {
         self.events.push(Events::MoveTab);
         self.values.push(og_idx as f32);
         self.values.push(target_idx as f32);
+    }
+
+    pub fn load_file(&mut self, path: PathBuf) {
+        self.events.push(Events::LoadFile);
+        self.str_values.push(path.to_str().unwrap().to_string());
     }
 }
 

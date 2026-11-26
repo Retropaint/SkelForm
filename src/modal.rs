@@ -1,8 +1,10 @@
+use std::path::PathBuf;
+
 use crate::{
     shared::Display,
     ui::EguiUi,
     utils::{self, open_link},
-    Config, PolarId,
+    Config, ImportedFileType, PolarId,
 };
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(
@@ -196,6 +198,11 @@ pub fn polar_modal(
                 }
                 PolarId::RemoveTab => {
                     events.remove_tab(ctx0 as usize);
+                }
+                PolarId::OpenSameArmature => {
+                    let split: Vec<&str> = shared_ui.context_menu.id.split('_').collect();
+                    let buf = PathBuf::from(split[1]);
+                    events.load_file(buf);
                 }
             }
         },

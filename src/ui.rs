@@ -1265,11 +1265,7 @@ fn context_menu_content(
                 button = ui.context_button(filename, config);
             }
             if button.clicked() {
-                let mut buf = PathBuf::new();
-                buf.push(file.clone());
-                *shared_ui.file_paths.lock().unwrap() = vec![buf.clone()];
-                *shared_ui.file_type.lock().unwrap() = ImportedFileType::Other;
-                shared_ui.changed_window_name = false;
+                events.load_file(file.clone());
                 shared_ui.context_menu.close();
             }
         }
