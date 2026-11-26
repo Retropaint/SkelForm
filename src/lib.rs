@@ -1045,29 +1045,45 @@ impl BackendRenderer {
             &shared.config, &shared.edit_mode, &shared.tabs[shared.ui.sel_tab].selections, &mut shared.renderer, &mut shared.events,
         );
 
-        //let mut buffer = shared.tabs[0].bone_buffer.clone();
-        //buffer.dirty = true;
-        //let cam = renderer::world_camera(&shared.sel_tab().camera, &shared.config);
-        //let mut new_arm = Armature {
-        //    bones: shared.tabs[0].armature.bones.clone(),
-        //    ..Default::default()
-        //};
-        //renderer::construction(&mut new_arm.bones, &shared.tabs[0].armature.bones);
-        //let sel = &shared.tabs[0].selections;
-        //let armature = &shared.tabs[0].armature;
-        //renderer::setup_world_verts(&mut new_arm, armature, &cam, &shared.config, sel, &vec![]);
+        let camera = shared.sel_tab().camera.clone();
+        for t in 0..shared.tabs.len() {
+            if t == shared.ui.sel_tab {
+                continue;
+            }
+            self.render_armature(render_pass, &mut shared.tabs[t], &camera, &shared.config);
+        }
+    }
 
-        //draw_armature(
-        //    &new_arm,
-        //    &shared.tabs[0].armature,
-        //    false,
-        //    &shared.tabs[0].selections,
-        //    &self.gpu.queue,
-        //    render_pass,
-        //    &mut buffer,
-        //    &mut vec![],
-        //);
-        //shared.tabs[0].bone_buffer = buffer;
+    fn render_armature(
+        &self,
+        render_pass: &mut wgpu::RenderPass,
+        tab: &mut ArmatureTab,
+        camera: &Camera,
+        config: &Config,
+    ) {
+        let mut buffer = tab.bone_buffer.clone();
+        buffer.dirty = true;
+        let mut new_arm = Armature {
+            bones: tab.armature.bones.clone(),
+            ..Default::default()
+        };
+        renderer::construction(&mut new_arm.bones, &tab.armature.bones);
+        let sel = &tab.selections;
+        let armature = &tab.armature;
+        let tint = TintColor::new(1., 1., 1., 0.5);
+        renderer::setup_world_verts(&mut new_arm, armature, &camera, &config, sel, &vec![], tint);
+
+        draw_armature(
+            &new_arm,
+            &tab.armature,
+            false,
+            &tab.selections,
+            &self.gpu.queue,
+            render_pass,
+            &mut buffer,
+            &mut vec![],
+        );
+        tab.bone_buffer = buffer;
     }
 
     // processes style to export, if appropriate
@@ -1182,8 +1198,8 @@ impl BackendRenderer {
     }
 
     fn init_buffers_and_bindgroups(&self, renderer: &mut Renderer, tabs: &mut Vec<ArmatureTab>) {
+        let max = 5000;
         if renderer.meshframe_buffer.index == None {
-            let max = 5000;
             renderer.bone_buffer.init(&self.gpu.device, max);
             renderer.prev_onion_buffer.init(&self.gpu.device, max);
             renderer.next_onion_buffer.init(&self.gpu.device, max);
@@ -1196,7 +1212,11 @@ impl BackendRenderer {
             renderer.selected_ring_buffer.init(&self.gpu.device, 100);
             renderer.rect_buffer.init(&self.gpu.device, max);
             renderer.edit_mesh_buffer.init(&self.gpu.device, 1000);
-            tabs[0].bone_buffer.init(&self.gpu.device, max);
+        }
+        for tab in tabs {
+            if tab.bone_buffer.index == None {
+                tab.bone_buffer.init(&self.gpu.device, max);
+            }
         }
         let bytes = include_bytes!("../assets/flow-kite.png");
         self.load_bindgroup(&mut renderer.flow_kite_bindgroup, bytes);
