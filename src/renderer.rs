@@ -49,6 +49,8 @@ pub fn render(
     // physics complicates this greatly since these buffers need to keep updating
     // to display physics effects when nothing's really happening.
     renderer.bone_buffer.dirty = true;
+    renderer.prev_onion_buffer.dirty = true;
+    renderer.next_onion_buffer.dirty = true;
     renderer.point_buffer.dirty = true;
     renderer.kite_buffer.dirty = true;
 
@@ -132,7 +134,7 @@ pub fn render(
     setup_world_verts(
         &mut renderer.temp_arm,
         &tab.armature,
-        &world_camera(&tab.camera, &config),
+        &tab.camera,
         config,
         selections,
         &selected_bone_ids,
@@ -142,7 +144,7 @@ pub fn render(
         setup_world_verts(
             &mut prev_arm,
             &tab.armature,
-            &world_camera(&tab.camera, &config),
+            &tab.camera,
             config,
             selections,
             &selected_bone_ids,
@@ -151,7 +153,7 @@ pub fn render(
         setup_world_verts(
             &mut next_arm,
             &tab.armature,
-            &world_camera(&tab.camera, &config),
+            &tab.camera,
             config,
             selections,
             &selected_bone_ids,
