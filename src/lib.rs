@@ -15,6 +15,7 @@ use std::{
 };
 
 use egui_wgpu::wgpu::ExperimentalFeatures;
+use global_hotkey::HotKeyState;
 use shared::*;
 use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, Features, FeaturesWGPU, InstanceDescriptor};
 
@@ -551,14 +552,18 @@ impl ApplicationHandler for App {
 
         // read system shortcuts (defined in main.rs with global_hotkey)
         if let Ok(event) = global_hotkey::GlobalHotKeyEvent::receiver().try_recv() {
-            let pressing_w = event.id() == self.shared.input.mod_w.unwrap().id();
-            let pressing_q = event.id() == self.shared.input.mod_q.unwrap().id();
-            if (pressing_w || pressing_q) && self.shared.ui.can_quit {
+            let pressed = event.state() == HotKeyState::Pressed;
+            let pressing_w = event.id() == self.shared.input.mod_w.unwrap().id() && pressed;
+            let pressing_q = event.id() == self.shared.input.mod_q.unwrap().id() && pressed;
+            let single_armature = self.shared.tabs.len() == 1;
+            if ((pressing_w && single_armature) || pressing_q) && self.shared.ui.can_quit {
                 utils::attempt_exit(
                     &self.shared.tabs[self.shared.ui.sel_tab].undo_states,
                     &self.shared.config,
                     &mut self.shared.ui,
                 );
+            } else if !single_armature && pressing_w {
+                self.shared.events.remove_tab(self.shared.ui.sel_tab);
             }
         }
 
