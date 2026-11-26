@@ -1028,6 +1028,8 @@ impl BackendRenderer {
             );
         }
 
+        self.render_other_armatures(0, shared.ui.sel_tab, render_pass, shared);
+
         // core rendering logic handled in renderer.rs
         #[rustfmt::skip]
         renderer::render(
@@ -1035,10 +1037,21 @@ impl BackendRenderer {
             &shared.config, &shared.edit_mode, &shared.tabs[shared.ui.sel_tab].selections, &mut shared.renderer, &mut shared.events,
         );
 
+        self.render_other_armatures(shared.ui.sel_tab, shared.tabs.len(), render_pass, shared);
+    }
+
+    // Renders all armatures from a min and max range.
+    fn render_other_armatures(
+        &mut self,
+        min: usize,
+        max: usize,
+        render_pass: &mut wgpu::RenderPass,
+        shared: &mut shared::Shared,
+    ) {
         let camera = shared.sel_tab().camera.clone();
-        for t in 0..shared.tabs.len() {
+        for t in min..max {
             let opacity = shared.tabs[t].armature.opacity;
-            if t == shared.ui.sel_tab || opacity == 0. {
+            if opacity == 0. {
                 continue;
             }
             self.render_armature(
@@ -1051,6 +1064,8 @@ impl BackendRenderer {
         }
     }
 
+    // Basic armature rendering.
+    // Used for rendering armatures from tabs other than the selected one.
     fn render_armature(
         &self,
         render_pass: &mut wgpu::RenderPass,
