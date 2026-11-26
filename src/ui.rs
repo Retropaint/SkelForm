@@ -1255,9 +1255,13 @@ fn context_menu_content(
         }
         ui.add_space(5.);
         for file in &shared_ui.recent_file_paths {
-            let filename = file.file_name().unwrap().to_str().unwrap();
-            let img = shared_ui.thumb_ui_tex.get(filename).unwrap();
-            let button = ui.context_button_img(filename, img, config);
+            let filename = file.file_name().unwrap().to_str().unwrap_or_default();
+            let button;
+            if let Some(img) = shared_ui.thumb_ui_tex.get(filename) {
+                button = ui.context_button_img(filename, img, config);
+            } else {
+                button = ui.context_button(filename, config);
+            }
             if button.clicked() {
                 let mut buf = PathBuf::new();
                 buf.push(file.clone());
