@@ -401,6 +401,13 @@ impl ApplicationHandler for App {
 
                 // ui logic handled in ui.rs
                 let names: Vec<String> = s.tabs.iter().map(|tab| tab.armature.filename()).collect();
+                let saved: Vec<bool> = s
+                    .tabs
+                    .iter()
+                    .map(|tab| {
+                        tab.undo_states.unsaved_undo_actions == tab.undo_states.undo_actions.len()
+                    })
+                    .collect();
                 ui::draw(
                     gui_state.egui_ctx(),
                     &mut s.ui,
@@ -410,6 +417,7 @@ impl ApplicationHandler for App {
                     &mut s.edit_mode,
                     &mut s.tabs[sel_tab],
                     &names,
+                    &saved,
                     &s.copy_buffer,
                     &s.renderer.temp_arm.bones,
                 );

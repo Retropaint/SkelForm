@@ -31,6 +31,7 @@ pub fn draw(
     edit_mode: &EditMode,
     tab: &ArmatureTab,
     armature_names: &Vec<String>,
+    armature_saved: &Vec<bool>,
     copy_buffer: &CopyBuffer,
     temp_bones: &Vec<Bone>,
 ) {
@@ -276,6 +277,7 @@ pub fn draw(
             context,
             config,
             armature_names,
+            armature_saved,
             shared_ui,
             events,
             input,
@@ -1466,6 +1468,7 @@ fn armature_panel(
     egui_ctx: &egui::Context,
     config: &Config,
     armature_names: &Vec<String>,
+    armature_saved: &Vec<bool>,
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     input: &InputStates,
@@ -1526,11 +1529,14 @@ fn armature_panel(
                                     egui::Direction::LeftToRight,
                                 );
                                 ui.with_layout(layout, |ui| {
-                                    let str = if armature_names[n] != "" {
+                                    let mut str = if armature_names[n] != "" {
                                         armature_names[n].to_string()
                                     } else {
                                         "Unsaved Armature".to_string()
                                     };
+                                    if !armature_saved[n] {
+                                        str += " *";
+                                    }
                                     ui.label(&str);
                                 });
                                 if shared_ui.hovering_armature == idx {
