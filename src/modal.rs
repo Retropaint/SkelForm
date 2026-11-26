@@ -193,6 +193,9 @@ pub fn polar_modal(
                 PolarId::GoToSameNameBone => {
                     events.select_bone(ctx0 as i32, false);
                 }
+                PolarId::RemoveTab => {
+                    events.remove_tab(ctx0 as usize);
+                }
             }
         },
     );

@@ -563,7 +563,14 @@ impl ApplicationHandler for App {
                     &mut self.shared.ui,
                 );
             } else if !single_armature && pressing_w {
-                self.shared.events.remove_tab(self.shared.ui.sel_tab);
+                let undo_states = &self.shared.tabs[self.shared.ui.sel_tab].undo_states;
+                if undo_states.unsaved_undo_actions != undo_states.undo_actions.len() {
+                    self.shared.ui.context_menu.id = format!("rm_{}", self.shared.ui.sel_tab);
+                    let str = self.shared.ui.loc("armature_unsaved");
+                    self.shared.events.open_polar_modal(PolarId::RemoveTab, str);
+                } else {
+                    self.shared.events.remove_tab(self.shared.ui.sel_tab);
+                }
             }
         }
 
