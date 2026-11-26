@@ -200,9 +200,7 @@ pub fn polar_modal(
                     events.remove_tab(ctx0 as usize);
                 }
                 PolarId::OpenSameArmature => {
-                    let split: Vec<&str> = shared_ui.context_menu.id.split('_').collect();
-                    let buf = PathBuf::from(split[1]);
-                    events.load_file(buf);
+                    events.load_file(PathBuf::from(shared_ui.polar_content.clone()));
                 }
             }
         },

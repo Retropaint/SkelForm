@@ -103,6 +103,7 @@ pub fn draw(
                     &tab.armature,
                     &tab.selections,
                     &cb,
+                    armature_names,
                 );
             });
 
@@ -1107,6 +1108,7 @@ fn context_menu_content(
     armature: &Armature,
     selections: &SelectionState,
     copy_buffer: &CopyBuffer,
+    armature_names: &Vec<String>,
 ) {
     let raw_split = shared_ui.context_id_parsed();
     let split: Vec<String> = raw_split.iter().map(|s| s.to_string()).collect();
@@ -1265,8 +1267,14 @@ fn context_menu_content(
                 button = ui.context_button(filename, config);
             }
             if button.clicked() {
-                events.load_file(file.clone());
-                shared_ui.context_menu.close();
+                if armature_names.contains(&filename.to_string()) {
+                    shared_ui.polar_content = format!("{}", file.to_str().unwrap().to_string());
+                    let str = shared_ui.loc("polar.open_same_armature");
+                    events.open_polar_modal(PolarId::OpenSameArmature, str);
+                } else {
+                    events.load_file(file.clone());
+                    shared_ui.context_menu.close();
+                }
             }
         }
     }

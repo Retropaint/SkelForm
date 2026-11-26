@@ -576,6 +576,7 @@ pub struct Ui {
 
     // id to identify actions for polar (yes-no) dialog
     pub polar_id: PolarId,
+    pub polar_content: String,
 
     pub headline: String,
 
