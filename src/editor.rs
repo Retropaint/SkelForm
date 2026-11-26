@@ -660,7 +660,7 @@ pub fn simple_event(
                 camera: Camera::default(),
                 bone_buffer: RenderBuffer::default(),
             });
-            switch_to_armature(tabs.len() - 1, tabs, ui);
+            switch_to_armature(tabs.len() - 1, tabs, ui, &config);
         }
         Events::NewStyle => {
             let ids = tabs[ui.sel_tab]
@@ -1491,12 +1491,12 @@ pub fn simple_event(
                 bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
         }
         Events::SwitchToArmature => {
-            switch_to_armature(value as usize, tabs, ui);
+            switch_to_armature(value as usize, tabs, ui, &config);
         }
         Events::RemoveTab => {
             tabs.remove(value as usize);
             if ui.sel_tab > tabs.len() - 1 {
-                switch_to_armature(ui.sel_tab - 1, tabs, ui);
+                switch_to_armature(ui.sel_tab - 1, tabs, ui, &config);
             }
         }
         _ => {}
@@ -2594,12 +2594,22 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
     }
 }
 
-pub fn switch_to_armature(new_sel_tab: usize, tabs: &mut Vec<ArmatureTab>, ui: &mut crate::Ui) {
+pub fn switch_to_armature(
+    new_sel_tab: usize,
+    tabs: &mut Vec<ArmatureTab>,
+    ui: &mut crate::Ui,
+    config: &Config,
+) {
     if new_sel_tab == ui.sel_tab || new_sel_tab > tabs.len() - 1 {
         return;
     }
 
+    let prev_tab = ui.sel_tab;
     ui.sel_tab = new_sel_tab;
+
+    if config.global_camera {
+        tabs[ui.sel_tab].camera = tabs[prev_tab].camera.clone();
+    }
 
     ui.warnings = check_warnings(&tabs[new_sel_tab].armature);
     ui.changed_window_name = false;

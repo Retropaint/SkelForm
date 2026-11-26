@@ -884,6 +884,7 @@ pub struct Config {
     pub bone_translucency: f32,
     pub allow_same_name: bool,
     pub no_single_tabs: bool,
+    pub global_camera: bool,
 
     #[serde(skip)]
     pub colors: ColorConfig,
@@ -938,6 +939,7 @@ impl Default for Config {
             bone_translucency: 0.25,
             allow_same_name: false,
             no_single_tabs: false,
+            global_camera: false,
         }
     }
 }

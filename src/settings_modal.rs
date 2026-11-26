@@ -260,6 +260,15 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::
         true,
     );
 
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("settings_modal.user_interface.global_camera"),
+        &shared_ui.loc("settings_modal.user_interface.global_camera_desc"),
+        &mut shared_ui.updated_config.global_camera,
+        config,
+        false,
+    );
+
     ui.add_space(20.);
 }
 
