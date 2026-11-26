@@ -1546,7 +1546,7 @@ fn armature_panel(
                                     }
                                     ui.label(&str);
                                 });
-                                if shared_ui.hovering_armature != idx {
+                                if shared_ui.hovering_armature != idx || armature_names.len() == 1 {
                                     return;
                                 }
                                 let layout = egui::Layout::right_to_left(egui::Align::Center);
