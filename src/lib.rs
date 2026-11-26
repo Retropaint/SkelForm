@@ -1376,8 +1376,8 @@ impl BackendRenderer {
             }
             Saving::Autosaving => {
                 let dir_init = directories_next::ProjectDirs::from("com", "retropaint", "skelform");
-                save_path = dir_init.unwrap().data_dir().into();
-                save_path.push("/autosave.skf");
+                save_path = dir_init.unwrap().data_dir().to_path_buf();
+                save_path.push("autosave.skf");
                 let freq = shared.config.autosave_frequency as f32;
                 let in_cooldown = shared.edit_mode.time - shared.last_autosave < freq;
                 if in_cooldown {
