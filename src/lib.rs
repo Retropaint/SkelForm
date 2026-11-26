@@ -148,7 +148,10 @@ impl ApplicationHandler for App {
             let canvas =
                 window().unwrap().document().unwrap().get_element_by_id("canvas")
                 .unwrap().dyn_into::<HtmlCanvasElement>().unwrap();
-            self.shared.camera.window = Vec2::new(canvas.width() as f32, canvas.height() as f32);
+
+            for tab in &mut self.shared.tabs {
+                tab.camera.window = Vec2::new(canvas.width() as f32, canvas.height() as f32);
+            }
             attributes = attributes.with_canvas(Some(canvas));
         }
 
@@ -201,7 +204,7 @@ impl ApplicationHandler for App {
             {
                 let (sender, receiver) = futures::channel::oneshot::channel();
                 self.renderer_receiver = Some(receiver);
-                let size = self.shared.camera.window.clone();
+                let size = self.shared.sel_tab().camera.window.clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     let renderer =
                         BackendRenderer::new(window_handle.clone(), size.x as u32, size.y as u32)
@@ -938,8 +941,8 @@ impl BackendRenderer {
                 let saving_type = shared.ui.saving.lock().unwrap().clone();
                 if saving_type == Saving::CustomPath || saving_type == Saving::Exporting {
                     let sel_tab = shared.ui.sel_tab;
-                    #[rustfmt::skip]
-                    utils::save_web(&shared.tabs[sel_tab].armature, &shared.camera, &shared.edit_mode, saving_type);
+                    let tab = &shared.tabs[sel_tab];
+                    utils::save_web(&tab.armature, &tab.camera, &shared.edit_mode, saving_type);
                 }
             }
 

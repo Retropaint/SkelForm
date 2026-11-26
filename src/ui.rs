@@ -281,7 +281,6 @@ pub fn draw(
             shared_ui,
             events,
             input,
-            &tab.undo_states
         ));
     }
 
@@ -1477,7 +1476,6 @@ fn armature_panel(
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     input: &InputStates,
-    undo_states: &UndoStates,
 ) {
     let panel = egui::TopBottomPanel::top("top_bar")
         .frame(egui::Frame {
