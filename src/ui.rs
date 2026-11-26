@@ -1569,7 +1569,7 @@ fn armature_panel(
                         color += Color::new(20, 20, 20, 0);
                     }
 
-                    let unsaved = !tabs[n].undo_states.unsaved_undo_actions
+                    let unsaved = tabs[n].undo_states.unsaved_undo_actions
                         != tabs[n].undo_states.undo_actions.len();
 
                     let mut is_choosing = false;
@@ -1604,7 +1604,7 @@ fn armature_panel(
                                     ui.add_space(10.);
                                     if ui.label("X").contains_pointer() && input.left_clicked {
                                         is_choosing = true;
-                                        if !unsaved {
+                                        if unsaved {
                                             shared_ui.context_menu.id = format!("rm_{}", n);
                                             let str = shared_ui.loc("armature_unsaved");
                                             events.open_polar_modal(PolarId::RemoveTab, str);
