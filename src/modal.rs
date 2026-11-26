@@ -38,7 +38,7 @@ pub fn polar_modal(
     let mut headline = shared_ui.headline.to_string();
 
     // destructive actions - these cannot be proceeded with the Yes shortcut
-    let dest_actions = vec![PolarId::Exiting, PolarId::DeleteFile];
+    let dest_actions = vec![PolarId::Exiting, PolarId::DeleteFile, PolarId::RemoveTab];
     let is_destructive = dest_actions.contains(&shared_ui.polar_id);
 
     if is_destructive {

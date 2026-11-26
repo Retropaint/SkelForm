@@ -31,7 +31,7 @@
   "locked_desc": "Lock this bone to prevent edits from being recorded in animations",
   "feedback_sent": "Thank you for the feedback!\nIt has been sent anonymously, and only the developer can see it.",
   "feedback_sent_err": "Something went wrong while attempting to send your feedback.\n\nPlease check your internet connection. Otherwise, it may be an issue on SkelForm's end.",
-  "armature_unsaved": "This armature has unsaved changes.\n\nClose anyway?",
+  "armature_unsaved": "This armature has unsaved changes. Close anyway?",
   "startup": {
     "import": "Import",
     "samples": "Samples",
