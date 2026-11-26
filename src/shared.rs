@@ -3028,6 +3028,7 @@ pub struct ArmatureTab {
     pub selections: SelectionState,
     pub camera: Camera,
     pub bone_buffer: RenderBuffer,
+    pub opacity: f32,
 }
 
 impl ArmatureTab {

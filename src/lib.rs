@@ -1047,10 +1047,17 @@ impl BackendRenderer {
 
         let camera = shared.sel_tab().camera.clone();
         for t in 0..shared.tabs.len() {
-            if t == shared.ui.sel_tab {
+            if t == shared.ui.sel_tab || shared.tabs[t].opacity == 0. {
                 continue;
             }
-            self.render_armature(render_pass, &mut shared.tabs[t], &camera, &shared.config);
+            let opacity = shared.tabs[t].opacity;
+            self.render_armature(
+                render_pass,
+                &mut shared.tabs[t],
+                &camera,
+                &shared.config,
+                opacity,
+            );
         }
     }
 
@@ -1060,6 +1067,7 @@ impl BackendRenderer {
         tab: &mut ArmatureTab,
         camera: &Camera,
         config: &Config,
+        opacity: f32,
     ) {
         let mut buffer = tab.bone_buffer.clone();
         buffer.dirty = true;
@@ -1070,7 +1078,7 @@ impl BackendRenderer {
         renderer::construction(&mut new_arm.bones, &tab.armature.bones);
         let sel = &tab.selections;
         let armature = &tab.armature;
-        let tint = TintColor::new(1., 1., 1., 0.5);
+        let tint = TintColor::new(1., 1., 1., opacity);
         renderer::setup_world_verts(&mut new_arm, armature, &camera, &config, sel, &vec![], tint);
 
         draw_armature(

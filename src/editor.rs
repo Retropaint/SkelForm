@@ -653,6 +653,7 @@ pub fn simple_event(
                 selections: SelectionState::init(),
                 camera: Camera::default(),
                 bone_buffer: RenderBuffer::default(),
+                opacity: 0.,
             });
             switch_to_armature(tabs.len() - 1, tabs, ui);
         }
