@@ -908,7 +908,7 @@ impl BackendRenderer {
             {
                 let saving_type = shared.ui.saving.lock().unwrap().clone();
                 if saving_type == Saving::CustomPath || saving_type == Saving::Exporting {
-                    let sel_tab = shared.selections.sel_tab;
+                    let sel_tab = shared.ui.sel_tab;
                     #[rustfmt::skip]
                     utils::save_web(&shared.tabs[sel_tab].armature, &shared.camera, &shared.edit_mode, saving_type);
                 }

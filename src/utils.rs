@@ -7,6 +7,7 @@ mod web {
     pub use wasm_bindgen::prelude::wasm_bindgen;
     pub use web_sys::*;
     pub use zip::write::FileOptions;
+    pub use image::GenericImage;
 }
 use image::buffer::ConvertBuffer;
 use image::{RgbImage, Rgba, RgbaImage};
