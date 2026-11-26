@@ -74,7 +74,6 @@ pub fn render(
         // set up next onion
         next_arm.bones = tab.armature.bones.clone();
         next_arm.animations = tab.armature.animations.clone();
-        let anim = selections.anim;
         let frame =
             if let Some(next_kf) = keyframes.iter().find(|kf| kf.frame > selections.anim_frame) {
                 next_kf.frame
@@ -137,44 +136,40 @@ pub fn render(
         config,
         selections,
         &selected_bone_ids,
+        TintColor::new(1., 1., 1., 1.),
     );
+    if selections.anim_frame != -1 && edit_mode.onion_layers {
+        setup_world_verts(
+            &mut prev_arm,
+            &tab.armature,
+            &world_camera(&tab.camera, &config),
+            config,
+            selections,
+            &selected_bone_ids,
+            TintColor::new(1., 0., 0., 1.),
+        );
+        setup_world_verts(
+            &mut next_arm,
+            &tab.armature,
+            &world_camera(&tab.camera, &config),
+            config,
+            selections,
+            &selected_bone_ids,
+            TintColor::new(0., 0., 1., 1.),
+        );
+    }
 
     // pre-draw bone setup
     for b in 0..renderer.temp_arm.bones.len() {
-        let tex = tab.armature.tex_of(renderer.temp_arm.bones[b].id);
         let parent_id = renderer.temp_arm.bones[b].parent_id;
         if parent_id != -1 {
             let parent = renderer.temp_arm.bones.iter().find(|b| b.id == parent_id);
             renderer.temp_arm.bones[b].hidden |= parent.unwrap().hidden;
         }
 
+        let tex = tab.armature.tex_of(renderer.temp_arm.bones[b].id);
         if tex == None || renderer.temp_arm.bones[b].hidden {
             continue;
-        }
-
-        // setup onion world verts
-        if selections.anim_frame != -1 && edit_mode.onion_layers {
-            macro_rules! prep_arm {
-                ($armature:expr, $color:expr) => {
-                    for v in 0..$armature.bones[b].vertices.len() {
-                        let tb = &mut $armature.bones[b];
-                        let ratio = tab.camera.aspect_ratio();
-                        let left = if is_facing_left(tb.scale) { -1. } else { 1. };
-                        let final_pivot = utils::rotate(
-                            &(tex.unwrap().size * tb.pivot_pos * tb.scale),
-                            tb.rot * left,
-                        );
-                        let mut vert = world_vert(tb.vertices[v], &tab.camera, ratio, final_pivot);
-                        vert.tint = $color;
-                        tb.world_verts.push(vert);
-                    }
-                };
-            }
-            prep_arm!(prev_arm, TintColor::new(255., 0., 0., 0.4));
-            prep_arm!(next_arm, TintColor::new(0., 0., 255., 0.4));
-        }
-        for vert in &mut renderer.temp_arm.bones[b].world_verts {
-            vert.add_color = Color::new(0, 0, 0, 0);
         }
 
         // check if cursor is on an opaque pixel of this bone's texture
@@ -2597,6 +2592,7 @@ pub fn setup_world_verts(
     config: &Config,
     selections: &SelectionState,
     selected_bone_ids: &Vec<i32>,
+    tint: TintColor,
 ) {
     for b in 0..armature.bones.len() {
         let tex = src_arm.tex_of(armature.bones[b].id);
@@ -2611,7 +2607,8 @@ pub fn setup_world_verts(
             let left = if is_facing_left(tb.scale) { -1. } else { 1. };
             let final_pivot = utils::rotate(&(size * tb.pivot_pos), tb.rot * left) * tb.scale;
             let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
-            vert.tint = tb.tint;
+            vert.tint = tb.tint * tint;
+            vert.add_color = Color::new(0, 0, 0, 0);
 
             // make this translucent if not part of selected bone(s)
             if selections.bone_ids.len() > 0 && !selected_bone_ids.contains(&tb.id) {
