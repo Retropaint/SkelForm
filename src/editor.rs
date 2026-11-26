@@ -839,6 +839,7 @@ pub fn simple_event(
             tabs[ui.sel_tab]
                 .armature
                 .set_bone_tex(value as i32, str_value.clone(), anim, frame);
+            ui.warnings = check_warnings(&tabs[ui.sel_tab].armature);
         }
         Events::DeleteVertex => {
             #[rustfmt::skip]
