@@ -1034,7 +1034,8 @@ impl BackendRenderer {
         #[rustfmt::skip]
         renderer::render(
             render_pass, &self.gpu.queue, &shared.input, &shared.tabs[shared.ui.sel_tab],
-            &shared.config, &shared.edit_mode, &shared.tabs[shared.ui.sel_tab].selections, &mut shared.renderer, &mut shared.events,
+            &shared.config, &shared.edit_mode, &shared.tabs[shared.ui.sel_tab].selections,
+            &mut shared.renderer, &mut shared.events,
         );
 
         self.render_other_armatures(shared.ui.sel_tab, shared.tabs.len(), render_pass, shared);
@@ -1054,13 +1055,8 @@ impl BackendRenderer {
             if opacity == 0. {
                 continue;
             }
-            self.render_armature(
-                render_pass,
-                &mut shared.tabs[t],
-                &camera,
-                &shared.config,
-                opacity,
-            );
+            let tab = &mut shared.tabs[t];
+            self.render_armature(render_pass, tab, &camera, &shared.config, opacity);
         }
     }
 

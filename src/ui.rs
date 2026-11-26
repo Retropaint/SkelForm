@@ -93,7 +93,7 @@ pub fn draw(
                     return;
                 }
                 let cb = &copy_buffer;
-                context_menu_content(config, shared_ui, events, ui, &cb, tabs);
+                context_menu_content(config, shared_ui, events, ui, &cb, tabs, input);
             });
 
             // close if clicked out of it
@@ -1136,6 +1136,7 @@ fn context_menu_content(
     ui: &mut egui::Ui,
     copy_buffer: &CopyBuffer,
     tabs: &Vec<ArmatureTab>,
+    input: &InputStates,
 ) {
     let raw_split = shared_ui.context_id_parsed();
     let split: Vec<String> = raw_split.iter().map(|s| s.to_string()).collect();
@@ -1313,11 +1314,12 @@ fn context_menu_content(
     } else if element_id == "armaturepanel" {
         let idx: usize = split[1].parse().unwrap();
         let mut opacity = tabs[idx].armature.opacity;
-        ui.add(egui::Slider::new(
+        ui.label("Reference Opacity:");
+        let slider = ui.add(egui::Slider::new(
             &mut opacity,
             egui::Rangef::new(0., 1.).into(),
         ));
-        if opacity != tabs[shared_ui.sel_tab].armature.opacity {
+        if slider.hovered() && input.left_down {
             events.set_tab_opacity(idx, opacity);
         }
     }
