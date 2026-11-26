@@ -34,8 +34,7 @@ pub fn read(
     // load images as textures
     if let Some((images, names)) = read_image_loaders(shared) {
         add_images_as_textures(
-            &shared.selections,
-            &mut shared.tabs[shared.selections.sel_tab],
+            &mut shared.tabs[shared.ui.sel_tab],
             &mut shared.events,
             &images,
             &names,
@@ -54,9 +53,9 @@ pub fn read(
     // read other file imports
     if let Some((file, filepath)) = read_import(shared) {
         // reset editor state, but keep selected tab
-        let sel_tab = shared.selections.sel_tab;
-        shared.selections.init();
-        shared.selections.sel_tab = sel_tab;
+        let sel_tab = shared.ui.sel_tab;
+        shared.sel_tab_mut().selections = SelectionState::init();
+        shared.ui.sel_tab = sel_tab;
 
         shared.ui.last_selected = "".to_string();
 
@@ -137,7 +136,6 @@ pub fn read_image_loaders(_shared: &mut Shared) -> Option<(Vec<image::DynamicIma
 }
 
 pub fn add_images_as_textures(
-    selections: &SelectionState,
     tab: &mut ArmatureTab,
     events: &mut EventState,
     images: &Vec<image::DynamicImage>,
@@ -145,7 +143,7 @@ pub fn add_images_as_textures(
     backend_renderer: &Option<&BackendRenderer>,
     ctx: Option<&egui::Context>,
 ) {
-    tab.new_undo_style(selections.style_id);
+    tab.new_undo_style(tab.selections.style_id);
     for i in 0..images.len() {
         if images[i].clone().into_rgba8().to_vec().len() == 0 {
             // this image is empty; something went wrong
@@ -157,7 +155,7 @@ pub fn add_images_as_textures(
         let dims = Vec2::new(images[i].width() as f32, images[i].height() as f32);
         add_texture(
             images[i].clone(),
-            selections.style_id,
+            tab.selections.style_id,
             dims,
             &names[i],
             &mut tab.armature,
@@ -209,7 +207,7 @@ pub fn add_pending_textures(
     let style = shared
         .sel_tab()
         .armature
-        .sel_style(&shared.selections)
+        .sel_style(&shared.sel_tab().selections)
         .unwrap();
     let textures = style.textures.last().unwrap().clone();
     let image = shared
@@ -221,14 +219,7 @@ pub fn add_pending_textures(
         .clone();
 
     // now that we have the atlas, remove it from the list
-    let selections = shared.selections.clone();
-    shared
-        .sel_tab_mut()
-        .armature
-        .sel_style_mut(&selections)
-        .unwrap()
-        .textures
-        .pop();
+    shared.sel_tab_mut().sel_style_mut().unwrap().textures.pop();
     shared.sel_tab_mut().armature.tex_data.pop();
 
     for tex in &shared.ui.pending_textures {
@@ -237,10 +228,10 @@ pub fn add_pending_textures(
         let crop_size = Vec2::new(crop.width() as f32, crop.height() as f32);
         add_texture(
             crop.clone(),
-            shared.selections.style_id,
+            shared.tabs[shared.ui.sel_tab].selections.style_id,
             crop_size,
             &tex.name,
-            &mut shared.tabs[shared.selections.sel_tab].armature,
+            &mut shared.tabs[shared.ui.sel_tab].armature,
             backend_renderer,
             ctx,
         );

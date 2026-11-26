@@ -14,7 +14,6 @@ pub fn iterate_events(
     events: &mut EventState,
     camera: &mut Camera,
     edit_mode: &mut EditMode,
-    selections: &mut SelectionState,
     tabs: &mut Vec<ArmatureTab>,
     psd_armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
@@ -33,29 +32,33 @@ pub fn iterate_events(
     if last_event != event {
         last_event = event.clone();
 
+        let style_id = tabs[ui.sel_tab].selections.style_id;
+        let anim = tabs[ui.sel_tab].selections.anim;
+        let sel_bone = tabs[ui.sel_tab].selections.sel_bone();
+
         #[rustfmt::skip]
         match last_event {
             E::NewBone | E::DragBone | E::DeleteBone | E::PasteBone | E::RaiseGlobalZindex |
             E::CreateBindBone | E::NewBonesFromTextures | E::CreateParentBone => {
-                tabs[selections.sel_tab].new_undo_bones()
+                tabs[ui.sel_tab].new_undo_bones()
             }
-            E::NewAnimation | E::DeleteAnim => tabs[selections.sel_tab].new_undo_anims(),
-            E::DeleteSelectedTextures       => tabs[selections.sel_tab].new_undo_style(selections.style_id),
-            E::DeleteStyle | E::NewStyle    => tabs[selections.sel_tab].new_undo_styles(),
-            E::RenameStyle => if !ui.just_made_style { tabs[selections.sel_tab].new_undo_style(selections.style_id); ui.just_made_style = false }
+            E::NewAnimation | E::DeleteAnim => tabs[ui.sel_tab].new_undo_anims(),
+            E::DeleteSelectedTextures       => tabs[ui.sel_tab].new_undo_style(style_id),
+            E::DeleteStyle | E::NewStyle    => tabs[ui.sel_tab].new_undo_styles(),
+            E::RenameStyle => if !ui.just_made_style { tabs[ui.sel_tab].new_undo_style(style_id); ui.just_made_style = false }
             E::DeleteSelectedKeyframes | E::DeleteKeyframeLine | E::PasteKeyframesOnFrame |
             E::AdjustKeyframesByFPS | E::AdjustKeyframesBySpeed => {
-                tabs[selections.sel_tab].new_undo_anim(selections.anim)
+                tabs[ui.sel_tab].new_undo_anim(anim)
             }
             E::ResetVertices | E::CenterBoneVerts | E::DeleteVertex |E::TraceBoneVerts |
             E::NewVertex | E::DeleteTriangle => {
-                tabs[selections.sel_tab].new_undo_bone(selections.sel_bone())
+                tabs[ui.sel_tab].new_undo_bone(sel_bone)
             }
             _ => {}
         };
     }
 
-    let armature = &mut tabs[selections.sel_tab].armature;
+    let armature = &mut tabs[ui.sel_tab].armature;
 
     if event == Events::MoveArmatureInTab {
         let mut remove_idx = events.values[0] as usize;
@@ -83,35 +86,38 @@ pub fn iterate_events(
         let pos = Vec2::new(events.values[1], events.values[2]);
 
         // add dragged texture to list
-        let mut tex_ids = selections.tex_ids.clone();
+        let mut tex_ids = tabs[ui.sel_tab].selections.tex_ids.clone();
         if !tex_ids.contains(&dragged_tex_id) {
             tex_ids.push(dragged_tex_id);
         }
 
         for tex_id in &tex_ids {
-            armature.new_bone(-1);
-            let tex_name = armature.sel_style(&selections).unwrap().textures[*tex_id as usize]
+            tabs[ui.sel_tab].armature.new_bone(-1);
+            let tex_name = tabs[ui.sel_tab].sel_style().unwrap().textures[*tex_id as usize]
                 .name
                 .clone();
-            let bone = armature.bones.last_mut().unwrap();
+            let bone = tabs[ui.sel_tab].armature.bones.last_mut().unwrap();
             let bone_id = bone.id;
             bone.name = tex_name.clone();
             bone.pos = pos;
+            let armature = &mut tabs[ui.sel_tab].armature;
             armature.set_bone_tex(bone_id, tex_name, usize::MAX, -1);
         }
 
         // activate style so the texture is immediately visible
-        armature.sel_style_mut(&selections).unwrap().active = true;
+        tabs[ui.sel_tab].sel_style_mut().unwrap().active = true;
 
         events.events.remove(0);
         events.values.drain(0..=2);
     } else if event == Events::DuplicateTexture {
-        for id in &selections.tex_ids {
+        for i in 0..tabs[ui.sel_tab].selections.tex_ids.len() {
+            let id = tabs[ui.sel_tab].selections.tex_ids[i];
+
             // get texture data of this selected texture
-            let style = armature.sel_style_mut(&selections).unwrap();
+            let style = tabs[ui.sel_tab].sel_style_mut().unwrap();
 
             // duplicate texture
-            let new_tex = style.textures[*id as usize].clone();
+            let new_tex = style.textures[id as usize].clone();
             style.textures.push(new_tex);
         }
 
@@ -130,7 +136,7 @@ pub fn iterate_events(
 
         armature.animations.insert(hov, anim);
 
-        selections.anim = hov;
+        tabs[ui.sel_tab].selections.anim = hov;
 
         events.events.remove(0);
         events.values.drain(0..=1);
@@ -138,13 +144,16 @@ pub fn iterate_events(
         let tex_id = events.values[0] as i32;
         let select = events.values[1] == 1.;
         if select {
-            if !selections.tex_ids.contains(&tex_id) {
-                selections.tex_ids.push(tex_id);
+            if !tabs[ui.sel_tab].selections.tex_ids.contains(&tex_id) {
+                tabs[ui.sel_tab].selections.tex_ids.push(tex_id);
             }
         } else {
-            selections.tex_ids.retain(|id| *id != tex_id);
+            tabs[ui.sel_tab]
+                .selections
+                .tex_ids
+                .retain(|id| *id != tex_id);
         }
-        selections.tex_ids.sort();
+        tabs[ui.sel_tab].selections.tex_ids.sort();
         ui.last_selected = "texture".to_string();
 
         events.events.remove(0);
@@ -158,8 +167,7 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::EditVertexUV {
-        let sel = &selections;
-        let bone = armature.sel_bone_mut(sel).unwrap();
+        let bone = tabs[ui.sel_tab].sel_bone_mut().unwrap();
         let vert_id = events.values[0] as u32;
         let vert = bone.vertices.iter_mut().find(|v| v.id == vert_id).unwrap();
         vert.uv = Vec2::new(events.values[1], events.values[2]);
@@ -167,8 +175,7 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=2);
     } else if event == Events::EditVertexPos {
-        let sel = &selections;
-        let bone = armature.sel_bone_mut(sel).unwrap();
+        let bone = tabs[ui.sel_tab].sel_bone_mut().unwrap();
         let vert_id = events.values[0] as u32;
         let vert = bone.vertices.iter_mut().find(|v| v.id == vert_id).unwrap();
         vert.pos = Vec2::new(events.values[1], events.values[2]);
@@ -178,14 +185,14 @@ pub fn iterate_events(
     } else if event == Events::SelectVertex {
         let vert_id = events.values[0] as i32;
         if vert_id == -1 {
-            selections.vert_ids = vec![];
+            tabs[ui.sel_tab].selections.vert_ids = vec![];
             renderer.clicked_vert_id = -1;
         } else {
             let force_append = events.values[1] == 1.;
             if input.holding_mod || input.holding_shift || force_append {
-                selections.vert_ids.push(vert_id as usize);
+                tabs[ui.sel_tab].selections.vert_ids.push(vert_id as usize);
             } else {
-                selections.vert_ids = vec![vert_id as usize];
+                tabs[ui.sel_tab].selections.vert_ids = vec![vert_id as usize];
             }
         }
 
@@ -197,7 +204,7 @@ pub fn iterate_events(
         let handle = Vec2::new(events.values[2], events.values[3]);
         let preset = events.values[4] as i32;
 
-        for kf in &mut armature.sel_anim_mut(selections).unwrap().keyframes {
+        for kf in &mut tabs[ui.sel_tab].sel_anim_mut().unwrap().keyframes {
             if kf.frame != frame as i32 {
                 continue;
             }
@@ -226,8 +233,8 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=2);
     } else if event == Events::DeleteKeyframeLine {
-        armature
-            .sel_anim_mut(&selections)
+        tabs[ui.sel_tab]
+            .sel_anim_mut()
             .unwrap()
             .keyframes
             .retain(|kf| {
@@ -237,12 +244,12 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::SelectAnimFrame {
-        let selected_anim = selections.anim;
-        let selected_bone_ids = selections.bone_ids.clone();
+        let selected_anim = tabs[ui.sel_tab].selections.anim;
+        let selected_bone_ids = tabs[ui.sel_tab].selections.bone_ids.clone();
         let last_selected = ui.last_selected.clone();
-        unselect_all(selections, edit_mode, ui);
-        selections.anim = selected_anim;
-        selections.anim_frame = events.values[0] as i32;
+        unselect_all(&mut tabs[ui.sel_tab].selections, edit_mode, ui);
+        tabs[ui.sel_tab].selections.anim = selected_anim;
+        tabs[ui.sel_tab].selections.anim_frame = events.values[0] as i32;
 
         // select keyframes in this frame if requested
         if events.values[1] == 1. {
@@ -252,16 +259,19 @@ pub fn iterate_events(
             }
             if !input.holding_shift {
                 // select just this diamond's keyframes
-                for kf in &armature.sel_anim(&selections).unwrap().keyframes {
-                    if kf.frame == selections.anim_frame && !ui.selected_keyframes.contains(&kf) {
+                for kf in &tabs[ui.sel_tab].sel_anim().unwrap().keyframes {
+                    if kf.frame == tabs[ui.sel_tab].selections.anim_frame
+                        && !ui.selected_keyframes.contains(&kf)
+                    {
                         ui.selected_keyframes.push(kf.clone());
                     }
                 }
             } else {
                 // select all diamonds' keyframes between this and last selected one
-                let left = ui.last_selected_frame.min(selections.anim_frame);
-                let right = ui.last_selected_frame.max(selections.anim_frame);
-                for kf in &armature.sel_anim(&selections).unwrap().keyframes {
+                let anim_frame = tabs[ui.sel_tab].selections.anim_frame;
+                let left = ui.last_selected_frame.min(anim_frame);
+                let right = ui.last_selected_frame.max(anim_frame);
+                for kf in &tabs[ui.sel_tab].sel_anim().unwrap().keyframes {
                     if kf.frame >= left && kf.frame <= right && !ui.selected_keyframes.contains(&kf)
                     {
                         ui.selected_keyframes.push(kf.clone());
@@ -270,8 +280,8 @@ pub fn iterate_events(
             }
         }
 
-        selections.bone_ids = selected_bone_ids;
-        ui.last_selected_frame = selections.anim_frame;
+        tabs[ui.sel_tab].selections.bone_ids = selected_bone_ids;
+        ui.last_selected_frame = tabs[ui.sel_tab].selections.anim_frame;
         ui.last_selected = last_selected;
 
         events.events.remove(0);
@@ -284,18 +294,18 @@ pub fn iterate_events(
         let sel_bind = events.values[0] as usize;
         let vert = events.values[1] as usize;
         let weight = events.values[2];
-        armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].verts[vert].weight = weight;
+        tabs[ui.sel_tab].sel_bone_mut().unwrap().binds[sel_bind].verts[vert].weight = weight;
 
         events.events.remove(0);
         events.values.drain(0..=2);
     } else if event == Events::ToggleBindPathing {
         let sel_bind = events.values[0] as usize;
         let is_pathing = events.values[1] == 1.;
-        armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].is_path = is_pathing;
+        tabs[ui.sel_tab].sel_bone_mut().unwrap().binds[sel_bind].is_path = is_pathing;
 
         // adjust vertices, so they stay in place
-        let bind = &armature.sel_bone_mut(&selections).unwrap().binds[sel_bind].clone();
-        let sel_bone = &mut armature.sel_bone_mut(&selections).unwrap();
+        let bind = &tabs[ui.sel_tab].sel_bone_mut().unwrap().binds[sel_bind].clone();
+        let sel_bone = &mut tabs[ui.sel_tab].sel_bone_mut().unwrap();
         let temp_bones = &renderer.temp_arm.bones;
         let temp_bone = temp_bones.iter().find(|b| b.id == sel_bone.id).unwrap();
         for vert in &bind.verts {
@@ -354,8 +364,7 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::MoveTexture {
-        let sel = &selections;
-        let textures = &mut armature.sel_style_mut(sel).unwrap().textures;
+        let textures = &mut tabs[ui.sel_tab].sel_style_mut().unwrap().textures;
         let tex = textures[events.values[0] as usize].clone();
         textures.insert(events.values[1] as usize, tex);
         let mut remove_idx = events.values[0] as usize;
@@ -368,23 +377,23 @@ pub fn iterate_events(
         events.values.drain(0..=1);
     } else if event == Events::MigrateTexture {
         // add dragged texture to ID list
-        let mut tex_ids = selections.tex_ids.clone();
+        let mut tex_ids = tabs[ui.sel_tab].selections.tex_ids.clone();
         if !tex_ids.contains(&(events.values[0] as i32)) {
             tex_ids.push(events.values[0] as i32);
         }
 
         // move textures to other style
         for tex_id in &tex_ids {
-            let tex = armature.sel_style(selections).unwrap().textures[*tex_id as usize].clone();
-            armature.styles[events.values[1] as usize]
+            let tex = tabs[ui.sel_tab].sel_style().unwrap().textures[*tex_id as usize].clone();
+            tabs[ui.sel_tab].armature.styles[events.values[1] as usize]
                 .textures
                 .push(tex);
         }
 
         // remove those textures from current style
         let mut idx = -1;
-        armature
-            .sel_style_mut(selections)
+        tabs[ui.sel_tab]
+            .sel_style_mut()
             .unwrap()
             .textures
             .retain(|_| {
@@ -393,10 +402,10 @@ pub fn iterate_events(
             });
 
         // reset selected IDs, since it's outdated now
-        selections.tex_ids = vec![];
+        tabs[ui.sel_tab].selections.tex_ids = vec![];
 
         ui.dragging_element = "".to_string();
-        ui.warnings = check_warnings(armature);
+        ui.warnings = check_warnings(&tabs[ui.sel_tab].armature);
 
         events.events.remove(0);
         events.values.drain(0..=1);
@@ -434,17 +443,25 @@ pub fn iterate_events(
         let is_above = events.values[0] == 1.;
         let pointing_id = events.values[1] as i32;
         let dragging_id = events.values[2] as i32;
-        if selections.bone_ids.len() < 2 {
-            selections.bone_ids = vec![dragging_id];
-            let tex = armature.tex_of(dragging_id);
+        if tabs[ui.sel_tab].selections.bone_ids.len() < 2 {
+            tabs[ui.sel_tab].selections.bone_ids = vec![dragging_id];
+            let tex = tabs[ui.sel_tab].armature.tex_of(dragging_id);
             if tex == None {
                 edit_mode.showing_mesh = false;
             }
         } else {
             // only move root bones (in context of selected bones)
-            selections.bone_ids = selections.only_root_bones(&armature.bones)
+            tabs[ui.sel_tab].selections.bone_ids = tabs[ui.sel_tab]
+                .selections
+                .only_root_bones(&tabs[ui.sel_tab].armature.bones)
         }
-        drag_bone(armature, pointing_id, &selections.bone_ids, is_above);
+        let bone_ids = tabs[ui.sel_tab].selections.bone_ids.clone();
+        drag_bone(
+            &mut tabs[ui.sel_tab].armature,
+            pointing_id,
+            &bone_ids,
+            is_above,
+        );
         events.events.remove(0);
         events.values.drain(0..=2);
     } else {
@@ -455,7 +472,7 @@ pub fn iterate_events(
         let str_value = events.str_values[0].clone().to_string();
         #[rustfmt::skip]
         editor::simple_event(
-            event, value, str_value, camera, &input, edit_mode, selections,
+            event, value, str_value, camera, &input, edit_mode,
             tabs, psd_armature, copy_buffer, ui, renderer, config
         );
 
@@ -473,7 +490,6 @@ pub fn simple_event(
     camera: &mut Camera,
     input: &InputStates,
     edit_mode: &mut EditMode,
-    selections: &mut SelectionState,
     tabs: &mut Vec<ArmatureTab>,
     psd_armature: &mut Armature,
     copy_buffer: &mut CopyBuffer,
@@ -481,7 +497,7 @@ pub fn simple_event(
     renderer: &mut crate::Renderer,
     config: &mut crate::Config,
 ) {
-    let armature = &mut tabs[selections.sel_tab].armature;
+    let armature = &mut tabs[ui.sel_tab].armature;
 
     match event {
         Events::CamZoomIn => {
@@ -497,17 +513,17 @@ pub fn simple_event(
         Events::EditModeMove => edit_mode.current = EditModes::Move,
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
         Events::EditModeScale => edit_mode.current = EditModes::Scale,
-        Events::UnselectAll => unselect_all(selections, edit_mode, ui),
+        Events::UnselectAll => unselect_all(&mut tabs[ui.sel_tab].selections, edit_mode, ui),
         Events::Undo => {
-            undo_redo(true, &mut tabs[selections.sel_tab], selections);
+            undo_redo(true, &mut tabs[ui.sel_tab]);
             ui.changed_window_name = false;
-            let armature = &tabs[selections.sel_tab].armature;
+            let armature = &tabs[ui.sel_tab].armature;
             ui.warnings = check_warnings(armature);
         }
         Events::Redo => {
-            undo_redo(false, &mut tabs[selections.sel_tab], selections);
+            undo_redo(false, &mut tabs[ui.sel_tab]);
             ui.changed_window_name = false;
-            let armature = &tabs[selections.sel_tab].armature;
+            let armature = &tabs[ui.sel_tab].armature;
             ui.warnings = check_warnings(armature);
         }
         Events::ResetConfig => {
@@ -538,9 +554,9 @@ pub fn simple_event(
         }
         Events::RenameAnim => {
             if !ui.just_made_anim {
-                tabs[selections.sel_tab].new_undo_anim(value as usize);
+                tabs[ui.sel_tab].new_undo_anim(value as usize);
             }
-            tabs[selections.sel_tab].armature.animations[value as usize].name = str_value;
+            tabs[ui.sel_tab].armature.animations[value as usize].name = str_value;
             ui.just_made_anim = false;
         }
         Events::PointerOnUi => camera.on_ui = value == 1.,
@@ -548,15 +564,15 @@ pub fn simple_event(
             edit_mode.showing_mesh = value == 1.;
             if value != 1. {
                 ui.tracing = false;
-                selections.hovering_vert_id = -1;
-                selections.vert_ids = vec![];
+                tabs[ui.sel_tab].selections.hovering_vert_id = -1;
+                tabs[ui.sel_tab].selections.vert_ids = vec![];
             }
         }
         Events::ToggleEditingMesh => {
             edit_mode.editing_mesh = !edit_mode.editing_mesh;
 
             // unselect all verts when switching modes
-            selections.vert_ids = vec![];
+            tabs[ui.sel_tab].selections.vert_ids = vec![];
         }
         Events::ToggleSettingIkTarget => {
             edit_mode.setting_ik_target = value == 1.;
@@ -571,21 +587,19 @@ pub fn simple_event(
             }
         }
         Events::ToggleOnionLayers => edit_mode.onion_layers = value == 1.,
-        Events::DeleteIkTarget => armature.sel_bone_mut(selections).unwrap().ik_target_id = -1,
-        Events::ToggleIkFolded => {
-            armature.sel_bone_mut(&selections).unwrap().ik_folded = value == 1.
-        }
+        Events::DeleteIkTarget => tabs[ui.sel_tab].sel_bone_mut().unwrap().ik_target_id = -1,
+        Events::ToggleIkFolded => tabs[ui.sel_tab].sel_bone_mut().unwrap().ik_folded = value == 1.,
         Events::TogglePhysFolded => {
-            armature.sel_bone_mut(&selections).unwrap().phys_folded = value == 1.
+            tabs[ui.sel_tab].sel_bone_mut().unwrap().phys_folded = value == 1.
         }
         Events::ToggleIkDisabled => {
-            armature.sel_bone_mut(&selections).unwrap().ik_disabled = value == 1.
+            tabs[ui.sel_tab].sel_bone_mut().unwrap().ik_disabled = value == 1.
         }
         Events::ToggleMeshdefFolded => {
-            armature.sel_bone_mut(&selections).unwrap().meshdef_folded = value == 1.
+            tabs[ui.sel_tab].sel_bone_mut().unwrap().meshdef_folded = value == 1.
         }
         Events::ToggleEffectsFolded => {
-            armature.sel_bone_mut(&selections).unwrap().effects_folded = value == 1.
+            tabs[ui.sel_tab].sel_bone_mut().unwrap().effects_folded = value == 1.
         }
         Events::CamZoomScroll => {
             let old_zoom = camera.zoom;
@@ -595,14 +609,14 @@ pub fn simple_event(
         Events::ToggleAnimPanelOpen => {
             edit_mode.anim_open = value == 1.;
             if !edit_mode.anim_open {
-                selections.anim_frame = -1;
+                tabs[ui.sel_tab].selections.anim_frame = -1;
             }
-            for anim in &mut armature.animations {
+            for anim in &mut tabs[ui.sel_tab].armature.animations {
                 anim.elapsed = None;
             }
         }
         Events::CancelPendingTexture => {
-            _ = armature.sel_style_mut(&selections).unwrap().textures.pop()
+            _ = tabs[ui.sel_tab].sel_style_mut().unwrap().textures.pop()
         }
         Events::DeleteAnim => {
             if let Some(idx) = armature
@@ -611,15 +625,15 @@ pub fn simple_event(
                 .position(|anim| anim.id == value as i32)
             {
                 _ = armature.animations.remove(idx);
-                selections.anim = usize::MAX
+                tabs[ui.sel_tab].selections.anim = usize::MAX
             }
         }
         Events::RenameStyle => {
-            armature.sel_style_mut(&selections).unwrap().name = str_value;
+            tabs[ui.sel_tab].sel_style_mut().unwrap().name = str_value;
             ui.just_made_style = false
         }
         Events::NewArmature => {
-            unselect_all(selections, edit_mode, ui);
+            unselect_all(&mut tabs[ui.sel_tab].selections, edit_mode, ui);
             edit_mode.anim_open = false;
             camera.pos = Vec2::new(0., 0.);
             camera.zoom = 2000.;
@@ -628,8 +642,9 @@ pub fn simple_event(
             tabs.push(ArmatureTab {
                 armature: Armature::default().clone(),
                 undo_states: UndoStates::default(),
+                selections: SelectionState::default(),
             });
-            switch_to_armature(tabs.len() - 1, selections, tabs, edit_mode, ui);
+            switch_to_armature(tabs.len() - 1, tabs, ui);
         }
         Events::NewStyle => {
             let ids = armature.styles.iter().map(|set| set.id).collect();
@@ -644,7 +659,7 @@ pub fn simple_event(
         }
         Events::DeleteSelectedKeyframes => {
             for skf in &ui.selected_keyframes {
-                let keyframes = &mut armature.sel_anim_mut(&selections).unwrap().keyframes;
+                let keyframes = &mut tabs[ui.sel_tab].sel_anim_mut().unwrap().keyframes;
                 keyframes.retain(|kf| {
                     kf.frame != skf.frame || kf.element != skf.element || kf.bone_id != skf.bone_id
                 });
@@ -653,18 +668,18 @@ pub fn simple_event(
         Events::SelectBone => {
             let render = str_value == "t";
             let val = value as i32;
-            select_bone(selections, ui, armature, edit_mode, input, val, render);
+            select_bone(&mut tabs[ui.sel_tab], ui, edit_mode, input, val, render);
         }
         Events::SelectAnim => {
             let val = value as usize;
-            selections.anim = if value == f32::MAX { usize::MAX } else { val };
-            selections.anim_frame = 0;
+            tabs[ui.sel_tab].selections.anim = if value == f32::MAX { usize::MAX } else { val };
+            tabs[ui.sel_tab].selections.anim_frame = 0;
         }
         Events::SelectStyle => {
-            selections.bone_ids = vec![];
-            selections.style_id = value as i32;
+            tabs[ui.sel_tab].selections.bone_ids = vec![];
+            tabs[ui.sel_tab].selections.style_id = value as i32;
             ui.last_selected = if value as i32 == -1 { "" } else { "style" }.to_string();
-            selections.tex_ids = vec![];
+            tabs[ui.sel_tab].selections.tex_ids = vec![];
         }
         Events::OpenModal => {
             open_modal(ui, value == 1., ui.loc(&str_value));
@@ -682,21 +697,21 @@ pub fn simple_event(
 
             // delete all selected bones, if the one being deleted is also selected
             let bone_id = value as i32;
-            if selections.bone_ids.contains(&bone_id) {
-                for id in &selections.bone_ids {
+            if tabs[ui.sel_tab].selections.bone_ids.contains(&bone_id) {
+                for id in &tabs[ui.sel_tab].selections.bone_ids {
                     ids_to_delete.push(*id);
                 }
             }
 
-            tabs[selections.sel_tab].new_undo_anims();
-            tabs[selections.sel_tab]
+            tabs[ui.sel_tab].new_undo_anims();
+            tabs[ui.sel_tab]
                 .undo_states
                 .undo_actions
                 .last_mut()
                 .unwrap()
                 .continued = true;
 
-            let armature = &mut tabs[selections.sel_tab].armature;
+            let armature = &mut tabs[ui.sel_tab].armature;
             for id in ids_to_delete {
                 let bone;
                 if let Some(result) = armature.bones.iter().find(|b| b.id == id) {
@@ -742,27 +757,29 @@ pub fn simple_event(
             }
 
             // de-select bone(s) to prevent any errors
-            selections.bone_ids = vec![];
+            tabs[ui.sel_tab].selections.bone_ids = vec![];
         }
         Events::DeleteSelectedTextures => {
-            let style = &mut armature.sel_style_mut(selections).unwrap();
+            let tex_ids = tabs[ui.sel_tab].selections.tex_ids.clone();
+            let style = &mut tabs[ui.sel_tab].sel_style_mut().unwrap();
             let mut t = -1;
             style.textures.retain(|_| {
                 t += 1;
-                !selections.tex_ids.contains(&t)
+                !tex_ids.contains(&t)
             });
-            selections.tex_ids = vec![];
+            tabs[ui.sel_tab].selections.tex_ids = vec![];
         }
         Events::DeleteStyle => {
-            let styles = &mut armature.styles;
-            let idx = styles.iter().position(|s| s.id == value as i32).unwrap();
-            if selections.style_id == value as i32 {
-                selections.style_id = -1;
+            if tabs[ui.sel_tab].selections.style_id == value as i32 {
+                tabs[ui.sel_tab].selections.style_id = -1;
             }
+
+            let styles = &mut tabs[ui.sel_tab].armature.styles;
+            let idx = styles.iter().position(|s| s.id == value as i32).unwrap();
             styles.remove(idx);
         }
-        Events::CopyBone => copy_bone(copy_buffer, selections, armature, value as i32),
-        Events::PasteBone => paste_bone(copy_buffer, selections, armature, value as i32),
+        Events::CopyBone => copy_bone(copy_buffer, &mut tabs[ui.sel_tab], value as i32),
+        Events::PasteBone => paste_bone(copy_buffer, &mut tabs[ui.sel_tab], value as i32),
         Events::NewAnimation => {
             armature.new_animation();
             let idx = armature.animations.len() - 1;
@@ -778,7 +795,7 @@ pub fn simple_event(
             armature.animations.push(new_anim);
         }
         Events::SaveBone => {
-            tabs[selections.sel_tab].new_undo_bone(value as i32);
+            tabs[ui.sel_tab].new_undo_bone(value as i32);
             *ui.saving.lock().unwrap() = Saving::Autosaving;
         }
         Events::SaveEditedBone => {
@@ -790,14 +807,15 @@ pub fn simple_event(
 
             let bones = &armature.bones;
             let bone = bones.iter().find(|b| b.id == value as i32).unwrap().clone();
-            if ui.is_animating(&edit_mode, &selections) && !bone.locked {
-                tabs[selections.sel_tab].new_undo_anim(selections.anim as usize);
+            if ui.is_animating(&edit_mode, &tabs[ui.sel_tab].selections) && !bone.locked {
+                let anim = tabs[ui.sel_tab].selections.anim;
+                tabs[ui.sel_tab].new_undo_anim(anim as usize);
             } else {
                 // save all bones, if multiple were edited
-                if selections.bone_ids.len() > 0 {
-                    tabs[selections.sel_tab].new_undo_bones();
+                if tabs[ui.sel_tab].selections.bone_ids.len() > 0 {
+                    tabs[ui.sel_tab].new_undo_bones();
                 } else {
-                    tabs[selections.sel_tab].new_undo_bone(value as i32);
+                    tabs[ui.sel_tab].new_undo_bone(value as i32);
                 }
             }
             *ui.saving.lock().unwrap() = Saving::Autosaving;
@@ -807,13 +825,15 @@ pub fn simple_event(
             crate::utils::save_config(&config);
         }
         Events::SetBoneTexture => {
-            let frame = selections.anim_frame;
-            armature.set_bone_tex(value as i32, str_value.clone(), selections.anim, frame);
+            let anim = tabs[ui.sel_tab].selections.anim;
+            let frame = tabs[ui.sel_tab].selections.anim_frame;
+            tabs[ui.sel_tab]
+                .armature
+                .set_bone_tex(value as i32, str_value.clone(), anim, frame);
         }
         Events::DeleteVertex => {
-            let sel = selections;
             #[rustfmt::skip]
-            macro_rules! verts {() => { armature.sel_bone_mut(&sel).unwrap().vertices }}
+            macro_rules! verts {() => { tabs[ui.sel_tab].sel_bone_mut().unwrap().vertices }}
 
             // don't delete if there are only 4 vertices
             if verts!().len() == 4 {
@@ -825,25 +845,29 @@ pub fn simple_event(
             verts!().remove(idx);
             sort_vertices(&mut verts!());
 
-            let bone_id = armature.sel_bone(&sel).unwrap().id;
-            let tex = armature.tex_of(bone_id).unwrap();
-            let tex_img = &armature.tex_data(tex).unwrap().image;
+            let bone_id = tabs[ui.sel_tab].sel_bone().unwrap().id;
+            let tex = tabs[ui.sel_tab].armature.tex_of(bone_id).unwrap();
+            let tex_img = &tabs[ui.sel_tab].armature.tex_data(tex).unwrap().image;
 
-            let indices = triangulate(&armature.sel_bone(&sel).unwrap().vertices, &tex_img);
-            let bone = armature.sel_bone_mut(&sel).unwrap();
+            let indices = triangulate(&tabs[ui.sel_tab].sel_bone().unwrap().vertices, &tex_img);
+            let bone = tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone.indices = indices;
 
             remove_blacklisted_tris(&mut bone.indices, &bone.vertices, &mut bone.blacklist);
             cleanup_vertices(bone);
 
             // remove vertex from selected IDs
-            let idx = sel.vert_ids.iter().position(|id| (*id) == value as usize);
+            let idx = tabs[ui.sel_tab]
+                .selections
+                .vert_ids
+                .iter()
+                .position(|id| (*id) == value as usize);
             if idx != None {
-                sel.vert_ids.remove(idx.unwrap());
+                tabs[ui.sel_tab].selections.vert_ids.remove(idx.unwrap());
             }
 
             // remove this vert from its binds
-            'bind: for bind in &mut armature.sel_bone_mut(&sel).unwrap().binds {
+            'bind: for bind in &mut tabs[ui.sel_tab].sel_bone_mut().unwrap().binds {
                 for v in 0..bind.verts.len() {
                     if bind.verts[v].id == value as i32 {
                         bind.verts.remove(v);
@@ -854,7 +878,7 @@ pub fn simple_event(
         }
         Events::DragVertex => {
             let bones = &renderer.temp_arm.bones;
-            let sel_id = armature.sel_bone(selections).unwrap().id;
+            let sel_id = tabs[ui.sel_tab].sel_bone().unwrap().id;
             let bone = bones.iter().find(|b| b.id == sel_id).clone().unwrap();
             let temp_vert = bone.vertices.iter().find(|v| v.id == value as u32);
             if bone.vertices.len() == 0 || temp_vert == None {
@@ -899,17 +923,17 @@ pub fn simple_event(
 
             let mouse_vel = renderer::mouse_vel(&input, &camera);
             let zoom = camera.zoom;
-            let og_bone = &mut armature.sel_bone_mut(&selections).unwrap();
+            let og_bone = &mut tabs[ui.sel_tab].sel_bone_mut().unwrap();
             og_bone.set_editing_vertices(true);
             let vert_mut = og_bone.vertices.iter_mut().find(|v| v.id == value as u32);
             vert_mut.unwrap().pos -= utils::rotate(&(mouse_vel * zoom), -total_rot) / scale;
         }
         Events::ClickVertex => {
-            if selections.bind == -1 {
+            if tabs[ui.sel_tab].selections.bind == -1 {
                 return;
             }
-            let bone_mut = &mut armature.sel_bone_mut(&selections).unwrap();
-            let idx = selections.bind as usize;
+            let idx = tabs[ui.sel_tab].selections.bind as usize;
+            let bone_mut = &mut tabs[ui.sel_tab].sel_bone_mut().unwrap();
             let vert_id = bone_mut.vertices[value as usize].id;
             let bind = &bone_mut.binds[idx];
 
@@ -939,7 +963,7 @@ pub fn simple_event(
             );
         }
         Events::DeleteTriangle => {
-            let bone = &mut armature.sel_bone_mut(&selections).unwrap();
+            let bone = &mut tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone.blacklist
                 .push(bone.vertices[bone.indices[value as usize + 0] as usize].id);
             bone.blacklist
@@ -950,27 +974,25 @@ pub fn simple_event(
         }
         Events::NewVertex => {
             // remove drag vertex action, since it's always triggered
-            tabs[selections.sel_tab].undo_states.undo_actions.pop();
-            tabs[selections.sel_tab].new_undo_bone(selections.sel_bone());
-
-            let sel = &selections;
+            tabs[ui.sel_tab].undo_states.undo_actions.pop();
+            let sel_bone = tabs[ui.sel_tab].selections.sel_bone();
+            tabs[ui.sel_tab].new_undo_bone(sel_bone);
 
             // give unique ID to vertex
-            let armature = &mut tabs[selections.sel_tab].armature;
-            let bone_verts = &mut armature.sel_bone_mut(sel).unwrap().vertices;
+            let bone_verts = &mut tabs[ui.sel_tab].sel_bone_mut().unwrap().vertices;
             bone_verts.push(renderer.new_vert.unwrap());
             let ids: Vec<i32> = bone_verts.iter().map(|v| v.id as i32).collect();
             bone_verts.last_mut().unwrap().id = generate_id(ids) as u32;
 
             // add vertex to mesh
-            sort_vertices(&mut armature.sel_bone_mut(sel).unwrap().vertices);
+            sort_vertices(&mut tabs[ui.sel_tab].sel_bone_mut().unwrap().vertices);
 
-            let bone_id = armature.sel_bone(&sel).unwrap().id;
-            let tex = armature.tex_of(bone_id).unwrap();
-            let tex_img = &armature.tex_data(tex).unwrap().image;
-            let indices = triangulate(&armature.sel_bone(sel).unwrap().vertices, &tex_img);
+            let bone_id = tabs[ui.sel_tab].sel_bone().unwrap().id;
+            let tex = tabs[ui.sel_tab].armature.tex_of(bone_id).unwrap();
+            let tex_img = &tabs[ui.sel_tab].armature.tex_data(tex).unwrap().image;
+            let indices = triangulate(&tabs[ui.sel_tab].sel_bone().unwrap().vertices, &tex_img);
 
-            let bone_mut = armature.sel_bone_mut(sel).unwrap();
+            let bone_mut = tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone_mut.indices = indices;
 
             remove_blacklisted_tris(
@@ -984,7 +1006,7 @@ pub fn simple_event(
             bone_mut.verts_edited = true;
         }
         Events::AdjustKeyframesByFPS => {
-            let anim_mut = armature.sel_anim_mut(selections).unwrap();
+            let anim_mut = tabs[ui.sel_tab].sel_anim_mut().unwrap();
 
             let mut old_unique_keyframes: Vec<i32> =
                 anim_mut.keyframes.iter().map(|kf| kf.frame).collect();
@@ -1010,64 +1032,69 @@ pub fn simple_event(
             }
         }
         Events::PasteKeyframesOnFrame => {
-            paste_keyframes_on_frame(copy_buffer, armature, selections, value as i32)
+            paste_keyframes_on_frame(copy_buffer, &mut tabs[ui.sel_tab], value as i32)
         }
         Events::DeleteKeyframesByFrame => {
-            let anim = armature.sel_anim_mut(&selections).unwrap();
+            let anim = tabs[ui.sel_tab].sel_anim_mut().unwrap();
             anim.keyframes.retain(|kf| kf.frame != value as i32);
         }
         Events::ResetVertices => {
-            let sel_bone = armature.sel_bone(&selections).unwrap().clone();
-            let tex_size = armature.tex_of(sel_bone.id).unwrap().size.clone();
+            let sel_bone = tabs[ui.sel_tab].sel_bone().unwrap().clone();
+            let tex_size = tabs[ui.sel_tab]
+                .armature
+                .tex_of(sel_bone.id)
+                .unwrap()
+                .size
+                .clone();
             let (verts, indices) = renderer::create_tex_rect(&tex_size);
-            let bone = armature.sel_bone_mut(&selections).unwrap();
-            selections.vert_ids = vec![];
+            tabs[ui.sel_tab].selections.vert_ids = vec![];
+            let bone = tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone.vertices = verts;
             bone.indices = indices;
             bone.binds = vec![];
             bone.set_editing_vertices(false);
-            selections.bind = -1;
+            tabs[ui.sel_tab].selections.bind = -1;
         }
         Events::SelectBind => {
             if value == -3. {
-                selections.bind = -1;
+                tabs[ui.sel_tab].selections.bind = -1;
             } else if value == -2. {
-                let binds = &mut armature.sel_bone_mut(&selections).unwrap().binds;
+                let binds = &mut tabs[ui.sel_tab].sel_bone_mut().unwrap().binds;
                 binds.push(BoneBind {
                     bone_id: -1,
                     ..Default::default()
                 });
-                selections.bind = binds.len() as i32 - 1;
+                tabs[ui.sel_tab].selections.bind = binds.len() as i32 - 1;
             } else if value != -1. {
-                selections.bind = value as i32;
+                tabs[ui.sel_tab].selections.bind = value as i32;
             }
         }
         Events::CenterBoneVerts => {
-            let verts = &mut armature.sel_bone_mut(&selections).unwrap().vertices;
+            let verts = &mut tabs[ui.sel_tab].sel_bone_mut().unwrap().vertices;
             center_verts(verts)
         }
         Events::TraceBoneVerts => {
-            let bone = armature.sel_bone(&selections).unwrap().clone();
-            let tex = &armature.tex_of(bone.id).unwrap();
-            let tex_data = &armature.tex_data;
+            let bone = tabs[ui.sel_tab].sel_bone().unwrap().clone();
+            let tex = &tabs[ui.sel_tab].armature.tex_of(bone.id).unwrap();
+            let tex_data = &tabs[ui.sel_tab].armature.tex_data;
             let data = tex_data.iter().find(|d| tex.data_id == d.id).unwrap();
             let (verts, indices) = trace_mesh(&data.image, ui.tracing_gap, ui.tracing_padding);
             if verts.len() < 4 || indices.len() < 6 {
                 open_modal(ui, false, ui.loc("tracing_high_gap"));
                 return;
             }
-            let bone = &mut armature.sel_bone_mut(&selections).unwrap();
-            selections.vert_ids = vec![];
+            tabs[ui.sel_tab].selections.vert_ids = vec![];
+            let bone = &mut tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone.vertices = verts;
             bone.indices = indices;
             bone.binds = vec![];
             bone.blacklist = vec![];
             bone.set_editing_vertices(true);
             cleanup_vertices(bone);
-            selections.bind = -1;
+            tabs[ui.sel_tab].selections.bind = -1;
         }
         Events::RenameTex => {
-            let style = armature.sel_style_mut(&selections);
+            let style = tabs[ui.sel_tab].sel_style_mut();
             if style == None {
                 return;
             }
@@ -1086,7 +1113,7 @@ pub fn simple_event(
 
                 if !config.keep_tex_str {
                     // change all bone tex names to point to the new one
-                    for bone in &mut armature.bones {
+                    for bone in &mut tabs[ui.sel_tab].armature.bones {
                         if bone.tex != "" && bone.tex == og_name {
                             bone.tex = trimmed.clone();
                         }
@@ -1094,7 +1121,7 @@ pub fn simple_event(
                 }
             }
 
-            ui.warnings = check_warnings(armature);
+            ui.warnings = check_warnings(&tabs[ui.sel_tab].armature);
         }
         Events::OpenFileErrModal => {
             open_modal(ui, false, ui.loc("import_err") + &str_value);
@@ -1127,7 +1154,8 @@ pub fn simple_event(
             copy_selected_keyframes(copy_buffer, ui);
         }
         Events::SaveAnimation => {
-            tabs[selections.sel_tab].new_undo_anim(selections.anim as usize);
+            let anim = tabs[ui.sel_tab].selections.anim;
+            tabs[ui.sel_tab].new_undo_anim(anim as usize);
         }
         Events::SetTemporaryEditMode => {
             if value == 3. {
@@ -1172,50 +1200,54 @@ pub fn simple_event(
             bone.zindex += 1;
         }
         Events::SetRotResistance => {
-            let bone = armature.sel_bone_mut(selections).unwrap();
+            let bone = tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone.phys_sway = value;
             if value == 0. {
                 let mut children = vec![];
-                let bone = armature.sel_bone(selections).unwrap();
-                get_all_children(&armature.bones, &mut children, bone);
+                let bone = tabs[ui.sel_tab].sel_bone().unwrap();
+                get_all_children(&tabs[ui.sel_tab].armature.bones, &mut children, bone);
                 for child in children {
-                    if child.parent_id != armature.sel_bone(selections).unwrap().id {
+                    if child.parent_id != tabs[ui.sel_tab].sel_bone().unwrap().id {
                         continue;
                     }
-                    let bones = &mut armature.bones;
-                    let bone = bones.iter_mut().find(|b| b.id == child.id).unwrap();
+                    let bone = tabs[ui.sel_tab]
+                        .armature
+                        .bones
+                        .iter_mut()
+                        .find(|b| b.id == child.id)
+                        .unwrap();
                     bone.pos.y = 0.;
                 }
             }
         }
         Events::SetPosDamping => {
-            let bone = armature.sel_bone_mut(selections).unwrap();
+            let bone = tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone.phys_pos_damping = value;
         }
         Events::SetScaleDamping => {
-            let bone = armature.sel_bone_mut(selections).unwrap();
+            let bone = tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone.phys_scale_damping = value;
         }
         Events::SetRotDamping => {
-            let bone = armature.sel_bone_mut(selections).unwrap();
+            let bone = tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone.phys_rot_damping = value;
         }
         Events::SetRotBounce => {
-            let bone = armature.sel_bone_mut(selections).unwrap();
+            let bone = tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone.phys_rot_bounce = (value).max(0.).min(1.);
         }
         Events::SetPosRatio => {
-            let bone = armature.sel_bone_mut(selections).unwrap();
+            let bone = tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone.phys_pos_ratio = (value).max(-1.).min(1.);
         }
         Events::SetScaleRatio => {
-            let bone = armature.sel_bone_mut(selections).unwrap();
+            let bone = tabs[ui.sel_tab].sel_bone_mut().unwrap();
             bone.phys_scale_ratio = (value).max(-1.).min(1.);
         }
-        Events::SetHoveringVertId => selections.hovering_vert_id = value as i32,
-        Events::SetHoveringTri => selections.hovering_tri_dur = value as i32,
-        Events::SetHoveringBoneId => selections.hovering_bone_id = value as i32,
-        Events::SetHoveringLine => selections.hovering_line_dur = value as i32,
+        Events::SetHoveringVertId => tabs[ui.sel_tab].selections.hovering_vert_id = value as i32,
+        Events::SetHoveringTri => tabs[ui.sel_tab].selections.hovering_tri_dur = value as i32,
+        Events::SetHoveringBoneId => tabs[ui.sel_tab].selections.hovering_bone_id = value as i32,
+        Events::SetHoveringLine => tabs[ui.sel_tab].selections.hovering_line_dur = value as i32,
         Events::ImportPsdArmature => {
             armature.bones = psd_armature.bones.clone();
             armature.styles = psd_armature.styles.clone();
@@ -1228,33 +1260,50 @@ pub fn simple_event(
             let id = bones.iter().find(|b| b.id == value as i32).unwrap().id;
             let mut bones_to_copy = vec![id];
 
-            if selections.bone_ids.len() > 1 {
-                bones_to_copy = selections.bone_ids.clone();
+            if tabs[ui.sel_tab].selections.bone_ids.len() > 1 {
+                bones_to_copy = tabs[ui.sel_tab].selections.bone_ids.clone();
             }
 
-            let (parent, _) = armature.new_bone(bones_to_copy[0]);
+            let (parent, _) = tabs[ui.sel_tab].armature.new_bone(bones_to_copy[0]);
 
             // move new bone(s) above target
-            drag_bone(armature, bones_to_copy[0], &vec![parent.id], true);
+            drag_bone(
+                &mut tabs[ui.sel_tab].armature,
+                bones_to_copy[0],
+                &vec![parent.id],
+                true,
+            );
 
             // set targets' parent as new bone
             for bone_id in &bones_to_copy {
-                let bone = armature.bones.iter().find(|b| b.id == *bone_id);
+                let bone = tabs[ui.sel_tab]
+                    .armature
+                    .bones
+                    .iter()
+                    .find(|b| b.id == *bone_id);
                 if bone == None || bones_to_copy.contains(&bone.unwrap().parent_id) {
                     continue;
                 }
-                armature.find_bone_mut(*bone_id).unwrap().parent_id = parent.id;
+                tabs[ui.sel_tab]
+                    .armature
+                    .find_bone_mut(*bone_id)
+                    .unwrap()
+                    .parent_id = parent.id;
             }
 
             // activate renaming for new bone
-            armature.find_bone_mut(parent.id).unwrap().name = "".to_string();
+            tabs[ui.sel_tab]
+                .armature
+                .find_bone_mut(parent.id)
+                .unwrap()
+                .name = "".to_string();
             ui.rename_id = format!("bone_{}", parent.id);
 
             // mark this bone as selected, so focus isn't taken away from bone name input
             ui.prev_selected_bone_id = parent.id;
 
             // select new parent
-            selections.bone_ids = vec![parent.id];
+            tabs[ui.sel_tab].selections.bone_ids = vec![parent.id];
         }
         Events::MoveSelectedKeyframes => {
             if value as i32 == ui.dragged_keyframe.frame
@@ -1265,10 +1314,10 @@ pub fn simple_event(
                 return;
             }
 
-            tabs[selections.sel_tab].new_undo_anim(selections.anim as usize);
+            let anim = tabs[ui.sel_tab].selections.anim;
+            tabs[ui.sel_tab].new_undo_anim(anim as usize);
 
-            let armature = &mut tabs[selections.sel_tab].armature;
-            let sel_anim = &mut armature.sel_anim_mut(&selections).unwrap();
+            let sel_anim = &mut tabs[ui.sel_tab].sel_anim_mut().unwrap();
 
             for skf in &mut ui.selected_keyframes {
                 // get difference between this frame and the frame being dragged
@@ -1295,24 +1344,24 @@ pub fn simple_event(
         Events::GlobalCopy => match ui.last_selected.as_str() {
             "keyframe" => copy_selected_keyframes(copy_buffer, ui),
             "bone" => {
-                let sbi = &selections.bone_ids;
+                let sbi = &tabs[ui.sel_tab].selections.bone_ids;
                 let bone_id = if sbi.len() > 0 { sbi[0] } else { i32::MAX };
-                copy_bone(copy_buffer, selections, armature, bone_id)
+                copy_bone(copy_buffer, &mut tabs[ui.sel_tab], bone_id)
             }
             _ => {}
         },
         Events::GlobalPaste => match ui.last_selected.as_str() {
             "keyframe" => {
-                tabs[selections.sel_tab].new_undo_anim(selections.anim as usize);
-                let armature = &mut tabs[selections.sel_tab].armature;
-                paste_keyframes_on_frame(copy_buffer, armature, selections, selections.anim_frame);
+                let anim = tabs[ui.sel_tab].selections.anim;
+                tabs[ui.sel_tab].new_undo_anim(anim as usize);
+                let frame = tabs[ui.sel_tab].selections.anim_frame;
+                paste_keyframes_on_frame(copy_buffer, &mut tabs[ui.sel_tab], frame);
             }
             "bone" => {
-                tabs[selections.sel_tab].new_undo_bones();
-                let sbi = &selections.bone_ids;
+                tabs[ui.sel_tab].new_undo_bones();
+                let sbi = &tabs[ui.sel_tab].selections.bone_ids;
                 let bone_id = if sbi.len() > 0 { sbi[0] } else { i32::MAX };
-                let armature = &mut tabs[selections.sel_tab].armature;
-                paste_bone(copy_buffer, selections, armature, bone_id);
+                paste_bone(copy_buffer, &mut tabs[ui.sel_tab], bone_id);
             }
             _ => {}
         },
@@ -1333,7 +1382,7 @@ pub fn simple_event(
         }
         Events::AdjustKeyframesBySpeed => {
             if value != 0. {
-                for kfs in &mut armature.sel_anim_mut(selections).unwrap().keyframes {
+                for kfs in &mut tabs[ui.sel_tab].sel_anim_mut().unwrap().keyframes {
                     kfs.frame = (kfs.frame as f32 / value).round() as i32;
                 }
             }
@@ -1354,18 +1403,19 @@ pub fn simple_event(
                     weight: 1.,
                 }],
             };
-            armature.sel_bone_mut(selections).unwrap().binds.push(bind);
+
+            tabs[ui.sel_tab].sel_bone_mut().unwrap().binds.push(bind);
 
             // add new bone to temp_bones for adjusting later
-            let bone = armature.bones.last().unwrap().clone();
+            let bone = tabs[ui.sel_tab].armature.bones.last().unwrap().clone();
             renderer.temp_arm.bones.push(bone);
 
-            let sel_bone_id = armature.sel_bone(selections).unwrap().id;
+            let sel_bone_id = tabs[ui.sel_tab].sel_bone().unwrap().id;
 
             // adjust vertex pos so it stays with new bind
-            let binds = &armature.sel_bone(selections).unwrap().binds;
+            let binds = &tabs[ui.sel_tab].sel_bone().unwrap().binds;
             let bind = binds.last().unwrap().clone();
-            let vertices = &mut armature.sel_bone_mut(selections).unwrap().vertices;
+            let vertices = &mut tabs[ui.sel_tab].sel_bone_mut().unwrap().vertices;
             let vert_id = value as u32;
             let vert = &mut vertices.iter_mut().find(|v| v.id == vert_id).unwrap();
             let temp_bones = &renderer.temp_arm.bones;
@@ -1373,30 +1423,36 @@ pub fn simple_event(
             adjust_vert_by_bind(vert, true, &bind, &renderer.temp_arm.bones, temp_bone);
 
             // set bone as child of mesh
-            drag_bone(armature, selections.sel_bone(), &vec![bone_id], false);
+            let sel_bone = tabs[ui.sel_tab].selections.sel_bone();
+            drag_bone(
+                &mut tabs[ui.sel_tab].armature,
+                sel_bone,
+                &vec![bone_id],
+                false,
+            );
         }
         Events::NewBone => {
             // set target bone as either one selected via the event, or currently selected one
             let target_id = if value != -1. {
                 value as i32
-            } else if armature.sel_bone(&selections) != None {
-                armature.sel_bone(&selections).unwrap().id
+            } else if tabs[ui.sel_tab].sel_bone() != None {
+                tabs[ui.sel_tab].sel_bone().unwrap().id
             } else {
                 -1
             };
 
             // reset selected bones, so that only new bone will be selected later
-            selections.bone_ids = vec![];
+            tabs[ui.sel_tab].selections.bone_ids = vec![];
 
             // create new bone
             let idx;
-            (_, idx) = armature.new_bone(target_id);
-            armature.bones[idx].name = "".to_string();
-            let bone_id = armature.bones[idx].id;
+            (_, idx) = tabs[ui.sel_tab].armature.new_bone(target_id);
+            tabs[ui.sel_tab].armature.bones[idx].name = "".to_string();
+            let bone_id = tabs[ui.sel_tab].armature.bones[idx].id;
 
             // don't select new bone until user has done it at least once this session
             if ui.selected_bone_first_time {
-                select_bone(selections, ui, armature, edit_mode, input, bone_id, false);
+                select_bone(&mut tabs[ui.sel_tab], ui, edit_mode, input, bone_id, false);
             }
 
             ui.rename_id = "bone_".to_string() + &bone_id.to_string();
@@ -1407,15 +1463,16 @@ pub fn simple_event(
         Events::SetArmatureSplit => edit_mode.armature_split = value,
         Events::SelectAllTexturedBones => {
             let bones = &armature.bones;
-            selections.bone_ids = bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
+            tabs[ui.sel_tab].selections.bone_ids =
+                bones.iter().filter(|b| b.tex != "").map(|b| b.id).collect();
         }
         Events::SwitchToArmature => {
-            switch_to_armature(value as usize, selections, tabs, edit_mode, ui);
+            switch_to_armature(value as usize, tabs, ui);
         }
         Events::RemoveArmatureInTab => {
             tabs.remove(value as usize);
-            if selections.sel_tab > tabs.len() - 1 {
-                switch_to_armature(selections.sel_tab - 1, selections, tabs, edit_mode, ui);
+            if ui.sel_tab > tabs.len() - 1 {
+                switch_to_armature(ui.sel_tab - 1, tabs, ui);
             }
         }
         _ => {}
@@ -1453,9 +1510,8 @@ pub fn open_modal(ui: &mut crate::Ui, forced: bool, headline: String) {
 }
 
 fn select_bone(
-    sel: &mut SelectionState,
+    tab: &mut ArmatureTab,
     ui: &mut crate::Ui,
-    armature: &mut Armature,
     edit_mode: &mut EditMode,
     input: &InputStates,
     id: i32,
@@ -1469,14 +1525,14 @@ fn select_bone(
     edit_mode.editing_mesh = false;
     edit_mode.sel_time = 0.;
     edit_mode.temporary = None;
-    sel.vert_ids = vec![];
+    tab.selections.vert_ids = vec![];
     ui.selected_bone_first_time = true;
     edit_mode.editing_pivot = false;
-    sel.style_id = -1;
+    tab.selections.style_id = -1;
 
     if id == -1 {
-        sel.bone_ids = vec![];
-        sel.bind = -1;
+        tab.selections.bone_ids = vec![];
+        tab.selections.bind = -1;
         edit_mode.setting_ik_target = false;
         edit_mode.setting_bind_bone = false;
         return;
@@ -1484,10 +1540,13 @@ fn select_bone(
 
     // rename bone if already selected and in right-side panel
     let holding_mods = input.holding_mod || input.holding_shift;
-    if sel.sel_bone() == id as i32 && !from_renderer && ui.last_selected == "bone" && !holding_mods
+    if tab.selections.sel_bone() == id as i32
+        && !from_renderer
+        && ui.last_selected == "bone"
+        && !holding_mods
     {
-        ui.rename_id = "bone_".to_string() + &sel.bone_ids[0].to_string().clone();
-        ui.edit_value = Some(armature.sel_bone(&sel).unwrap().name.clone());
+        ui.rename_id = "bone_".to_string() + &tab.selections.bone_ids[0].to_string().clone();
+        ui.edit_value = Some(tab.armature.sel_bone(&tab.selections).unwrap().name.clone());
         return;
     }
 
@@ -1495,18 +1554,21 @@ fn select_bone(
 
     // set this bone as IK target if in IK target mode
     if edit_mode.setting_ik_target {
-        armature.sel_bone_mut(&sel).unwrap().ik_target_id =
-            armature.bones.iter().find(|b| b.id == id).unwrap().id;
+        tab.armature
+            .sel_bone_mut(&tab.selections)
+            .unwrap()
+            .ik_target_id = tab.armature.bones.iter().find(|b| b.id == id).unwrap().id;
         edit_mode.setting_ik_target = false;
         return;
     }
 
     // set this bone as bind if in bind mode
     if edit_mode.setting_bind_bone {
-        let id = armature.bones.iter().find(|b| b.id == id).unwrap().id;
-        if let Some(bind) = armature
-            .sel_bone_mut(&sel)
-            .and_then(|bone| bone.binds.get_mut(sel.bind as usize))
+        let id = tab.armature.bones.iter().find(|b| b.id == id).unwrap().id;
+        if let Some(bind) = tab
+            .armature
+            .sel_bone_mut(&tab.selections)
+            .and_then(|bone| bone.binds.get_mut(tab.selections.bind as usize))
         {
             bind.bone_id = id;
         }
@@ -1514,8 +1576,8 @@ fn select_bone(
         return;
     }
 
-    sel.bind = -1;
-    let bone_id = armature.bones.iter().find(|b| b.id == id).unwrap().id;
+    tab.selections.bind = -1;
+    let bone_id = tab.armature.bones.iter().find(|b| b.id == id).unwrap().id;
     // scroll to this bone in keyframe editor
     if let Some(bone) = ui.bone_tops.tops.iter().find(|b| b.id == bone_id) {
         ui.timeline_offset.y =
@@ -1524,49 +1586,67 @@ fn select_bone(
 
     // select only this bone if not holding modifiers
     if !holding_mods {
-        sel.bone_ids = vec![bone_id];
+        tab.selections.bone_ids = vec![bone_id];
         edit_mode.showing_mesh = false;
 
         // unfold this bone's parents to reveal it in the hierarchy
-        let parents = armature.get_all_parents(false, armature.sel_bone(sel).unwrap().id);
-        let bones = &mut armature.bones;
+        let parents = tab
+            .armature
+            .get_all_parents(false, tab.sel_bone().unwrap().id);
+        let bones = &mut tab.armature.bones;
         for p in parents {
             bones.iter_mut().find(|b| b.id == p.id).unwrap().folded = false;
         }
-    } else if sel.bone_ids.contains(&bone_id) {
+    } else if tab.selections.bone_ids.contains(&bone_id) {
         // unselect bone if already part of selection
-        sel.bone_ids.retain(|id| *id != bone_id);
+        tab.selections.bone_ids.retain(|id| *id != bone_id);
     } else {
         // add bone to selection (holding cmd/shift)
-        if sel.bone_ids.len() == 0 {
-            sel.bone_ids = vec![bone_id];
+        if tab.selections.bone_ids.len() == 0 {
+            tab.selections.bone_ids = vec![bone_id];
         }
         if input.holding_mod {
             let id = bone_id;
-            sel.bone_ids.push(id);
+            tab.selections.bone_ids.push(id);
         } else {
-            let bones = &armature.bones;
-            let mut first = bones.iter().position(|b| b.id == sel.sel_bone()).unwrap();
+            let bones = &tab.armature.bones;
+            let mut first = bones
+                .iter()
+                .position(|b| b.id == tab.selections.sel_bone())
+                .unwrap();
             let mut second = bones.iter().position(|b| b.id == id).unwrap();
             if first > second {
                 first = bones.iter().position(|b| b.id == id).unwrap();
-                second = bones.iter().position(|b| b.id == sel.sel_bone()).unwrap();
+                second = bones
+                    .iter()
+                    .position(|b| b.id == tab.selections.sel_bone())
+                    .unwrap();
             }
             for i in first..second as usize + 1 {
-                let bone = &armature.bones[i];
-                sel.bone_ids.push(bone.id);
+                let bone = &tab.armature.bones[i];
+                tab.selections.bone_ids.push(bone.id);
             }
         }
 
         // sort bone IDs by their order in the hierarchy
-        sel.bone_ids.sort_by(|a, b| {
-            let a_pos = armature.bones.iter().position(|bo| bo.id == *a).unwrap();
-            let b_pos = armature.bones.iter().position(|bo| bo.id == *b).unwrap();
+        tab.selections.bone_ids.sort_by(|a, b| {
+            let a_pos = tab
+                .armature
+                .bones
+                .iter()
+                .position(|bo| bo.id == *a)
+                .unwrap();
+            let b_pos = tab
+                .armature
+                .bones
+                .iter()
+                .position(|bo| bo.id == *b)
+                .unwrap();
             a_pos.cmp(&b_pos)
         });
 
         // remove any duplicate IDs
-        sel.bone_ids.dedup();
+        tab.selections.bone_ids.dedup();
     }
 }
 
@@ -1583,7 +1663,7 @@ fn unselect_all(selections: &mut SelectionState, edit_mode: &mut EditMode, ui: &
     ui.last_selected = "".to_string();
 }
 
-pub fn undo_redo(undo: bool, tab: &mut ArmatureTab, selections: &mut SelectionState) {
+pub fn undo_redo(undo: bool, tab: &mut ArmatureTab) {
     let action: Action;
     if undo {
         if tab.undo_states.undo_actions.last() == None {
@@ -1608,7 +1688,7 @@ pub fn undo_redo(undo: bool, tab: &mut ArmatureTab, selections: &mut SelectionSt
             *bone = action.bones[0].clone();
             // remove selected vertices that no longer exist
             let vert_ids: Vec<usize> = bone.vertices.iter().map(|v| v.id as usize).collect();
-            selections.vert_ids.retain(|id| vert_ids.contains(id));
+            tab.selections.vert_ids.retain(|id| vert_ids.contains(id));
         }
         ActionType::Bones => {
             new_action.bones = tab.armature.bones.clone();
@@ -1625,8 +1705,8 @@ pub fn undo_redo(undo: bool, tab: &mut ArmatureTab, selections: &mut SelectionSt
             new_action.animations = tab.armature.animations.clone();
             tab.armature.animations = action.animations.clone();
             let animations = &mut tab.armature.animations;
-            if animations.len() == 0 || selections.anim > animations.len() - 1 {
-                selections.anim = usize::MAX;
+            if animations.len() == 0 || tab.selections.anim > animations.len() - 1 {
+                tab.selections.anim = usize::MAX;
             }
         }
         ActionType::Style => {
@@ -1639,8 +1719,8 @@ pub fn undo_redo(undo: bool, tab: &mut ArmatureTab, selections: &mut SelectionSt
             new_action.styles = tab.armature.styles.clone();
             tab.armature.styles = action.styles.clone();
             let style_ids: Vec<i32> = tab.armature.styles.iter().map(|s| s.id).collect();
-            if !style_ids.contains(&selections.style_id) {
-                selections.style_id = -1;
+            if !style_ids.contains(&tab.selections.style_id) {
+                tab.selections.style_id = -1;
             }
         }
         ActionType::Armature => {
@@ -1677,7 +1757,7 @@ pub fn undo_redo(undo: bool, tab: &mut ArmatureTab, selections: &mut SelectionSt
 
     // actions tagged with `continue` are part of an action chain
     if action.continued {
-        undo_redo(undo, tab, selections);
+        undo_redo(undo, tab);
     }
 }
 
@@ -2217,12 +2297,7 @@ pub fn remove_blacklisted_tris(
     }
 }
 
-pub fn copy_bone(
-    copy_buffer: &mut CopyBuffer,
-    selections: &mut SelectionState,
-    armature: &mut Armature,
-    bone_id: i32,
-) {
+pub fn copy_bone(copy_buffer: &mut CopyBuffer, tab: &mut ArmatureTab, bone_id: i32) {
     copy_buffer.bones = vec![];
 
     // ignore copying if there isn't a target bone
@@ -2232,32 +2307,27 @@ pub fn copy_bone(
 
     // either get the bone ID from event, or selected bones if more than 1
     let mut bones_to_copy = vec![bone_id];
-    if selections.bone_ids.len() > 1 {
-        bones_to_copy = selections.bone_ids.clone();
+    if tab.selections.bone_ids.len() > 1 {
+        bones_to_copy = tab.selections.bone_ids.clone();
     }
 
     // add appropriate bones to copy buffer
     for bone_id in &bones_to_copy {
-        let bone = armature.bones.iter().find(|b| b.id == *bone_id);
+        let bone = tab.armature.bones.iter().find(|b| b.id == *bone_id);
         let not_root = bones_to_copy.contains(&bone.unwrap().parent_id);
         if bone == None || not_root {
             continue;
         }
         let mut bones = vec![];
-        armature_window::get_all_children(&armature.bones, &mut bones, bone.unwrap());
+        armature_window::get_all_children(&tab.armature.bones, &mut bones, bone.unwrap());
         bones.insert(0, bone.unwrap().clone());
         copy_buffer.bones.extend_from_slice(&bones);
     }
 }
 
-fn paste_bone(
-    copy_buffer: &mut CopyBuffer,
-    selections: &mut SelectionState,
-    armature: &mut Armature,
-    pasted_id: i32,
-) {
+fn paste_bone(copy_buffer: &mut CopyBuffer, tab: &mut ArmatureTab, pasted_id: i32) {
     // determine which id to give the new bone(s), based on the highest current id
-    let ids: Vec<i32> = armature.bones.iter().map(|bone| bone.id).collect();
+    let ids: Vec<i32> = tab.armature.bones.iter().map(|bone| bone.id).collect();
     let mut highest_id = 0;
     for id in ids {
         highest_id = id.max(highest_id);
@@ -2268,7 +2338,7 @@ fn paste_bone(
     let mut id_refs: HashMap<i32, i32> = HashMap::new();
 
     let mut highest_ik_family_id = 0;
-    for bone in &armature.bones {
+    for bone in &tab.armature.bones {
         highest_ik_family_id = bone.ik_family_id.max(highest_ik_family_id);
     }
 
@@ -2289,9 +2359,9 @@ fn paste_bone(
         if bone.parent_id != -1 && id_refs.get(&bone.parent_id) != None {
             bone.parent_id = *id_refs.get(&bone.parent_id).unwrap();
         } else if pasted_id != i32::MAX {
-            let bones = &armature.bones;
+            let bones = &tab.armature.bones;
             insert_idx = bones.iter().position(|b| b.id == pasted_id).unwrap();
-            bone.parent_id = armature.bones[insert_idx].parent_id;
+            bone.parent_id = tab.armature.bones[insert_idx].parent_id;
         } else {
             bone.parent_id = -1;
         }
@@ -2309,10 +2379,10 @@ fn paste_bone(
 
     // insert pasted bones on proper position of the bone array
     if insert_idx == usize::MAX {
-        armature.bones.extend_from_slice(&copy_buffer.bones);
+        tab.armature.bones.extend_from_slice(&copy_buffer.bones);
     } else {
         for bone in &copy_buffer.bones {
-            armature.bones.insert(insert_idx, bone.clone());
+            tab.armature.bones.insert(insert_idx, bone.clone());
             insert_idx += 1;
         }
     }
@@ -2322,7 +2392,7 @@ fn paste_bone(
     }
 
     // select pasted bones
-    selections.bone_ids = id_refs.into_values().collect();
+    tab.selections.bone_ids = id_refs.into_values().collect();
 }
 
 fn copy_selected_keyframes(copy_buffer: &mut CopyBuffer, ui: &mut crate::Ui) {
@@ -2330,12 +2400,7 @@ fn copy_selected_keyframes(copy_buffer: &mut CopyBuffer, ui: &mut crate::Ui) {
     copy_buffer.keyframes = ui.selected_keyframes.clone();
 }
 
-fn paste_keyframes_on_frame(
-    copy_buffer: &mut CopyBuffer,
-    armature: &mut Armature,
-    selections: &mut SelectionState,
-    frame: i32,
-) {
+fn paste_keyframes_on_frame(copy_buffer: &mut CopyBuffer, tab: &mut ArmatureTab, frame: i32) {
     if frame < 0 || frame == i32::MAX || copy_buffer.keyframes.len() == 0 {
         return;
     }
@@ -2344,7 +2409,7 @@ fn paste_keyframes_on_frame(
     let base_frame = copy_buffer.keyframes[0].frame;
 
     let mut buffer_frames = copy_buffer.keyframes.clone();
-    let anim = &mut armature.sel_anim_mut(&selections).unwrap();
+    let anim = &mut tab.armature.sel_anim_mut(&tab.selections).unwrap();
 
     // set copy buffer to new frames, for the retain() later
     for kf in &mut buffer_frames {
@@ -2370,7 +2435,10 @@ fn paste_keyframes_on_frame(
         })
     }
 
-    armature.sel_anim_mut(&selections).unwrap().sort_keyframes();
+    tab.armature
+        .sel_anim_mut(&tab.selections)
+        .unwrap()
+        .sort_keyframes();
 }
 
 // remove invalid/duplicate keyframes
@@ -2493,20 +2561,13 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
     }
 }
 
-pub fn switch_to_armature(
-    new_sel_tab: usize,
-    selections: &mut SelectionState,
-    tabs: &mut Vec<ArmatureTab>,
-    edit_mode: &mut EditMode,
-    ui: &mut crate::Ui,
-) {
-    if new_sel_tab == selections.sel_tab || new_sel_tab > tabs.len() - 1 {
+pub fn switch_to_armature(new_sel_tab: usize, tabs: &mut Vec<ArmatureTab>, ui: &mut crate::Ui) {
+    if new_sel_tab == ui.sel_tab || new_sel_tab > tabs.len() - 1 {
         return;
     }
 
-    selections.sel_tab = new_sel_tab;
+    ui.sel_tab = new_sel_tab;
 
-    unselect_all(selections, edit_mode, ui);
     ui.warnings = check_warnings(&tabs[new_sel_tab].armature);
     ui.changed_window_name = false;
 }

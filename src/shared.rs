@@ -735,6 +735,7 @@ pub struct Ui {
     pub hovering_on_resizer: bool,
 
     pub anim_transitions: bool,
+    pub sel_tab: usize,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Default, PartialEq, Eq, Debug, Clone)]
@@ -2942,12 +2943,11 @@ pub struct SelectionState {
     pub hovering_tri_dur: i32,
     pub hovering_line_dur: i32,
     pub hovering_bone_id: i32,
-    pub sel_tab: usize,
 }
 
 impl SelectionState {
-    pub fn init(&mut self) {
-        *self = Self {
+    pub fn init() -> Self {
+        Self {
             anim: usize::MAX,
             anim_frame: -1,
             vert_ids: vec![],
@@ -2956,7 +2956,7 @@ impl SelectionState {
             hovering_vert_id: -1,
             hovering_bone_id: -1,
             ..Default::default()
-        };
+        }
     }
 
     pub fn only_root_bones(&self, bones: &Vec<Bone>) -> Vec<i32> {
@@ -2985,6 +2985,7 @@ impl SelectionState {
 pub struct ArmatureTab {
     pub armature: Armature,
     pub undo_states: UndoStates,
+    pub selections: SelectionState,
 }
 
 impl ArmatureTab {
@@ -3055,6 +3056,62 @@ impl ArmatureTab {
             ..Default::default()
         });
     }
+
+    pub fn sel_style(&self) -> Option<&Style> {
+        self.armature
+            .styles
+            .iter()
+            .find(|s| s.id == self.selections.style_id)
+    }
+
+    pub fn sel_style_mut(&mut self) -> Option<&mut Style> {
+        self.armature
+            .styles
+            .iter_mut()
+            .find(|s| s.id == self.selections.style_id)
+    }
+
+    // return selected bone based on first bone_ids
+    pub fn sel_bone(&self) -> Option<&Bone> {
+        if self.selections.bone_ids.len() > 0 {
+            let id = self.selections.sel_bone();
+            if let Some(bone) = self.armature.bones.iter().find(|bone| bone.id == id) {
+                return Some(bone);
+            } else if self.armature.bones.len() > 0 {
+                // safeguard: select first bone
+                return Some(&self.armature.bones[0]);
+            }
+        }
+        None
+    }
+
+    pub fn sel_bone_mut(&mut self) -> Option<&mut Bone> {
+        if self.selections.bone_ids.len() > 0 {
+            let id = self.selections.sel_bone();
+            let has_bone = self.armature.bones.iter().find(|bone| bone.id == id) != None;
+            if has_bone {
+                return self.armature.bones.iter_mut().find(|bone| bone.id == id);
+            } else if self.armature.bones.len() > 0 {
+                // safeguard: select first bone
+                return Some(&mut self.armature.bones[0]);
+            }
+        }
+        None
+    }
+
+    pub fn sel_anim(&self) -> Option<&Animation> {
+        if self.selections.anim > self.armature.animations.len() {
+            return None;
+        }
+        Some(&self.armature.animations[self.selections.anim as usize])
+    }
+
+    pub fn sel_anim_mut(&mut self) -> Option<&mut Animation> {
+        if self.selections.anim > self.armature.animations.len() {
+            return None;
+        }
+        Some(&mut self.armature.animations[self.selections.anim as usize])
+    }
 }
 
 #[derive(Default)]
@@ -3064,7 +3121,6 @@ pub struct Shared {
     pub renderer: Renderer,
     pub events: EventState,
     pub camera: Camera,
-    pub selections: SelectionState,
     pub edit_mode: EditMode,
     pub config: Config,
     pub copy_buffer: CopyBuffer,
@@ -3079,11 +3135,11 @@ pub struct Shared {
 
 impl Shared {
     pub fn sel_tab(&self) -> &ArmatureTab {
-        &self.tabs[self.selections.sel_tab]
+        &self.tabs[self.ui.sel_tab]
     }
 
     pub fn sel_tab_mut(&mut self) -> &mut ArmatureTab {
-        &mut self.tabs[self.selections.sel_tab]
+        &mut self.tabs[self.ui.sel_tab]
     }
 }
 

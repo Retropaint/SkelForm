@@ -129,7 +129,6 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 }
 
 fn init_shared(shared: &mut Shared) {
-    shared.selections.init();
     shared.camera.zoom = 2000.;
     shared.ui.timeline_zoom = 1.;
     shared.ui.dragged_keyframe = Keyframe {
@@ -162,6 +161,7 @@ fn init_shared(shared: &mut Shared) {
     shared.tabs.push(ArmatureTab {
         armature: Armature::default(),
         undo_states: UndoStates::default(),
+        selections: SelectionState::init(),
     });
 
     shared.ui.video_clear_bg = shared.config.colors.background;

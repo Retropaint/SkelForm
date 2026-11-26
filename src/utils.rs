@@ -1289,6 +1289,7 @@ pub fn import<R: Read + std::io::Seek>(
         shared.tabs.push(ArmatureTab {
             armature: temp_arm,
             undo_states: UndoStates::default(),
+            selections: SelectionState::default(),
         });
         shared.events.switch_to_armature(shared.tabs.len() - 1);
     }
@@ -1646,7 +1647,12 @@ pub fn attempt_exit(undo_states: &UndoStates, config: &Config, ui: &mut Ui) {
     }
 }
 
-pub fn animate_bones(armature: &mut Armature, selection: &SelectionState, edit_mode: &EditMode) {
+pub fn animate_bones(
+    armature: &mut Armature,
+    anim_idx: usize,
+    anim_frame: i32,
+    edit_mode: &EditMode,
+) {
     // start a fresh copy of bones, to prevent lingering from previous animations
     armature.animated_bones = None;
 
@@ -1660,9 +1666,9 @@ pub fn animate_bones(armature: &mut Armature, selection: &SelectionState, edit_m
             let frame = anim.set_frame();
             armature.animated_bones = Some(armature.animate(a, frame));
         }
-    } else if edit_mode.anim_open && selection.anim != usize::MAX && selection.anim_frame != -1 {
+    } else if edit_mode.anim_open && anim_idx != usize::MAX && anim_frame != -1 {
         // display the selected animation's frame
-        armature.animated_bones = Some(armature.animate(selection.anim, selection.anim_frame));
+        armature.animated_bones = Some(armature.animate(anim_idx, anim_frame));
     }
 }
 

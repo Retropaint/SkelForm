@@ -299,7 +299,7 @@ impl ApplicationHandler for App {
                 }
             }
             WindowEvent::CloseRequested => {
-                let sel_tab = self.shared.selections.sel_tab;
+                let sel_tab = self.shared.ui.sel_tab;
                 utils::attempt_exit(
                     &self.shared.tabs[sel_tab].undo_states,
                     &self.shared.config,
@@ -390,11 +390,11 @@ impl ApplicationHandler for App {
 
                 // most keyboard inputs handled here
                 let s = &mut self.shared;
-                let sel_tab = s.selections.sel_tab;
+                let sel_tab = s.ui.sel_tab;
                 #[rustfmt::skip]
                 ui::process_inputs(
                     gui_state.egui_ctx(), &mut s.input, &mut s.ui, &s.config,
-                    &mut s.edit_mode, &mut s.events, &s.camera, &s.selections, &mut s.tabs[sel_tab].armature
+                    &mut s.edit_mode, &mut s.events, &s.camera, &mut s.tabs[sel_tab]
                 );
 
                 // ui logic handled in ui.rs
@@ -403,12 +403,11 @@ impl ApplicationHandler for App {
                     gui_state.egui_ctx(),
                     &mut s.ui,
                     &mut s.input,
-                    &mut s.selections,
                     &mut s.config,
                     &mut s.events,
                     &mut s.edit_mode,
                     &s.camera,
-                    &mut s.tabs[sel_tab].armature,
+                    &mut s.tabs[sel_tab],
                     &names,
                     &s.copy_buffer,
                     &s.renderer.temp_arm.bones,
@@ -469,7 +468,7 @@ impl ApplicationHandler for App {
 
                 // set hovering bone to -1 if neither the renderer nor UI have it
                 if !self.shared.renderer.is_hovering_bone && !self.shared.ui.is_hovering_bone {
-                    self.shared.selections.hovering_bone_id = -1;
+                    self.shared.sel_tab_mut().selections.hovering_bone_id = -1;
                 }
 
                 // iterate and process all events for this frame
@@ -482,24 +481,24 @@ impl ApplicationHandler for App {
                     let render_ref = &self.renderer.as_ref();
                     if shared.events.events[0] == Events::CreateEmptyTexture {
                         let img = image::DynamicImage::new(1, 1, image::ColorType::Rgba8);
-                        let style_id = shared.selections.style_id;
+                        let style_id = shared.sel_tab_mut().selections.style_id;
                         let armature = &mut shared.sel_tab_mut().armature;
                         let dims = Vec2::new(1., 1.);
                         file_reader::add_texture(
                             img, style_id, dims, "", armature, render_ref, ctx,
                         );
                     } else if shared.events.events[0] == Events::TrimTexture {
-                        for id in &shared.selections.tex_ids {
+                        for i in 0..shared.sel_tab().selections.tex_ids.len() {
                             // get texture data of this selected texture
                             let style = shared
                                 .sel_tab()
                                 .armature
-                                .sel_style(&shared.selections)
+                                .sel_style(&shared.sel_tab().selections)
                                 .unwrap();
-                            let data_id = style.textures[*id as usize].data_id;
-                            let tex_data = &mut shared.tabs[shared.selections.sel_tab]
-                                .armature
-                                .tex_data[data_id as usize];
+                            let id = shared.sel_tab().selections.tex_ids[i] as usize;
+                            let data_id = style.textures[id].data_id;
+                            let tex_data = &mut shared.tabs[shared.ui.sel_tab].armature.tex_data
+                                [data_id as usize];
 
                             // trim transparent edges off
                             let img = file_reader::trim_transparent(&tex_data.image);
@@ -513,12 +512,10 @@ impl ApplicationHandler for App {
                             tex_data.bind_group = bind_group;
                             tex_data.ui_img = ui_img;
 
+                            let id = shared.sel_tab().selections.tex_ids[i] as usize;
                             // update texture size in armature as well
-                            let style = shared.tabs[shared.selections.sel_tab]
-                                .armature
-                                .sel_style_mut(&shared.selections)
-                                .unwrap();
-                            style.textures[*id as usize].size = dims;
+                            let style = shared.tabs[shared.ui.sel_tab].sel_style_mut().unwrap();
+                            style.textures[id].size = dims;
                         }
                     }
 
@@ -526,7 +523,7 @@ impl ApplicationHandler for App {
                     let s = &mut self.shared;
                     #[rustfmt::skip]
                     editor::iterate_events(
-                        &s.input, &mut s.config, &mut s.events, &mut s.camera, &mut s.edit_mode, &mut s.selections,
+                        &s.input, &mut s.config, &mut s.events, &mut s.camera, &mut s.edit_mode,
                         &mut s.tabs, &mut s.psd_armature, &mut s.copy_buffer, &mut s.ui, &mut s.renderer
                     );
                 }
@@ -547,7 +544,7 @@ impl ApplicationHandler for App {
             let pressing_q = event.id() == self.shared.input.mod_q.unwrap().id();
             if (pressing_w || pressing_q) && self.shared.ui.can_quit {
                 utils::attempt_exit(
-                    &self.shared.tabs[self.shared.selections.sel_tab].undo_states,
+                    &self.shared.tabs[self.shared.ui.sel_tab].undo_states,
                     &self.shared.config,
                     &mut self.shared.ui,
                 );
@@ -873,7 +870,7 @@ impl BackendRenderer {
             let name_split = name.split('.').collect::<Vec<_>>();
             let ext = name_split.last().unwrap().to_string().to_lowercase();
             if IMG_FORMATS.contains(&ext.as_str()) {
-                if shared.sel_tab().armature.sel_style(&shared.selections) != None {
+                if shared.sel_tab().sel_style() != None {
                     *shared.ui.file_type.lock().unwrap() = ImportedFileType::Image;
                 } else {
                     *shared.ui.file_paths.lock().unwrap() = vec![];
@@ -923,7 +920,7 @@ impl BackendRenderer {
             // recording animations for images/videos
             shared.events.open_modal("exporting", true);
             utils::render_spritesheets(
-                &shared.tabs[shared.selections.sel_tab].armature,
+                &shared.tabs[shared.ui.sel_tab].armature,
                 &mut shared.ui,
                 &shared.camera,
                 &shared.config,
@@ -935,17 +932,13 @@ impl BackendRenderer {
             shared.ui.export_modal = false;
         }
 
-        self.check_export_style(
-            &shared.tabs[shared.selections.sel_tab].armature,
-            &mut shared.ui,
-        );
+        self.check_export_style(&shared.tabs[shared.ui.sel_tab].armature, &mut shared.ui);
 
         // animated bones will be used throughout the program
-        utils::animate_bones(
-            &mut shared.tabs[shared.selections.sel_tab].armature,
-            &shared.selections,
-            &shared.edit_mode,
-        );
+        let anim = shared.tabs[shared.ui.sel_tab].selections.anim;
+        let frame = shared.tabs[shared.ui.sel_tab].selections.anim_frame;
+        let tab = &mut shared.tabs[shared.ui.sel_tab].armature;
+        utils::animate_bones(tab, anim, frame, &shared.edit_mode);
         shared.renderer.temp_arm = Armature {
             bones: shared.sel_tab_mut().armature.try_anim_bones().clone(),
             ..Default::default()
@@ -979,7 +972,7 @@ impl BackendRenderer {
             let bone = shared
                 .sel_tab()
                 .armature
-                .sel_bone(&shared.selections)
+                .sel_bone(&shared.sel_tab().selections)
                 .unwrap();
             physics_bone_edited = shared.sel_tab().armature.has_physics(bone.id);
         }
@@ -988,16 +981,14 @@ impl BackendRenderer {
             // apply runtime-based construction (including physics)
             renderer::runtime_construction(
                 &mut shared.renderer.temp_arm.bones,
-                &mut shared.tabs[shared.selections.sel_tab]
-                    .armature
-                    .try_anim_bones_mut(),
+                &mut shared.tabs[shared.ui.sel_tab].armature.try_anim_bones_mut(),
             );
 
             // the construction above usually affects the physics of animated_bones
             // instead of actual, so keep them consistent
             if shared.sel_tab().armature.animated_bones != None {
                 for b in 0..shared.sel_tab().armature.bones.len() {
-                    let sel_tab = shared.selections.sel_tab;
+                    let sel_tab = shared.ui.sel_tab;
                     let anim_bone = &shared.tabs[sel_tab]
                         .armature
                         .animated_bones
@@ -1016,17 +1007,15 @@ impl BackendRenderer {
         } else {
             renderer::construction(
                 &mut shared.renderer.temp_arm.bones,
-                &shared.tabs[shared.selections.sel_tab]
-                    .armature
-                    .try_anim_bones(),
+                &shared.tabs[shared.ui.sel_tab].armature.try_anim_bones(),
             );
         }
 
         // core rendering logic handled in renderer.rs
         #[rustfmt::skip]
         renderer::render(
-            render_pass, &self.gpu.queue, &shared.camera, &shared.input, &mut shared.tabs[shared.selections.sel_tab].armature,
-            &shared.config, &shared.edit_mode, &mut shared.selections, &mut shared.renderer, &mut shared.events,
+            render_pass, &self.gpu.queue, &shared.camera, &shared.input, &shared.tabs[shared.ui.sel_tab].armature,
+            &shared.config, &shared.edit_mode, &shared.tabs[shared.ui.sel_tab].selections, &mut shared.renderer, &mut shared.events,
         );
     }
 
@@ -1121,7 +1110,7 @@ impl BackendRenderer {
         }
 
         if *elapsed != None && elapsed.unwrap().elapsed().as_millis() > duration_in_millis {
-            let sel_tab = shared.selections.sel_tab;
+            let sel_tab = shared.ui.sel_tab;
             if shared.ui.exporting_video_type != ExportVideoType::None {
                 self.skf_export_videos(
                     &shared.tabs[sel_tab].armature,
@@ -1384,7 +1373,7 @@ impl BackendRenderer {
         let mut frames = vec![];
         #[rustfmt::skip]
         self.take_screenshot(
-            shared.screenshot_res, &mut shared.tabs[shared.selections.sel_tab].armature, &shared.camera,
+            shared.screenshot_res, &mut shared.tabs[shared.ui.sel_tab].armature, &shared.camera,
             &shared.config.colors.background, &mut frames, &mut shared.ui.mapped_frames, &shared.renderer
         );
         let buffer = frames[0].buffer.clone();

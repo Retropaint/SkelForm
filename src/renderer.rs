@@ -62,10 +62,10 @@ pub fn render(
         // set up previous onion
         prev_arm.bones = armature.bones.clone();
         prev_arm.animations = armature.animations.clone();
-        let mut prev_sel = selections.clone();
         let idx = keyframes.iter().position(|kf| kf.frame > sel.anim_frame);
-        prev_sel.anim_frame = keyframes[idx.unwrap_or_else(|| 1) - 1].frame;
-        utils::animate_bones(&mut prev_arm, &prev_sel, edit_mode);
+        let anim = selections.anim;
+        let anim_frame = keyframes[idx.unwrap_or_else(|| 1) - 1].frame;
+        utils::animate_bones(&mut prev_arm, anim, anim_frame, edit_mode);
         prev_arm.bones = prev_arm.try_anim_bones().clone();
         construction(
             &mut prev_arm.bones,
@@ -75,11 +75,14 @@ pub fn render(
         // set up next onion
         next_arm.bones = armature.bones.clone();
         next_arm.animations = armature.animations.clone();
-        let mut next_sel = prev_sel.clone();
-        if let Some(next_kf) = keyframes.iter().find(|kf| kf.frame > selections.anim_frame) {
-            next_sel.anim_frame = next_kf.frame;
-        }
-        utils::animate_bones(&mut next_arm, &next_sel, edit_mode);
+        let anim = selections.anim;
+        let frame =
+            if let Some(next_kf) = keyframes.iter().find(|kf| kf.frame > selections.anim_frame) {
+                next_kf.frame
+            } else {
+                0
+            };
+        utils::animate_bones(&mut next_arm, anim, frame, edit_mode);
         next_arm.bones = next_arm.try_anim_bones().clone();
         construction(
             &mut next_arm.bones,
