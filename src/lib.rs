@@ -564,8 +564,12 @@ impl ApplicationHandler for App {
 
         // if an exit was attemped, first show unsaved changes modal if appropriate
         if self.shared.ui.exiting {
-            let undo = &self.shared.sel_tab().undo_states;
-            if undo.unsaved_undo_actions != undo.undo_actions.len() {
+            let mut has_any_unsaved = false;
+            for tab in &self.shared.tabs {
+                let undo = &tab.undo_states;
+                has_any_unsaved |= undo.unsaved_undo_actions != undo.undo_actions.len();
+            }
+            if has_any_unsaved {
                 let str_del = self.shared.ui.loc("polar.unsaved").clone().to_string();
                 let exiting = PolarId::Exiting;
                 self.shared.events.open_polar_modal(exiting, str_del);
