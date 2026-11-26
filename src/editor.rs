@@ -2514,7 +2514,8 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         | E::CamZoomScroll
         | E::EditCamera
         | E::UpdateConfig
-        | E::SelectBone => {
+        | E::SelectBone
+        | E::SwitchToArmature => {
             renderer.gridline_buffer.dirty = true;
         }
         _ => {}
@@ -2541,7 +2542,8 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         | E::SelectAnim
         | E::SelectAnimFrame
         | E::SelectBone
-        | E::DeleteBone => {
+        | E::DeleteBone
+        | E::SwitchToArmature => {
             renderer.point_buffer.dirty = true;
             renderer.kite_buffer.dirty = true;
             renderer.bone_buffer.dirty = true;
@@ -2564,7 +2566,8 @@ pub fn set_buffers_dirty(renderer: &mut Renderer, event: &crate::Events) {
         | E::UpdateRenderOptions
         | E::UpdateConfig
         | E::SelectBone
-        | E::SetHoveringBoneId => {
+        | E::SetHoveringBoneId
+        | E::SwitchToArmature => {
             renderer.bone_buffer.dirty = true;
         }
         _ => {}
