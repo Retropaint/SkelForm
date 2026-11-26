@@ -1052,7 +1052,7 @@ impl BackendRenderer {
         let camera = shared.sel_tab().camera.clone();
         for t in min..max {
             let opacity = shared.tabs[t].armature.opacity;
-            if opacity == 0. {
+            if t == shared.ui.sel_tab || opacity == 0. {
                 continue;
             }
             let tab = &mut shared.tabs[t];
