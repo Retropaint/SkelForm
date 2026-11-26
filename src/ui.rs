@@ -1312,15 +1312,21 @@ fn context_menu_content(
             }
         }
     } else if element_id == "armaturepanel" {
+        // opacity slider
         let idx: usize = split[1].parse().unwrap();
         let mut opacity = tabs[idx].armature.opacity;
-        ui.label("Reference Opacity:");
+        ui.label("Reference opacity:");
         let slider = ui.add(egui::Slider::new(
             &mut opacity,
             egui::Rangef::new(0., 1.).into(),
         ));
         if slider.hovered() && input.left_down {
             events.set_tab_opacity(idx, opacity);
+        }
+        ui.add_space(5.);
+        if ui.context_button("Remove tab", config).clicked() {
+            events.remove_tab(idx);
+            shared_ui.context_menu.close();
         }
     }
 }
@@ -1642,6 +1648,9 @@ fn armature_panel(
                                 ui.painter().vline(rect.right(), rect.y_range(), stroke);
                             }
                         }
+                    }
+                    if button.secondary_clicked() {
+                        shared_ui.context_menu.show(&format!("armaturepanel_{}", n));
                     }
                     if button.clicked() && !is_choosing {
                         events.switch_to_armature(n);
