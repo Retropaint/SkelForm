@@ -1273,8 +1273,6 @@ pub fn import<R: Read + std::io::Seek>(
         }
     }
 
-    //shared.armature = temp_arm.clone();
-
     // add armature to list
     let mut replaced = false;
     for a in 0..shared.tabs.len() {
@@ -1290,7 +1288,7 @@ pub fn import<R: Read + std::io::Seek>(
         shared.tabs.push(ArmatureTab {
             armature: temp_arm,
             undo_states: UndoStates::default(),
-            selections: SelectionState::default(),
+            selections: SelectionState::init(),
             camera: imported_camera,
         });
         shared.events.switch_to_armature(shared.tabs.len() - 1);

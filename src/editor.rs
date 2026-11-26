@@ -644,7 +644,7 @@ pub fn simple_event(
             tabs.push(ArmatureTab {
                 armature: Armature::default().clone(),
                 undo_states: UndoStates::default(),
-                selections: SelectionState::default(),
+                selections: SelectionState::init(),
                 camera: Camera::default(),
             });
             switch_to_armature(tabs.len() - 1, tabs, ui);
