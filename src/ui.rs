@@ -245,8 +245,8 @@ pub fn draw(
             events.open_modal("startup.error_update", false);
         } else if dl_links != "" {
             let ver_str = dl_links["version"].as_str().unwrap();
-            //if utils::newer_version(ver_str.trim().to_string(), this_ver_str.trim().to_string()) {
-            if true {
+            let this_ver_str = env!("CARGO_PKG_VERSION").to_string();
+            if utils::newer_version(ver_str.trim().to_string(), this_ver_str.trim().to_string()) {
                 let loc = "startup.update_available";
                 let str = shared_ui.loc(loc).replace("$ver", ver_str);
                 events.open_polar_modal(PolarId::NewUpdate, str);
