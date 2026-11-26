@@ -281,6 +281,7 @@ pub fn draw(
             shared_ui,
             events,
             input,
+            &tab.undo_states
         ));
     }
 
@@ -682,6 +683,7 @@ pub fn process_inputs(
         shared_ui.last_pressed = i.keys_down.iter().last().copied();
 
         // UI elements should not receive left click if context menu is open
+        println!("{}", shared_ui.context_menu.id);
         if shared_ui.context_menu.id == "" {
             if shared_ui.mobile {
                 input.left_clicked = i.pointer.any_click();
@@ -1476,6 +1478,7 @@ fn armature_panel(
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     input: &InputStates,
+    undo_states: &UndoStates,
 ) {
     let panel = egui::TopBottomPanel::top("top_bar")
         .frame(egui::Frame {
@@ -1543,15 +1546,22 @@ fn armature_panel(
                                     }
                                     ui.label(&str);
                                 });
-                                if shared_ui.hovering_armature == idx {
-                                    let layout = egui::Layout::right_to_left(egui::Align::Center);
-                                    ui.with_layout(layout, |ui| {
-                                        ui.add_space(10.);
-                                        if ui.label("X").contains_pointer() && input.left_clicked {
-                                            events.remove_tab(idx as usize);
-                                        };
-                                    });
+                                if shared_ui.hovering_armature != idx {
+                                    return;
                                 }
+                                let layout = egui::Layout::right_to_left(egui::Align::Center);
+                                ui.with_layout(layout, |ui| {
+                                    ui.add_space(10.);
+                                    if ui.label("X").contains_pointer() && input.left_clicked {
+                                        if !armature_saved[n] {
+                                            shared_ui.context_menu.id = format!("rm_{}", n);
+                                            let str = shared_ui.loc("armature_unsaved");
+                                            events.open_polar_modal(PolarId::RemoveTab, str);
+                                        } else {
+                                            events.remove_tab(n);
+                                        }
+                                    };
+                                });
                             });
                         })
                         .response

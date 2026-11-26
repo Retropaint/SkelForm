@@ -80,6 +80,7 @@ pub fn polar_modal(
             let pressed_no = ui.input_mut(|i| i.consume_shortcut(&config.keys.cancel));
             if ui.skf_button(str_no).clicked() || pressed_no {
                 shared_ui.polar_modal = false;
+                shared_ui.context_menu.close();
             }
 
             // Yes
