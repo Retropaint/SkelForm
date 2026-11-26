@@ -3013,6 +3013,7 @@ pub struct ArmatureTab {
     pub undo_states: UndoStates,
     pub selections: SelectionState,
     pub camera: Camera,
+    pub bone_buffer: RenderBuffer,
 }
 
 impl ArmatureTab {

@@ -162,6 +162,7 @@ fn init_shared(shared: &mut Shared) {
         undo_states: UndoStates::default(),
         selections: SelectionState::init(),
         camera: Camera::default(),
+        bone_buffer: RenderBuffer::default(),
     });
 
     shared.ui.video_clear_bg = shared.config.colors.background;

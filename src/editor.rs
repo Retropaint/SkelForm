@@ -652,6 +652,7 @@ pub fn simple_event(
                 undo_states: UndoStates::default(),
                 selections: SelectionState::init(),
                 camera: Camera::default(),
+                bone_buffer: RenderBuffer::default(),
             });
             switch_to_armature(tabs.len() - 1, tabs, ui);
         }

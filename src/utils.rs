@@ -1290,6 +1290,7 @@ pub fn import<R: Read + std::io::Seek>(
             undo_states: UndoStates::default(),
             selections: SelectionState::init(),
             camera: imported_camera,
+            bone_buffer: RenderBuffer::default()
         });
         shared.events.switch_to_armature(shared.tabs.len() - 1);
     }

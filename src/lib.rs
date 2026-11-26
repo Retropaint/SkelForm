@@ -16,6 +16,7 @@ use std::{
 
 use egui_wgpu::wgpu::ExperimentalFeatures;
 use global_hotkey::HotKeyState;
+use renderer::draw_armature;
 use shared::*;
 use wgpu::{util::DeviceExt, BindGroupLayout, Buffer, Features, FeaturesWGPU, InstanceDescriptor};
 
@@ -888,7 +889,7 @@ impl BackendRenderer {
     }
 
     fn skf_render(&mut self, shared: &mut Shared, render_pass: &mut wgpu::RenderPass) {
-        self.init_buffers_and_bindgroups(&mut shared.renderer);
+        self.init_buffers_and_bindgroups(&mut shared.renderer, &mut shared.tabs);
         self.check_export(shared);
 
         // import dropped files.
@@ -1043,6 +1044,30 @@ impl BackendRenderer {
             render_pass, &self.gpu.queue, &shared.input, &shared.tabs[shared.ui.sel_tab],
             &shared.config, &shared.edit_mode, &shared.tabs[shared.ui.sel_tab].selections, &mut shared.renderer, &mut shared.events,
         );
+
+        //let mut buffer = shared.tabs[0].bone_buffer.clone();
+        //buffer.dirty = true;
+        //let cam = renderer::world_camera(&shared.sel_tab().camera, &shared.config);
+        //let mut new_arm = Armature {
+        //    bones: shared.tabs[0].armature.bones.clone(),
+        //    ..Default::default()
+        //};
+        //renderer::construction(&mut new_arm.bones, &shared.tabs[0].armature.bones);
+        //let sel = &shared.tabs[0].selections;
+        //let armature = &shared.tabs[0].armature;
+        //renderer::setup_world_verts(&mut new_arm, armature, &cam, &shared.config, sel, &vec![]);
+
+        //draw_armature(
+        //    &new_arm,
+        //    &shared.tabs[0].armature,
+        //    false,
+        //    &shared.tabs[0].selections,
+        //    &self.gpu.queue,
+        //    render_pass,
+        //    &mut buffer,
+        //    &mut vec![],
+        //);
+        //shared.tabs[0].bone_buffer = buffer;
     }
 
     // processes style to export, if appropriate
@@ -1156,7 +1181,7 @@ impl BackendRenderer {
         }
     }
 
-    fn init_buffers_and_bindgroups(&self, renderer: &mut Renderer) {
+    fn init_buffers_and_bindgroups(&self, renderer: &mut Renderer, tabs: &mut Vec<ArmatureTab>) {
         if renderer.meshframe_buffer.index == None {
             let max = 5000;
             renderer.bone_buffer.init(&self.gpu.device, max);
@@ -1171,6 +1196,7 @@ impl BackendRenderer {
             renderer.selected_ring_buffer.init(&self.gpu.device, 100);
             renderer.rect_buffer.init(&self.gpu.device, max);
             renderer.edit_mesh_buffer.init(&self.gpu.device, 1000);
+            tabs[0].bone_buffer.init(&self.gpu.device, max);
         }
         let bytes = include_bytes!("../assets/flow-kite.png");
         self.load_bindgroup(&mut renderer.flow_kite_bindgroup, bytes);

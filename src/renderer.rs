@@ -130,6 +130,15 @@ pub fn render(
     let mut hovering_bone_id = -1;
     let mut on_click_id = -1;
 
+    setup_world_verts(
+        &mut renderer.temp_arm,
+        &tab.armature,
+        &world_camera(&tab.camera, &config),
+        config,
+        selections,
+        &selected_bone_ids,
+    );
+
     // pre-draw bone setup
     for b in 0..renderer.temp_arm.bones.len() {
         let tex = tab.armature.tex_of(renderer.temp_arm.bones[b].id);
@@ -141,24 +150,6 @@ pub fn render(
 
         if tex == None || renderer.temp_arm.bones[b].hidden {
             continue;
-        }
-
-        // setup world verts
-        let cam = world_camera(&tab.camera, &config);
-        for v in 0..renderer.temp_arm.bones[b].vertices.len() {
-            let tb = &mut renderer.temp_arm.bones[b];
-            let left = if is_facing_left(tb.scale) { -1. } else { 1. };
-            let final_pivot =
-                utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot * left) * tb.scale;
-            let mut vert = world_vert(tb.vertices[v], &cam, tab.camera.aspect_ratio(), final_pivot);
-            vert.tint = tb.tint;
-
-            // make this translucent if not part of selected bone(s)
-            if selections.bone_ids.len() > 0 && !selected_bone_ids.contains(&tb.id) {
-                vert.tint.a = config.bone_translucency;
-            }
-
-            tb.world_verts.push(vert);
         }
 
         // setup onion world verts
@@ -2596,5 +2587,38 @@ pub fn same_zindex_sort(bones: &mut Vec<Bone>) {
 
         bones[start..end].reverse();
         start = end;
+    }
+}
+
+pub fn setup_world_verts(
+    armature: &mut Armature,
+    src_arm: &Armature,
+    camera: &Camera,
+    config: &Config,
+    selections: &SelectionState,
+    selected_bone_ids: &Vec<i32>,
+) {
+    for b in 0..armature.bones.len() {
+        let tex = src_arm.tex_of(armature.bones[b].id);
+        if tex == None || armature.bones[b].hidden {
+            continue;
+        }
+        let size = tex.unwrap().size;
+
+        let cam = world_camera(&camera, &config);
+        for v in 0..armature.bones[b].vertices.len() {
+            let tb = &mut armature.bones[b];
+            let left = if is_facing_left(tb.scale) { -1. } else { 1. };
+            let final_pivot = utils::rotate(&(size * tb.pivot_pos), tb.rot * left) * tb.scale;
+            let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
+            vert.tint = tb.tint;
+
+            // make this translucent if not part of selected bone(s)
+            if selections.bone_ids.len() > 0 && !selected_bone_ids.contains(&tb.id) {
+                vert.tint.a = config.bone_translucency;
+            }
+
+            tb.world_verts.push(vert);
+        }
     }
 }
