@@ -9,16 +9,15 @@ use wgpu::{BindGroup, Device, Queue, RenderPass};
 pub fn render(
     render_pass: &mut RenderPass,
     queue: &wgpu::Queue,
-    camera: &Camera,
     input: &InputStates,
-    armature: &Armature,
+    tab: &ArmatureTab,
     config: &Config,
     edit_mode: &EditMode,
     selections: &SelectionState,
     renderer: &mut Renderer,
     events: &mut EventState,
 ) {
-    if camera.window == Vec2::ZERO {
+    if tab.camera.window == Vec2::ZERO {
         return;
     }
     let sel = &selections;
@@ -35,10 +34,10 @@ pub fn render(
         renderer.has_loaded = true;
     }
 
-    let (mouse_world_vert, mouse_pos) = utils::world_mouse(input.mouse, camera);
+    let (mouse_world_vert, mouse_pos) = utils::world_mouse(input.mouse, &tab.camera);
 
     if !config.gridline_front {
-        draw_gridline(render_pass, renderer, &camera, &config, queue);
+        draw_gridline(render_pass, renderer, &tab.camera, &config, queue);
     }
 
     // turn off hovering vert if not editing mesh
@@ -57,11 +56,11 @@ pub fn render(
     let mut next_arm = Armature::default();
     let mut prev_arm = Armature::default();
     if selections.anim_frame != -1 && edit_mode.onion_layers {
-        let keyframes = &armature.sel_anim(selections).unwrap().keyframes;
+        let keyframes = &tab.armature.sel_anim(selections).unwrap().keyframes;
 
         // set up previous onion
-        prev_arm.bones = armature.bones.clone();
-        prev_arm.animations = armature.animations.clone();
+        prev_arm.bones = tab.armature.bones.clone();
+        prev_arm.animations = tab.armature.animations.clone();
         let idx = keyframes.iter().position(|kf| kf.frame > sel.anim_frame);
         let anim = selections.anim;
         let anim_frame = keyframes[idx.unwrap_or_else(|| 1) - 1].frame;
@@ -73,8 +72,8 @@ pub fn render(
         );
 
         // set up next onion
-        next_arm.bones = armature.bones.clone();
-        next_arm.animations = armature.animations.clone();
+        next_arm.bones = tab.armature.bones.clone();
+        next_arm.animations = tab.armature.animations.clone();
         let anim = selections.anim;
         let frame =
             if let Some(next_kf) = keyframes.iter().find(|kf| kf.frame > selections.anim_frame) {
@@ -92,7 +91,7 @@ pub fn render(
 
     // get all children of selected bone(s)
     let mut selected_bone_ids = vec![];
-    if armature.sel_bone(&sel) != None {
+    if tab.armature.sel_bone(&sel) != None {
         for id in &selections.bone_ids {
             if let Some(bone) = renderer.temp_arm.bones.iter().find(|bone| bone.id == *id) {
                 let mut children = vec![bone.clone()];
@@ -133,7 +132,7 @@ pub fn render(
 
     // pre-draw bone setup
     for b in 0..renderer.temp_arm.bones.len() {
-        let tex = armature.tex_of(renderer.temp_arm.bones[b].id);
+        let tex = tab.armature.tex_of(renderer.temp_arm.bones[b].id);
         let parent_id = renderer.temp_arm.bones[b].parent_id;
         if parent_id != -1 {
             let parent = renderer.temp_arm.bones.iter().find(|b| b.id == parent_id);
@@ -145,13 +144,13 @@ pub fn render(
         }
 
         // setup world verts
-        let cam = world_camera(&camera, &config);
+        let cam = world_camera(&tab.camera, &config);
         for v in 0..renderer.temp_arm.bones[b].vertices.len() {
             let tb = &mut renderer.temp_arm.bones[b];
             let left = if is_facing_left(tb.scale) { -1. } else { 1. };
             let final_pivot =
                 utils::rotate(&(tex.unwrap().size * tb.pivot_pos), tb.rot * left) * tb.scale;
-            let mut vert = world_vert(tb.vertices[v], &cam, camera.aspect_ratio(), final_pivot);
+            let mut vert = world_vert(tb.vertices[v], &cam, tab.camera.aspect_ratio(), final_pivot);
             vert.tint = tb.tint;
 
             // make this translucent if not part of selected bone(s)
@@ -168,13 +167,13 @@ pub fn render(
                 ($armature:expr, $color:expr) => {
                     for v in 0..$armature.bones[b].vertices.len() {
                         let tb = &mut $armature.bones[b];
-                        let ratio = camera.aspect_ratio();
+                        let ratio = tab.camera.aspect_ratio();
                         let left = if is_facing_left(tb.scale) { -1. } else { 1. };
                         let final_pivot = utils::rotate(
                             &(tex.unwrap().size * tb.pivot_pos * tb.scale),
                             tb.rot * left,
                         );
-                        let mut vert = world_vert(tb.vertices[v], &camera, ratio, final_pivot);
+                        let mut vert = world_vert(tb.vertices[v], &tab.camera, ratio, final_pivot);
                         vert.tint = $color;
                         tb.world_verts.push(vert);
                     }
@@ -192,10 +191,10 @@ pub fn render(
         let selected_mesh = !edit_mode.editing_mesh
             || edit_mode.editing_mesh
                 && sel.bone_ids.len() > 0
-                && armature.sel_bone(&sel).unwrap().id == tb.id;
+                && tab.armature.sel_bone(&sel).unwrap().id == tb.id;
         if on_click_id == -1
             && (!input.left_down || input.left_pressed) // allow detection on LMB press
-            && !camera.on_ui
+            && !tab.camera.on_ui
             && selected_mesh
             && edit_mode.render_options.textures
         {
@@ -231,8 +230,8 @@ pub fn render(
                 }
 
                 // set this bone as hovered, if the cursor is on its texture
-                let tex = armature.tex_of(renderer.temp_arm.bones[b].id).unwrap();
-                let img = &armature.tex_data(tex).unwrap().image;
+                let tex = tab.armature.tex_of(renderer.temp_arm.bones[b].id).unwrap();
+                let img = &tab.armature.tex_data(tex).unwrap().image;
                 let pos = Vec2::new(
                     (uv.x * img.width() as f32).min(img.width() as f32 - 1.),
                     (uv.y * img.height() as f32).min(img.height() as f32 - 1.),
@@ -264,8 +263,8 @@ pub fn render(
         // hovering glow animation
         let bone_ids = &selections.bone_ids;
         let not_selected = bone_ids.len() == 0
-            || (armature.sel_bone(selections) != None
-                && armature.sel_bone(selections).unwrap().id != hovering_bone_id);
+            || (tab.armature.sel_bone(selections) != None
+                && tab.armature.sel_bone(selections).unwrap().id != hovering_bone_id);
         let is_hovering =
             selections.hovering_bone_id == renderer.temp_arm.bones[b].id || parent_selected;
         if is_hovering && not_selected && !renderer.on_point {
@@ -277,8 +276,8 @@ pub fn render(
             }
 
             // select bone if clicked
-            if !camera.on_ui && input.left_pressed && !renderer.on_point {
-                let bones = &armature.bones;
+            if !tab.camera.on_ui && input.left_pressed && !renderer.on_point {
+                let bones = &tab.armature.bones;
                 let idx = bones.iter().position(|bone| bone.id == on_click_id);
                 if idx != None {
                     events.select_bone(on_click_id, true);
@@ -317,12 +316,12 @@ pub fn render(
     if edit_mode.render_options.textures && selections.anim_frame != -1 && edit_mode.onion_layers {
         #[rustfmt::skip]
         draw_armature(
-            &prev_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass,
+            &prev_arm, &tab.armature, edit_mode.showing_mesh, &sel, queue, render_pass,
             &mut renderer.prev_onion_buffer, &mut renderer.visible_prev_onion_ids
         );
         #[rustfmt::skip]
         draw_armature(
-            &next_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass,
+            &next_arm, &tab.armature, edit_mode.showing_mesh, &sel, queue, render_pass,
             &mut renderer.next_onion_buffer, &mut renderer.visible_next_onion_ids
         );
     }
@@ -331,7 +330,7 @@ pub fn render(
     if edit_mode.render_options.textures {
         #[rustfmt::skip]
         draw_armature(
-            &renderer.temp_arm, armature, edit_mode.showing_mesh, &sel, queue, render_pass,
+            &renderer.temp_arm, &tab.armature, edit_mode.showing_mesh, &sel, queue, render_pass,
             &mut renderer.bone_buffer, &mut renderer.visible_bone_ids
         );
     }
@@ -342,7 +341,7 @@ pub fn render(
     let mut is_hovering_line = false;
     let sel_bone = renderer.temp_arm.sel_bone(&sel);
     if edit_mode.editing_mesh && sel_bone != None && !sel_bone.unwrap().hidden {
-        let id = armature.sel_bone(&sel).unwrap().id;
+        let id = tab.armature.sel_bone(&sel).unwrap().id;
         let bone = renderer
             .temp_arm
             .bones
@@ -352,9 +351,9 @@ pub fn render(
             .clone();
 
         // render texture, so it appears above everything else
-        let tex = armature.tex_of(bone.id);
+        let tex = tab.armature.tex_of(bone.id);
         if edit_mode.render_options.textures && tex != None {
-            let bind_group = &armature.tex_data(tex.unwrap()).unwrap().bind_group;
+            let bind_group = &tab.armature.tex_data(tex.unwrap()).unwrap().bind_group;
             let sel_bone_buffer = &mut renderer.sel_bone_buffer;
             let mut world_verts = bone.world_verts.clone();
             for vert in &mut world_verts {
@@ -373,7 +372,7 @@ pub fn render(
         let current_hover_id = selections.hovering_vert_id;
         #[rustfmt::skip]
         let (mut verts, mut indices, on_vert) =
-            bone_vertices(&wv, true, selections, input, camera, config, events, armature, renderer, current_hover_id);
+            bone_vertices(&wv, true, selections, input, &tab.camera, config, events, &tab.armature, renderer, current_hover_id);
         if on_vert != -1 {
             new_vert = None;
             hovering_vert_id = on_vert;
@@ -382,14 +381,14 @@ pub fn render(
         }
         #[rustfmt::skip]
         let (mut lines_v, mut lines_i, on_line) =
-            vert_lines(&bone, &renderer.temp_arm.bones, &mouse, &mut new_vert, true, on_vert != -1, camera, input, selections, events, config);
+            vert_lines(&bone, &renderer.temp_arm.bones, &mouse, &mut new_vert, true, on_vert != -1, &tab.camera, input, selections, events, config);
         is_hovering_line |= on_line;
         lines_v.append(&mut verts);
         add_offseted_indices(&mut indices, &mut lines_i);
 
         // draw hovered triangle if neither a vertex nor a line is hovered
         let (idx, mut hovering_tri) = bone_triangle(&bone, &mouse, wv);
-        if hovering_tri.len() > 0 && on_vert == -1 && !on_line && !camera.on_ui {
+        if hovering_tri.len() > 0 && on_vert == -1 && !on_line && !tab.camera.on_ui {
             is_hovering_tri = true;
             hovering_tri[0].color = Color::new(0, 200, 0, 100);
             hovering_tri[1].color = Color::new(0, 200, 0, 100);
@@ -406,14 +405,14 @@ pub fn render(
 
             // remove this triangle if right-clicking
             if edit_mode.editing_mesh && input.right_clicked {
-                if armature.sel_bone(&sel).unwrap().indices.len() == 6 {
+                if tab.armature.sel_bone(&sel).unwrap().indices.len() == 6 {
                     events.open_modal("indices_limit", false);
                 } else {
                     events.delete_triangle(idx as usize * 3);
                 }
             }
         }
-        hovered_vert = on_vert != -1 && !camera.on_ui;
+        hovered_vert = on_vert != -1 && !tab.camera.on_ui;
 
         // draw vertex points and lines
         let buffer = &mut renderer.edit_mesh_buffer;
@@ -445,7 +444,7 @@ pub fn render(
         let mut verts = vec![];
         let mut indices = vec![];
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
-        let hiddens = armature.get_propagated_hidden();
+        let hiddens = tab.armature.get_propagated_hidden();
         for bone in &renderer.temp_arm.bones {
             let is_hidden = hiddens.get(&bone.id) == None || *hiddens.get(&bone.id).unwrap();
             if bone.verts_edited || is_hidden {
@@ -482,12 +481,12 @@ pub fn render(
     if edit_mode.render_options.meshes {
         let mut verts = vec![];
         let mut indices = vec![];
-        let hiddens = armature.get_propagated_hidden();
+        let hiddens = tab.armature.get_propagated_hidden();
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
         for b in 0..renderer.temp_arm.bones.len() {
             let bone = &renderer.temp_arm.bones[b];
             let already_editing =
-                edit_mode.editing_mesh && armature.sel_bone(&sel).unwrap().id == bone.id;
+                edit_mode.editing_mesh && tab.armature.sel_bone(&sel).unwrap().id == bone.id;
             let is_hidden = hiddens.get(&bone.id) == None || *hiddens.get(&bone.id).unwrap();
             if !bone.verts_edited || is_hidden || already_editing {
                 continue;
@@ -498,11 +497,11 @@ pub fn render(
             let wv = bone.world_verts.clone();
 
             #[rustfmt::skip]
-            let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, camera, config, events, armature, renderer, -1);
+            let (mut verts_p, mut indices_p, _) = bone_vertices(&wv, false, selections, input, &tab.camera, config, events, &tab.armature, renderer, -1);
 
             let bone = &renderer.temp_arm.bones[b];
             #[rustfmt::skip]
-            let (mut verts_l, mut indices_l, _) = vert_lines(bone, &renderer.temp_arm.bones, &mouse, nw, false, false, camera, input, selections, events, config);
+            let (mut verts_l, mut indices_l, _) = vert_lines(bone, &renderer.temp_arm.bones, &mouse, nw, false, false, &tab.camera, input, selections, events, config);
 
             // color wireframes
             if bone.group_color.a == 0 {
@@ -541,24 +540,24 @@ pub fn render(
     }
 
     if config.gridline_front {
-        draw_gridline(render_pass, renderer, &camera, &config, queue);
+        draw_gridline(render_pass, renderer, &tab.camera, &config, queue);
     }
 
     // draw bone center points, and kites representing hierarchy
     #[rustfmt::skip]
-    draw_render_points(config, camera, input, edit_mode, &selected_bone_ids, selections, renderer, queue, render_pass, events, armature);
+    draw_render_points(config, &tab.camera, input, edit_mode, &selected_bone_ids, selections, renderer, queue, render_pass, events, &tab.armature);
     #[rustfmt::skip]
-    draw_kites(config, camera, edit_mode, selected_bone_ids, renderer, queue, render_pass);
+    draw_kites(config, &tab.camera, edit_mode, selected_bone_ids, renderer, queue, render_pass);
 
     // is a bone being hovered on, in the renderer?
     renderer.is_hovering_bone = renderer.on_point || on_click_id != -1;
 
     // check if this bone is part of IK, to disable editing later
     let mut has_ik = false;
-    if let Some(bone) = armature.sel_bone(&sel) {
+    if let Some(bone) = tab.armature.sel_bone(&sel) {
         has_ik = bone.ik_family_id != -1
             && !bone.ik_disabled
-            && armature.bone_eff(bone.id) != JointEffector::Start;
+            && tab.armature.bone_eff(bone.id) != JointEffector::Start;
     }
 
     // show transform rings when editing a bone
@@ -567,13 +566,23 @@ pub fn render(
     let selected = selections.bone_ids.len() == 1;
     let holding_lmb = input.left_down && !input.mouse_pressed_on_ui;
     if ring_enabled && !edit_mode.editing_mesh && !has_ik && selected && !holding_lmb {
-        #[rustfmt::skip]
-        transform_ring(config, camera, armature, render_pass, renderer, events, edit_mode, &sel, queue, &mouse_pos);
+        transform_ring(
+            config,
+            &tab.camera,
+            &tab.armature,
+            render_pass,
+            renderer,
+            events,
+            edit_mode,
+            &sel,
+            queue,
+            &mouse_pos,
+        );
     }
 
     // if no SelectBone events have been called, unselect current if mouse is pressed
-    if !camera.on_ui
-        && armature.bones.len() > 0
+    if !tab.camera.on_ui
+        && tab.armature.bones.len() > 0
         && edit_mode.sel_time > 0.25
         && input.left_clicked
         && !edit_mode.editing_mesh
@@ -592,7 +601,7 @@ pub fn render(
     }
 
     // if cursor is not hovering on any verts, unselect on click
-    if !camera.on_ui
+    if !tab.camera.on_ui
         && input.left_clicked
         && (edit_mode.editing_mesh || selections.bind != -1)
         && !hovered_vert
@@ -604,7 +613,7 @@ pub fn render(
     if !input.left_down {
         renderer.editing_bone = false;
         renderer.started_dragging_verts = false;
-    } else if sel.vert_ids.len() > 0 && armature.sel_bone(&sel) != None && !camera.on_ui {
+    } else if sel.vert_ids.len() > 0 && tab.armature.sel_bone(&sel) != None && !tab.camera.on_ui {
         if !renderer.started_dragging_verts {
             events.save_bone(selections.sel_bone());
             renderer.started_dragging_verts = true
@@ -618,8 +627,8 @@ pub fn render(
 
     // keep track of selected bone's initial rotation, if mouse isn't being pressed
     if input.mouse_init == None {
-        if let Some(bone) = armature.sel_bone(&sel) {
-            let anim_bones = &armature.try_anim_bones();
+        if let Some(bone) = tab.armature.sel_bone(&sel) {
+            let anim_bones = &tab.armature.try_anim_bones();
             let sel_anim_bone = anim_bones.iter().find(|b| b.id == bone.id).unwrap();
             renderer.bone_init_rot = sel_anim_bone.rot;
             renderer.bone_init_pivot_rot = sel_anim_bone.pivot_rot;
@@ -632,8 +641,12 @@ pub fn render(
 
     // move camera
     if input.right_down && !input.mouse_pressed_on_ui {
-        let vel = renderer::mouse_vel(&input, &camera) * camera.zoom;
-        events.edit_camera(camera.pos.x + vel.x, camera.pos.y + vel.y, camera.zoom);
+        let vel = renderer::mouse_vel(&input, &tab.camera) * tab.camera.zoom;
+        events.edit_camera(
+            tab.camera.pos.x + vel.x,
+            tab.camera.pos.y + vel.y,
+            tab.camera.zoom,
+        );
         return;
     }
 
@@ -671,10 +684,10 @@ pub fn render(
         let mut line_indices = vec![];
 
         // move all selected (root) bones
-        for sel_id in &selections.only_root_bones(&armature.bones) {
+        for sel_id in &selections.only_root_bones(&tab.armature.bones) {
             if *current_edit == EditModes::Rotate {
-                let mut mouse = utils::screen_to_world_space(input.mouse, camera.window);
-                mouse.x *= camera.aspect_ratio();
+                let mut mouse = utils::screen_to_world_space(input.mouse, tab.camera.window);
+                mouse.x *= tab.camera.aspect_ratio();
                 let bone = renderer
                     .temp_arm
                     .bones
@@ -682,8 +695,8 @@ pub fn render(
                     .find(|b| b.id == *sel_id)
                     .unwrap();
                 let center = vert(Some(bone.pos), None, None);
-                let cam = &world_camera(&camera, &config);
-                let aspect_ratio = camera.aspect_ratio();
+                let cam = &world_camera(&tab.camera, &config);
+                let aspect_ratio = tab.camera.aspect_ratio();
                 let cw = world_vert(center, cam, aspect_ratio, Vec2::default());
                 let (mut verts, mut indices) = draw_line(cw.pos, mouse);
                 line_verts.append(&mut verts);
@@ -700,8 +713,8 @@ pub fn render(
                 .unwrap();
             #[rustfmt::skip]
             edit_bone(
-                events, edit_mode, current_edit, &selections, &camera,
-                &config, &input, &renderer, bone, &renderer.temp_arm.bones, &armature
+                events, edit_mode, current_edit, &selections, &tab.camera,
+                &config, &input, &renderer, bone, &renderer.temp_arm.bones, &tab.armature
             );
         }
 

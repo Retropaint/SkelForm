@@ -29,7 +29,6 @@ pub fn draw(
     config: &Config,
     events: &mut EventState,
     edit_mode: &EditMode,
-    camera: &Camera,
     tab: &ArmatureTab,
     armature_names: &Vec<String>,
     copy_buffer: &CopyBuffer,
@@ -173,7 +172,7 @@ pub fn draw(
 
     // render certain UI elements only if startup isn't open (performance)
     if !shared_ui.startup_window {
-        camera_bar(context, config, shared_ui, camera, events);
+        camera_bar(context, config, shared_ui, &tab.camera, events);
         render_bar(
             context,
             config,
@@ -192,7 +191,7 @@ pub fn draw(
         modal::modal(context, shared_ui, &config);
     }
     if shared_ui.settings_modal {
-        settings_modal::draw(shared_ui, config, camera, events, context);
+        settings_modal::draw(shared_ui, config, &tab.camera, events, context);
     }
     if shared_ui.startup_window {
         startup_window::startup_modal(context, shared_ui, events, &config);
@@ -267,7 +266,7 @@ pub fn draw(
         events,
         &tab.selections,
         &tab.armature,
-        camera,
+        &tab.camera,
         edit_mode,
         buffer
     ));
@@ -294,7 +293,7 @@ pub fn draw(
             &tab.selections,
             events,
             &edit_mode,
-            camera
+            &tab.camera
         ));
     }
 
@@ -307,7 +306,7 @@ pub fn draw(
         &tab.selections,
         edit_mode,
         shared_ui,
-        camera
+        &tab.camera
     ));
 
     // get current properties of selected bone, including animations
@@ -384,7 +383,7 @@ pub fn draw(
                         &tab.armature,
                         events,
                         input,
-                        &camera,
+                        &tab.camera,
                     );
                 } else if tab.armature.bones.len() > 1 {
                     ui.heading("Armature Shortcuts");
@@ -403,10 +402,10 @@ pub fn draw(
         });
         shared_ui.bone_panel_rect = Some(ui.min_rect());
     });
-    draw_resizable_panel(bone_panel_id, panel, events, context, camera);
+    draw_resizable_panel(bone_panel_id, panel, events, context, &tab.camera);
 
     // create bone(s) from texture(s) if dropped on renderer
-    if shared_ui.dragging_element == "texture" && !camera.on_ui {
+    if shared_ui.dragging_element == "texture" && !tab.camera.on_ui {
         if context.dragged_id() != None {
             egui::Area::new("dragging_texture".into()).show(context, |ui| {
                 let tex_size = tab.armature.sel_style(&tab.selections).unwrap().textures
@@ -426,7 +425,7 @@ pub fn draw(
                 );
             });
         } else if context.drag_stopped_id() != None {
-            let mouse_pos = world_mouse(input.mouse, &camera);
+            let mouse_pos = world_mouse(input.mouse, &tab.camera);
             events.new_bones_from_textures(shared_ui.dragging_id as i32, mouse_pos.1);
         }
     }
@@ -522,12 +521,12 @@ pub fn draw(
     }
 
     // check if mouse is on ui
-    if camera.on_ui != context.is_pointer_over_area() {
+    if tab.camera.on_ui != context.is_pointer_over_area() {
         events.toggle_pointer_on_ui(context.is_pointer_over_area());
     }
 
     // show ID of vertex being hovered
-    if tab.selections.hovering_vert_id != -1 && !camera.on_ui {
+    if tab.selections.hovering_vert_id != -1 && !tab.camera.on_ui {
         let mouse = input.mouse / shared_ui.scale;
         let pos = egui::Pos2::new(mouse.x, mouse.y - 13.);
         let str = format!("#{}", tab.selections.hovering_vert_id);
@@ -544,7 +543,7 @@ pub fn draw(
     // show hovered bone's name
     let hbid = tab.selections.hovering_bone_id;
     let sel_bone = tab.armature.sel_bone(&tab.selections);
-    if hbid != -1 && !camera.on_ui && (sel_bone == None || hbid != sel_bone.unwrap().id) {
+    if hbid != -1 && !tab.camera.on_ui && (sel_bone == None || hbid != sel_bone.unwrap().id) {
         let mouse = input.mouse / shared_ui.scale;
         if let Some(bone) = tab.armature.bones.iter().find(|b| b.id == hbid) {
             context.debug_painter().debug_text(
@@ -659,7 +658,6 @@ pub fn process_inputs(
     config: &Config,
     edit_mode: &mut EditMode,
     events: &mut EventState,
-    camera: &Camera,
     tab: &mut ArmatureTab,
 ) {
     shared_ui.last_pressed = None;
@@ -676,7 +674,7 @@ pub fn process_inputs(
                 &mut tab.selections,
                 edit_mode,
                 &mut tab.armature,
-                camera,
+                &tab.camera,
             );
         }
         shared_ui.last_pressed = i.keys_down.iter().last().copied();
@@ -705,10 +703,10 @@ pub fn process_inputs(
 
         if input.left_pressed {
             input.mouse_init = Some(input.mouse);
-            input.mouse_pressed_on_ui = camera.on_ui;
+            input.mouse_pressed_on_ui = tab.camera.on_ui;
         }
         if input.right_pressed {
-            input.mouse_pressed_on_ui = camera.on_ui;
+            input.mouse_pressed_on_ui = tab.camera.on_ui;
         }
 
         if i.pointer.primary_released() {
@@ -754,7 +752,7 @@ pub fn process_inputs(
                 // zoom timeline instead of scrolling
                 shared_ui.timeline_zoom -= input.scroll_delta / 25.;
                 shared_ui.timeline_zoom = shared_ui.timeline_zoom.min(10.).max(0.1);
-            } else if !camera.on_ui {
+            } else if !tab.camera.on_ui {
                 events.cam_zoom_scroll();
             }
         }

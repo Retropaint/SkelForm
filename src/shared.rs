@@ -366,7 +366,7 @@ impl TintColor {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
 pub struct Camera {
     pub pos: Vec2,
     pub zoom: f32,
@@ -374,6 +374,17 @@ pub struct Camera {
     pub on_ui: bool,
     #[serde(skip)]
     pub window: Vec2,
+}
+
+impl Default for Camera {
+    fn default() -> Self {
+        Camera {
+            pos: Vec2::new(0., 0.),
+            zoom: 2000.,
+            on_ui: false,
+            window: Vec2::new(0., 0.),
+        }
+    }
 }
 
 impl Camera {
@@ -2984,11 +2995,12 @@ impl SelectionState {
 }
 
 // Each armature tab stores this data individually.
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct ArmatureTab {
     pub armature: Armature,
     pub undo_states: UndoStates,
     pub selections: SelectionState,
+    pub camera: Camera,
 }
 
 impl ArmatureTab {
@@ -3125,7 +3137,6 @@ pub struct Shared {
     pub ui: Ui,
     pub renderer: Renderer,
     pub events: EventState,
-    pub camera: Camera,
     pub edit_mode: EditMode,
     pub config: Config,
     pub copy_buffer: CopyBuffer,

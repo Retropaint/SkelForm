@@ -327,7 +327,9 @@ impl ApplicationHandler for App {
                 if width == 0 || height == 0 {
                     return;
                 }
-                self.shared.camera.window = Vec2::new(width as f32, height as f32);
+                for tab in &mut self.shared.tabs {
+                    tab.camera.window = Vec2::new(width as f32, height as f32);
+                }
                 self.shared.renderer.gridline_buffer.dirty = true;
                 self.shared.renderer.kite_buffer.dirty = true;
                 self.shared.renderer.point_buffer.dirty = true;
@@ -394,7 +396,7 @@ impl ApplicationHandler for App {
                 #[rustfmt::skip]
                 ui::process_inputs(
                     gui_state.egui_ctx(), &mut s.input, &mut s.ui, &s.config,
-                    &mut s.edit_mode, &mut s.events, &s.camera, &mut s.tabs[sel_tab]
+                    &mut s.edit_mode, &mut s.events, &mut s.tabs[sel_tab]
                 );
 
                 // ui logic handled in ui.rs
@@ -406,7 +408,6 @@ impl ApplicationHandler for App {
                     &mut s.config,
                     &mut s.events,
                     &mut s.edit_mode,
-                    &s.camera,
                     &mut s.tabs[sel_tab],
                     &names,
                     &s.copy_buffer,
@@ -436,7 +437,9 @@ impl ApplicationHandler for App {
                     self.shared.renderer.initialized_window = true;
                 }
 
-                self.shared.camera.window = Vec2::new(size.width as f32, size.height as f32);
+                for tab in &mut self.shared.tabs {
+                    tab.camera.window = Vec2::new(size.width as f32, size.height as f32);
+                }
                 renderer.render_frame(
                     screen_descriptor,
                     paint_jobs,
@@ -523,7 +526,7 @@ impl ApplicationHandler for App {
                     let s = &mut self.shared;
                     #[rustfmt::skip]
                     editor::iterate_events(
-                        &s.input, &mut s.config, &mut s.events, &mut s.camera, &mut s.edit_mode,
+                        &s.input, &mut s.config, &mut s.events, &mut s.edit_mode,
                         &mut s.tabs, &mut s.psd_armature, &mut s.copy_buffer, &mut s.ui, &mut s.renderer
                     );
                 }
@@ -703,7 +706,7 @@ impl BackendRenderer {
         textures_delta: egui::TexturesDelta,
         shared: &mut shared::Shared,
     ) {
-        if shared.camera.window == Vec2::new(0., 0.) {
+        if shared.tabs[0].camera.window == Vec2::new(0., 0.) {
             return;
         }
 
@@ -762,8 +765,10 @@ impl BackendRenderer {
             _ => format = self.gpu.surface_format,
         }
         let size = Vec2::new(
-            (shared.camera.window.x as u32 / shared.config.pixel_magnification as u32) as f32,
-            (shared.camera.window.y as u32 / shared.config.pixel_magnification as u32) as f32,
+            (shared.tabs[0].camera.window.x as u32 / shared.config.pixel_magnification as u32)
+                as f32,
+            (shared.tabs[0].camera.window.y as u32 / shared.config.pixel_magnification as u32)
+                as f32,
         );
         if size.x == 0. || size.y == 0. {
             return;
@@ -919,14 +924,8 @@ impl BackendRenderer {
         } else if recording {
             // recording animations for images/videos
             shared.events.open_modal("exporting", true);
-            utils::render_spritesheets(
-                &shared.tabs[shared.ui.sel_tab].armature,
-                &mut shared.ui,
-                &shared.camera,
-                &shared.config,
-                self,
-                &shared.renderer,
-            );
+            let tab = &shared.tabs[shared.ui.sel_tab];
+            utils::render_spritesheets(tab, &mut shared.ui, &shared.config, self, &shared.renderer);
             *shared.ui.saving.lock().unwrap() = Saving::None;
             shared.ui.spritesheet_elapsed = Some(Instant::now());
             shared.ui.export_modal = false;
@@ -1014,7 +1013,7 @@ impl BackendRenderer {
         // core rendering logic handled in renderer.rs
         #[rustfmt::skip]
         renderer::render(
-            render_pass, &self.gpu.queue, &shared.camera, &shared.input, &shared.tabs[shared.ui.sel_tab].armature,
+            render_pass, &self.gpu.queue, &shared.input, &shared.tabs[shared.ui.sel_tab],
             &shared.config, &shared.edit_mode, &shared.tabs[shared.ui.sel_tab].selections, &mut shared.renderer, &mut shared.events,
         );
     }
@@ -1369,16 +1368,21 @@ impl BackendRenderer {
         utils::save_recent_paths(shared.ui.recent_file_paths.clone());
 
         let mut frames = vec![];
-        #[rustfmt::skip]
+        let camera = shared.tabs[shared.ui.sel_tab].camera.clone();
         self.take_screenshot(
-            shared.screenshot_res, &mut shared.tabs[shared.ui.sel_tab].armature, &shared.camera,
-            &shared.config.colors.background, &mut frames, &mut shared.ui.mapped_frames, &shared.renderer
+            shared.screenshot_res,
+            &mut shared.tabs[shared.ui.sel_tab].armature,
+            &camera,
+            &shared.config.colors.background,
+            &mut frames,
+            &mut shared.ui.mapped_frames,
+            &shared.renderer,
         );
         let buffer = frames[0].buffer.clone();
         let screenshot_res = shared.screenshot_res;
 
         let mut armature = shared.sel_tab().armature.clone();
-        let camera = shared.camera.clone();
+        let camera = shared.sel_tab().camera.clone();
         let edit_mode = shared.edit_mode.clone();
 
         // clear export options

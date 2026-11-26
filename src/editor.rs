@@ -12,7 +12,6 @@ pub fn iterate_events(
     input: &InputStates,
     config: &mut Config,
     events: &mut EventState,
-    camera: &mut Camera,
     edit_mode: &mut EditMode,
     tabs: &mut Vec<ArmatureTab>,
     psd_armature: &mut Armature,
@@ -321,8 +320,8 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::EditCamera {
-        camera.pos = Vec2::new(events.values[0], events.values[1]);
-        camera.zoom = MIN_ZOOM.max(events.values[2]);
+        tabs[ui.sel_tab].camera.pos = Vec2::new(events.values[0], events.values[1]);
+        tabs[ui.sel_tab].camera.zoom = MIN_ZOOM.max(events.values[2]);
 
         events.events.remove(0);
         events.values.drain(0..=2);
@@ -472,7 +471,7 @@ pub fn iterate_events(
         let str_value = events.str_values[0].clone().to_string();
         #[rustfmt::skip]
         editor::simple_event(
-            event, value, str_value, camera, &input, edit_mode,
+            event, value, str_value, &input, edit_mode,
             tabs, psd_armature, copy_buffer, ui, renderer, config
         );
 
@@ -487,7 +486,6 @@ pub fn simple_event(
     event: &crate::Events,
     value: f32,
     str_value: String,
-    camera: &mut Camera,
     input: &InputStates,
     edit_mode: &mut EditMode,
     tabs: &mut Vec<ArmatureTab>,
@@ -501,14 +499,14 @@ pub fn simple_event(
 
     match event {
         Events::CamZoomIn => {
-            let old_zoom = camera.zoom;
-            camera.zoom = MIN_ZOOM.max(camera.zoom - 10.);
-            move_camera_with_zoom(camera, input, old_zoom);
+            let old_zoom = tabs[ui.sel_tab].camera.zoom;
+            tabs[ui.sel_tab].camera.zoom = MIN_ZOOM.max(tabs[ui.sel_tab].camera.zoom - 10.);
+            move_camera_with_zoom(&mut tabs[ui.sel_tab].camera, input, old_zoom);
         }
         Events::CamZoomOut => {
-            let old_zoom = camera.zoom;
-            camera.zoom += 10.;
-            move_camera_with_zoom(camera, input, old_zoom);
+            let old_zoom = tabs[ui.sel_tab].camera.zoom;
+            tabs[ui.sel_tab].camera.zoom += 10.;
+            move_camera_with_zoom(&mut tabs[ui.sel_tab].camera, input, old_zoom);
         }
         Events::EditModeMove => edit_mode.current = EditModes::Move,
         Events::EditModeRotate => edit_mode.current = EditModes::Rotate,
@@ -559,7 +557,7 @@ pub fn simple_event(
             tabs[ui.sel_tab].armature.animations[value as usize].name = str_value;
             ui.just_made_anim = false;
         }
-        Events::PointerOnUi => camera.on_ui = value == 1.,
+        Events::PointerOnUi => tabs[ui.sel_tab].camera.on_ui = value == 1.,
         Events::ToggleShowingMesh => {
             edit_mode.showing_mesh = value == 1.;
             if value != 1. {
@@ -602,9 +600,10 @@ pub fn simple_event(
             tabs[ui.sel_tab].sel_bone_mut().unwrap().effects_folded = value == 1.
         }
         Events::CamZoomScroll => {
-            let old_zoom = camera.zoom;
-            camera.zoom = MIN_ZOOM.max(camera.zoom - input.scroll_delta);
-            move_camera_with_zoom(camera, input, old_zoom);
+            let old_zoom = tabs[ui.sel_tab].camera.zoom;
+            tabs[ui.sel_tab].camera.zoom =
+                MIN_ZOOM.max(tabs[ui.sel_tab].camera.zoom - input.scroll_delta);
+            move_camera_with_zoom(&mut tabs[ui.sel_tab].camera, input, old_zoom);
         }
         Events::ToggleAnimPanelOpen => {
             edit_mode.anim_open = value == 1.;
@@ -635,14 +634,15 @@ pub fn simple_event(
         Events::NewArmature => {
             unselect_all(&mut tabs[ui.sel_tab].selections, edit_mode, ui);
             edit_mode.anim_open = false;
-            camera.pos = Vec2::new(0., 0.);
-            camera.zoom = 2000.;
+            tabs[ui.sel_tab].camera.pos = Vec2::new(0., 0.);
+            tabs[ui.sel_tab].camera.zoom = 2000.;
             ui.save_path = None;
             ui.changed_window_name = false;
             tabs.push(ArmatureTab {
                 armature: Armature::default().clone(),
                 undo_states: UndoStates::default(),
                 selections: SelectionState::default(),
+                camera: Camera::default(),
             });
             switch_to_armature(tabs.len() - 1, tabs, ui);
         }
@@ -921,8 +921,8 @@ pub fn simple_event(
             }
             total_rot += bone.pivot_rot;
 
-            let mouse_vel = renderer::mouse_vel(&input, &camera);
-            let zoom = camera.zoom;
+            let mouse_vel = renderer::mouse_vel(&input, &tabs[ui.sel_tab].camera);
+            let zoom = tabs[ui.sel_tab].camera.zoom;
             let og_bone = &mut tabs[ui.sel_tab].sel_bone_mut().unwrap();
             og_bone.set_editing_vertices(true);
             let vert_mut = og_bone.vertices.iter_mut().find(|v| v.id == value as u32);
@@ -1390,11 +1390,12 @@ pub fn simple_event(
         Events::CreateBindBone => {
             // create new bone
             let (_, new_idx) = armature.new_bone(-1);
-            armature.bones[new_idx].pos =
-                utils::world_mouse(ui.context_menu.last_mouse_pos, camera).1;
+            let camera = tabs[ui.sel_tab].camera.clone();
+            tabs[ui.sel_tab].armature.bones[new_idx].pos =
+                utils::world_mouse(ui.context_menu.last_mouse_pos, &camera).1;
 
             // set new bone as bind
-            let bone_id = armature.bones[new_idx].id;
+            let bone_id = tabs[ui.sel_tab].armature.bones[new_idx].id;
             let bind = BoneBind {
                 bone_id,
                 is_path: false,

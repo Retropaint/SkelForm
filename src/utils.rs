@@ -4,10 +4,10 @@ use crate::*;
 
 #[cfg(target_arch = "wasm32")]
 mod web {
+    pub use image::GenericImage;
     pub use wasm_bindgen::prelude::wasm_bindgen;
     pub use web_sys::*;
     pub use zip::write::FileOptions;
-    pub use image::GenericImage;
 }
 use image::buffer::ConvertBuffer;
 use image::{RgbImage, Rgba, RgbaImage};
@@ -194,9 +194,8 @@ pub fn save_web(armature: &Armature, camera: &Camera, edit_mode: &EditMode, save
 
 // process spritesheet buffers, to be used later
 pub fn render_spritesheets(
-    armature: &Armature,
+    tab: &ArmatureTab,
     shared_ui: &mut shared::Ui,
-    camera: &Camera,
     config: &Config,
     backend: &BackendRenderer,
     renderer: &Renderer,
@@ -207,18 +206,18 @@ pub fn render_spritesheets(
     let mut left_top = Vec2::new(f32::MAX, -f32::MAX);
     let mut right_bot = Vec2::new(-f32::MAX, f32::MAX);
     if shared_ui.export_global_bounds {
-        for a in 0..armature.animations.len() {
-            let anim = &armature.animations[a];
+        for a in 0..tab.armature.animations.len() {
+            let anim = &tab.armature.animations[a];
             let last_frame = if let Some(kf) = anim.keyframes.last() {
                 kf.frame + 1
             } else {
                 1
             };
             let all_frames = last_frame * shared_ui.anim_cycles;
-            let mut new_arm = armature.clone();
+            let mut new_arm = tab.armature.clone();
             for f in 0..all_frames {
-                new_arm.bones = armature.animate(a, f % last_frame);
-                let (lt, br) = renderer::get_sprite_boundary(&new_arm, camera, config);
+                new_arm.bones = tab.armature.animate(a, f % last_frame);
+                let (lt, br) = renderer::get_sprite_boundary(&new_arm, &tab.camera, config);
                 left_top = Vec2::new(left_top.x.min(lt.x), left_top.y.max(lt.y));
                 right_bot = Vec2::new(right_bot.x.max(br.x), right_bot.y.min(br.y));
             }
@@ -226,34 +225,34 @@ pub fn render_spritesheets(
     }
 
     let mut spritesheet_idx = 0;
-    for a in 0..armature.animations.len() {
+    for a in 0..tab.armature.animations.len() {
         if !shared_ui.exporting_anims[a] {
             continue;
         }
         shared_ui.rendered_spritesheets.push(vec![]);
-        let anim = &armature.animations[a];
+        let anim = &tab.armature.animations[a];
         let last_frame = if let Some(kf) = anim.keyframes.last() {
             kf.frame + 1
         } else {
             1
         };
         let all_frames = last_frame * shared_ui.anim_cycles;
-        let mut new_arm = armature.clone();
+        let mut new_arm = tab.armature.clone();
 
         // get maximum boundary of this animation alone, if global_bounds is false
         if !shared_ui.export_global_bounds {
             left_top = Vec2::new(f32::MAX, -f32::MAX);
             right_bot = Vec2::new(-f32::MAX, f32::MAX);
             for f in 0..all_frames {
-                new_arm.bones = armature.animate(a, f % last_frame);
-                let (lt, br) = renderer::get_sprite_boundary(&new_arm, camera, config);
+                new_arm.bones = tab.armature.animate(a, f % last_frame);
+                let (lt, br) = renderer::get_sprite_boundary(&new_arm, &tab.camera, config);
                 left_top = Vec2::new(left_top.x.min(lt.x), left_top.y.max(lt.y));
                 right_bot = Vec2::new(right_bot.x.max(br.x), right_bot.y.min(br.y));
             }
         }
 
         // adjust camera to the biggest boundary
-        let mut cam = camera.clone();
+        let mut cam = tab.camera.clone();
         cam.pos = (left_top + right_bot) / 2.;
         // cam will zoom out until it gets the farthest boundary
         cam.zoom = (right_bot.x - cam.pos.x)
@@ -1165,11 +1164,12 @@ pub fn import<R: Read + std::io::Seek>(
     }
 
     // load editor data
+    let mut imported_camera = Camera::default();
     if let Ok(editor_file) = zip.as_mut().unwrap().by_name("editor.json") {
         if let Ok(editor) =
             serde_json::from_reader::<ZipFile<'_, R>, crate::EditorOptions>(editor_file)
         {
-            shared.camera = editor.camera;
+            imported_camera = editor.camera;
             for b in 0..temp_arm.bones.len() {
                 let bone = &mut temp_arm.bones[b];
                 let ed_bone = &editor.bones[b];
@@ -1291,6 +1291,7 @@ pub fn import<R: Read + std::io::Seek>(
             armature: temp_arm,
             undo_states: UndoStates::default(),
             selections: SelectionState::default(),
+            camera: imported_camera,
         });
         shared.events.switch_to_armature(shared.tabs.len() - 1);
     }

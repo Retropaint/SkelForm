@@ -129,7 +129,6 @@ fn main() -> Result<(), winit::error::EventLoopError> {
 }
 
 fn init_shared(shared: &mut Shared) {
-    shared.camera.zoom = 2000.;
     shared.ui.timeline_zoom = 1.;
     shared.ui.dragged_keyframe = Keyframe {
         frame: -1,
@@ -162,6 +161,7 @@ fn init_shared(shared: &mut Shared) {
         armature: Armature::default(),
         undo_states: UndoStates::default(),
         selections: SelectionState::init(),
+        camera: Camera::default(),
     });
 
     shared.ui.video_clear_bg = shared.config.colors.background;
@@ -208,7 +208,7 @@ fn init_shared(shared: &mut Shared) {
 
     // if this were false, the first click would always
     // be considered non-UI
-    shared.camera.on_ui = true;
+    shared.sel_tab_mut().camera.on_ui = true;
 
     // initialize files to show on startup
     #[cfg(not(target_arch = "wasm32"))]
