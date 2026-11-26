@@ -29,9 +29,7 @@ pub fn draw(
     config: &Config,
     events: &mut EventState,
     edit_mode: &EditMode,
-    tab: &ArmatureTab,
-    armature_names: &Vec<String>,
-    armature_saved: &Vec<bool>,
+    tabs: &Vec<ArmatureTab>,
     copy_buffer: &CopyBuffer,
     temp_bones: &Vec<Bone>,
 ) {
@@ -43,10 +41,10 @@ pub fn draw(
     default_styling(context, &config);
 
     // show global transforms of selected bone if holding ;
-    if input.global_bone && tab.selections.bone_ids.len() != 0 {
+    if input.global_bone && tabs[shared_ui.sel_tab].selections.bone_ids.len() != 0 {
         if let Some(bone) = temp_bones
             .iter()
-            .find(|bone| bone.id == tab.selections.sel_bone())
+            .find(|bone| bone.id == tabs[shared_ui.sel_tab].selections.sel_bone())
         {
             let area_pos = egui::Pos2::new(0., 0.);
             let area = egui::Area::new("globl_bone".into()).fixed_pos(area_pos);
@@ -95,16 +93,7 @@ pub fn draw(
                     return;
                 }
                 let cb = &copy_buffer;
-                context_menu_content(
-                    config,
-                    shared_ui,
-                    events,
-                    ui,
-                    &tab.armature,
-                    &tab.selections,
-                    &cb,
-                    armature_names,
-                );
+                context_menu_content(config, shared_ui, events, ui, &cb, tabs);
             });
 
             // close if clicked out of it
@@ -174,13 +163,19 @@ pub fn draw(
 
     // render certain UI elements only if startup isn't open (performance)
     if !shared_ui.startup_window {
-        camera_bar(context, config, shared_ui, &tab.camera, events);
+        camera_bar(
+            context,
+            config,
+            shared_ui,
+            &tabs[shared_ui.sel_tab].camera,
+            events,
+        );
         render_bar(
             context,
             config,
             shared_ui,
             events,
-            &tab.armature,
+            &tabs[shared_ui.sel_tab].armature,
             &edit_mode,
         );
     }
@@ -193,7 +188,13 @@ pub fn draw(
         modal::modal(context, shared_ui, &config);
     }
     if shared_ui.settings_modal {
-        settings_modal::draw(shared_ui, config, &tab.camera, events, context);
+        settings_modal::draw(
+            shared_ui,
+            config,
+            &tabs[shared_ui.sel_tab].camera,
+            events,
+            context,
+        );
     }
     if shared_ui.startup_window {
         startup_window::startup_modal(context, shared_ui, events, &config);
@@ -205,8 +206,8 @@ pub fn draw(
         atlas_modal::draw(
             context,
             config,
-            &tab.selections,
-            &tab.armature,
+            &tabs[shared_ui.sel_tab].selections,
+            &tabs[shared_ui.sel_tab].armature,
             shared_ui,
             input,
             events,
@@ -219,7 +220,7 @@ pub fn draw(
             &edit_mode,
             config,
             events,
-            &tab.armature,
+            &tabs[shared_ui.sel_tab].armature,
         );
     }
     if shared_ui.lang_import_modal {
@@ -266,22 +267,16 @@ pub fn draw(
         config,
         shared_ui,
         events,
-        &tab.selections,
-        &tab.armature,
-        &tab.camera,
+        &tabs[shared_ui.sel_tab].selections,
+        &tabs[shared_ui.sel_tab].armature,
+        &tabs[shared_ui.sel_tab].camera,
         edit_mode,
         buffer
     ));
 
-    if armature_names.len() > 1 || !config.no_single_tabs {
+    if tabs.len() > 1 || !config.no_single_tabs {
         style_once!(armature_panel(
-            context,
-            config,
-            armature_names,
-            armature_saved,
-            shared_ui,
-            events,
-            input,
+            context, tabs, config, shared_ui, events, input,
         ));
     }
 
@@ -291,12 +286,12 @@ pub fn draw(
             context,
             shared_ui,
             input,
-            &tab.armature,
+            &tabs[shared_ui.sel_tab].armature,
             config,
-            &tab.selections,
+            &tabs[shared_ui.sel_tab].selections,
             events,
             &edit_mode,
-            &tab.camera
+            &tabs[shared_ui.sel_tab].camera
         ));
     }
 
@@ -305,19 +300,19 @@ pub fn draw(
         context,
         events,
         config,
-        &tab.armature,
-        &tab.selections,
+        &tabs[shared_ui.sel_tab].armature,
+        &tabs[shared_ui.sel_tab].selections,
         edit_mode,
         shared_ui,
-        &tab.camera
+        &tabs[shared_ui.sel_tab].camera
     ));
 
     // get current properties of selected bone, including animations
-    let selected_bone = if let Some(bone) = tab
+    let selected_bone = if let Some(bone) = tabs[shared_ui.sel_tab]
         .armature
         .try_anim_bones()
         .iter()
-        .find(|bone| bone.id == tab.selections.sel_bone())
+        .find(|bone| bone.id == tabs[shared_ui.sel_tab].selections.sel_bone())
     {
         bone.clone()
     } else {
@@ -341,7 +336,10 @@ pub fn draw(
         // if right-side panel is bone, determine if it should be enabled
         let mut enable_bone_panel = true;
         if shared_ui.last_selected == "bone" {
-            if let Some(_) = tab.armature.sel_bone(&tab.selections) {
+            if let Some(_) = tabs[shared_ui.sel_tab]
+                .armature
+                .sel_bone(&tabs[shared_ui.sel_tab].selections)
+            {
                 enable_bone_panel = !edit_mode.setting_ik_target && !edit_mode.setting_bind_bone;
             }
         }
@@ -359,9 +357,9 @@ pub fn draw(
                     bone_panel::draw(
                         bone,
                         ui,
-                        &tab.selections,
+                        &tabs[shared_ui.sel_tab].selections,
                         shared_ui,
-                        &tab.armature,
+                        &tabs[shared_ui.sel_tab].armature,
                         config,
                         events,
                         edit_mode,
@@ -369,26 +367,29 @@ pub fn draw(
                 } else if last_selected == "keyframe" {
                     keyframe_panel::draw(
                         ui,
-                        &tab.selections,
-                        &tab.armature,
+                        &tabs[shared_ui.sel_tab].selections,
+                        &tabs[shared_ui.sel_tab].armature,
                         events,
                         shared_ui,
                         config,
                     );
                 } else if (last_selected == "style" || last_selected == "texture")
-                    && tab.armature.sel_style(&tab.selections) != None
+                    && tabs[shared_ui.sel_tab]
+                        .armature
+                        .sel_style(&tabs[shared_ui.sel_tab].selections)
+                        != None
                 {
                     style_panel::draw(
                         ui,
                         shared_ui,
                         &config,
-                        &tab.selections,
-                        &tab.armature,
+                        &tabs[shared_ui.sel_tab].selections,
+                        &tabs[shared_ui.sel_tab].armature,
                         events,
                         input,
-                        &tab.camera,
+                        &tabs[shared_ui.sel_tab].camera,
                     );
-                } else if tab.armature.bones.len() > 1 {
+                } else if tabs[shared_ui.sel_tab].armature.bones.len() > 1 {
                     ui.heading("Armature Shortcuts");
                     ui.add_space(10.);
                     let next_bone = shared_ui.loc("settings_modal.keyboard.next_bone");
@@ -405,14 +406,23 @@ pub fn draw(
         });
         shared_ui.bone_panel_rect = Some(ui.min_rect());
     });
-    draw_resizable_panel(bone_panel_id, panel, events, context, &tab.camera);
+    draw_resizable_panel(
+        bone_panel_id,
+        panel,
+        events,
+        context,
+        &tabs[shared_ui.sel_tab].camera,
+    );
 
     // create bone(s) from texture(s) if dropped on renderer
-    if shared_ui.dragging_element == "texture" && !tab.camera.on_ui {
+    if shared_ui.dragging_element == "texture" && !tabs[shared_ui.sel_tab].camera.on_ui {
         if context.dragged_id() != None {
             egui::Area::new("dragging_texture".into()).show(context, |ui| {
-                let tex_size = tab.armature.sel_style(&tab.selections).unwrap().textures
-                    [shared_ui.dragging_id as usize]
+                let tex_size = tabs[shared_ui.sel_tab]
+                    .armature
+                    .sel_style(&tabs[shared_ui.sel_tab].selections)
+                    .unwrap()
+                    .textures[shared_ui.dragging_id as usize]
                     .size
                     / 4.;
                 let pos = input.mouse / 2. - tex_size / 2.;
@@ -420,15 +430,15 @@ pub fn draw(
                 let drag_id = shared_ui.dragging_id as usize;
                 style_panel::draw_texture_overlay(
                     drag_id,
-                    &tab.armature,
-                    &tab.selections,
+                    &tabs[shared_ui.sel_tab].armature,
+                    &tabs[shared_ui.sel_tab].selections,
                     ui,
                     &rect,
                     config,
                 );
             });
         } else if context.drag_stopped_id() != None {
-            let mouse_pos = world_mouse(input.mouse, &tab.camera);
+            let mouse_pos = world_mouse(input.mouse, &tabs[shared_ui.sel_tab].camera);
             events.new_bones_from_textures(shared_ui.dragging_id as i32, mouse_pos.1);
         }
     }
@@ -498,11 +508,11 @@ pub fn draw(
         }
     }
 
-    if tab.selections.bone_ids.len() > 0 {
+    if tabs[shared_ui.sel_tab].selections.bone_ids.len() > 0 {
         edit_mode_bar(
             context,
-            &tab.armature,
-            &tab.selections,
+            &tabs[shared_ui.sel_tab].armature,
+            &tabs[shared_ui.sel_tab].selections,
             edit_mode,
             events,
             shared_ui,
@@ -510,8 +520,8 @@ pub fn draw(
         );
         bone_pivot_bar(
             context,
-            &tab.armature,
-            &tab.selections,
+            &tabs[shared_ui.sel_tab].armature,
+            &tabs[shared_ui.sel_tab].selections,
             edit_mode,
             events,
             shared_ui,
@@ -519,36 +529,51 @@ pub fn draw(
         );
     }
 
-    if tab.armature.bones.len() > 0 {
+    if tabs[shared_ui.sel_tab].armature.bones.len() > 0 {
         animate_bar(context, shared_ui, edit_mode, events);
     }
 
     // check if mouse is on ui
-    if tab.camera.on_ui != context.is_pointer_over_area() {
+    if tabs[shared_ui.sel_tab].camera.on_ui != context.is_pointer_over_area() {
         events.toggle_pointer_on_ui(context.is_pointer_over_area());
     }
 
     // show ID of vertex being hovered
-    if tab.selections.hovering_vert_id != -1 && !tab.camera.on_ui {
+    if tabs[shared_ui.sel_tab].selections.hovering_vert_id != -1
+        && !tabs[shared_ui.sel_tab].camera.on_ui
+    {
         let mouse = input.mouse / shared_ui.scale;
         let pos = egui::Pos2::new(mouse.x, mouse.y - 13.);
-        let str = format!("#{}", tab.selections.hovering_vert_id);
+        let str = format!("#{}", tabs[shared_ui.sel_tab].selections.hovering_vert_id);
         let painter = context.debug_painter();
         painter.debug_text(pos, egui::Align2::CENTER_CENTER, egui::Color32::GREEN, str);
 
         if input.right_clicked {
             shared_ui.context_menu.close();
-            let context_id = &format!("vertex_{}", tab.selections.hovering_vert_id);
+            let context_id = &format!(
+                "vertex_{}",
+                tabs[shared_ui.sel_tab].selections.hovering_vert_id
+            );
             shared_ui.context_menu.show(context_id);
         }
     }
 
     // show hovered bone's name
-    let hbid = tab.selections.hovering_bone_id;
-    let sel_bone = tab.armature.sel_bone(&tab.selections);
-    if hbid != -1 && !tab.camera.on_ui && (sel_bone == None || hbid != sel_bone.unwrap().id) {
+    let hbid = tabs[shared_ui.sel_tab].selections.hovering_bone_id;
+    let sel_bone = tabs[shared_ui.sel_tab]
+        .armature
+        .sel_bone(&tabs[shared_ui.sel_tab].selections);
+    if hbid != -1
+        && !tabs[shared_ui.sel_tab].camera.on_ui
+        && (sel_bone == None || hbid != sel_bone.unwrap().id)
+    {
         let mouse = input.mouse / shared_ui.scale;
-        if let Some(bone) = tab.armature.bones.iter().find(|b| b.id == hbid) {
+        if let Some(bone) = tabs[shared_ui.sel_tab]
+            .armature
+            .bones
+            .iter()
+            .find(|b| b.id == hbid)
+        {
             context.debug_painter().debug_text(
                 egui::Pos2::new(mouse.x, mouse.y - 13.),
                 egui::Align2::CENTER_CENTER,
@@ -559,7 +584,7 @@ pub fn draw(
     }
 
     // show hovering triangle helpers
-    if tab.selections.hovering_tri_dur > 25 {
+    if tabs[shared_ui.sel_tab].selections.hovering_tri_dur > 25 {
         let mouse = input.mouse / shared_ui.scale;
         let pos = egui::Pos2::new(mouse.x, mouse.y - 20.);
         let str = shared_ui.loc("bone_panel.mesh_deformation.hovering_tri_tooltip");
@@ -568,7 +593,7 @@ pub fn draw(
     }
 
     // show hovering line helpers
-    if tab.selections.hovering_line_dur > 25 {
+    if tabs[shared_ui.sel_tab].selections.hovering_line_dur > 25 {
         let mouse = input.mouse / shared_ui.scale;
         let pos = egui::Pos2::new(mouse.x, mouse.y - 20.);
         let str = shared_ui.loc("bone_panel.mesh_deformation.hovering_line_tooltip");
@@ -594,7 +619,11 @@ pub fn draw(
         };
     }
 
-    if tab.armature.sel_bone(&tab.selections) != None {
+    if tabs[shared_ui.sel_tab]
+        .armature
+        .sel_bone(&tabs[shared_ui.sel_tab].selections)
+        != None
+    {
         // show which temporary mode will activate on press
         if !input.left_down && !edit_mode.editing_mesh {
             if let Some(temporary) = &edit_mode.temporary {
@@ -609,7 +638,7 @@ pub fn draw(
         }
 
         // show rotation/scale values (either bone or pivot) above cursor
-        if tab.selections.bone_ids.len() == 1 {
+        if tabs[shared_ui.sel_tab].selections.bone_ids.len() == 1 {
             if edit_mode.is_rotating {
                 let offset = Vec2::new(50., 0.);
                 let rot = if edit_mode.editing_pivot {
@@ -1105,10 +1134,8 @@ fn context_menu_content(
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     ui: &mut egui::Ui,
-    armature: &Armature,
-    selections: &SelectionState,
     copy_buffer: &CopyBuffer,
-    armature_names: &Vec<String>,
+    tabs: &Vec<ArmatureTab>,
 ) {
     let raw_split = shared_ui.context_id_parsed();
     let split: Vec<String> = raw_split.iter().map(|s| s.to_string()).collect();
@@ -1154,8 +1181,10 @@ fn context_menu_content(
     } else if element_id == "texture" {
         ui.context_rename(shared_ui, &config);
         let polar_id = PolarId::DeleteSelectedTextures;
-        let styles = &armature.styles;
-        let style_idx = styles.iter().position(|s| s.id == selections.style_id);
+        let styles = &tabs[shared_ui.sel_tab].armature.styles;
+        let style_idx = styles
+            .iter()
+            .position(|s| s.id == tabs[shared_ui.sel_tab].selections.style_id);
         if ui.context_button("Duplicate", config).clicked() {
             events.duplicate_texture(style_idx.unwrap(), split[1].parse().unwrap());
             shared_ui.context_menu.close();
@@ -1193,7 +1222,10 @@ fn context_menu_content(
     } else if element_id == "kfline" {
         // copy option, if there are any keyframes in this frame
         let frame: i32 = split[1].parse().unwrap();
-        let anim = armature.sel_anim(&selections).unwrap();
+        let anim = tabs[shared_ui.sel_tab]
+            .armature
+            .sel_anim(&tabs[shared_ui.sel_tab].selections)
+            .unwrap();
         let has_kf = anim.keyframes.iter().find(|kf| kf.frame == frame) != None;
 
         // paste option, if there are keyframes in copy buffer
@@ -1267,7 +1299,8 @@ fn context_menu_content(
                 button = ui.context_button(filename, config);
             }
             if button.clicked() {
-                if armature_names.contains(&filename.to_string()) {
+                let names: Vec<String> = tabs.iter().map(|tab| tab.armature.filename()).collect();
+                if names.contains(&filename.to_string()) {
                     shared_ui.polar_content = format!("{}", file.to_str().unwrap().to_string());
                     let str = shared_ui.loc("polar.open_same_armature");
                     events.open_polar_modal(PolarId::OpenSameArmature, str);
@@ -1276,6 +1309,16 @@ fn context_menu_content(
                     shared_ui.context_menu.close();
                 }
             }
+        }
+    } else if element_id == "armaturepanel" {
+        let idx: usize = split[1].parse().unwrap();
+        let mut opacity = tabs[idx].armature.opacity;
+        ui.add(egui::Slider::new(
+            &mut opacity,
+            egui::Rangef::new(0., 1.).into(),
+        ));
+        if opacity != tabs[shared_ui.sel_tab].armature.opacity {
+            events.set_tab_opacity(idx, opacity);
         }
     }
 }
@@ -1476,13 +1519,13 @@ fn top_panel(
 
 fn armature_panel(
     egui_ctx: &egui::Context,
+    tabs: &Vec<ArmatureTab>,
     config: &Config,
-    armature_names: &Vec<String>,
-    armature_saved: &Vec<bool>,
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     input: &InputStates,
 ) {
+    let names: Vec<String> = tabs.iter().map(|tab| tab.armature.filename()).collect();
     let panel = egui::TopBottomPanel::top("top_bar")
         .frame(egui::Frame {
             fill: config.colors.main.into(),
@@ -1507,7 +1550,7 @@ fn armature_panel(
                 let mut hovering = false;
                 ui.style_mut().spacing.item_spacing = egui::Vec2::new(0., 0.);
                 let mut idx: i32 = -1;
-                for n in 0..armature_names.len() {
+                for n in 0..tabs.len() {
                     idx += 1;
 
                     let id = egui::Id::new(("arm", idx, 0));
@@ -1522,11 +1565,14 @@ fn armature_panel(
                     if shared_ui.hovering_armature == n as i32 {
                         color += Color::new(20, 20, 20, 0);
                     }
-                    if shared_ui.sel_tab == idx as usize && armature_names.len() > 1 {
+                    if shared_ui.sel_tab == idx as usize && tabs.len() > 1 {
                         color += Color::new(20, 20, 20, 0);
                     }
 
-                    let mut is_closing = false;
+                    let unsaved = !tabs[n].undo_states.unsaved_undo_actions
+                        != tabs[n].undo_states.undo_actions.len();
+
+                    let mut is_choosing = false;
                     let button = ui
                         .dnd_drag_source(id, idx, |ui| {
                             ui.set_height(max_size.y);
@@ -1535,30 +1581,30 @@ fn armature_panel(
                                 .multiply_with_opacity(opacity);
                             frame.show(ui, |ui| {
                                 ui.set_height(max_size.y);
-                                ui.set_width(max_size.x / armature_names.len() as f32);
+                                ui.set_width(max_size.x / tabs.len() as f32);
                                 let layout = egui::Layout::centered_and_justified(
                                     egui::Direction::LeftToRight,
                                 );
                                 ui.with_layout(layout, |ui| {
-                                    let mut str = if armature_names[n] != "" {
-                                        armature_names[n].to_string()
+                                    let mut str = if names[n] != "" {
+                                        names[n].to_string()
                                     } else {
                                         "Unsaved Armature".to_string()
                                     };
-                                    if !armature_saved[n] {
+                                    if unsaved {
                                         str += " *";
                                     }
                                     ui.label(&str);
                                 });
-                                if shared_ui.hovering_armature != idx || armature_names.len() == 1 {
+                                if shared_ui.hovering_armature != idx || names.len() == 1 {
                                     return;
                                 }
                                 let layout = egui::Layout::right_to_left(egui::Align::Center);
                                 ui.with_layout(layout, |ui| {
                                     ui.add_space(10.);
                                     if ui.label("X").contains_pointer() && input.left_clicked {
-                                        is_closing = true;
-                                        if !armature_saved[n] {
+                                        is_choosing = true;
+                                        if !unsaved {
                                             shared_ui.context_menu.id = format!("rm_{}", n);
                                             let str = shared_ui.loc("armature_unsaved");
                                             events.open_polar_modal(PolarId::RemoveTab, str);
@@ -1566,6 +1612,13 @@ fn armature_panel(
                                             events.remove_tab(n);
                                         }
                                     };
+                                    ui.add_space(5.);
+                                    if ui.label("⚙").contains_pointer() && input.left_clicked {
+                                        is_choosing = true;
+                                        shared_ui
+                                            .context_menu
+                                            .show(&format!("armaturepanel_{}", n));
+                                    }
                                 });
                             });
                         })
@@ -1588,7 +1641,7 @@ fn armature_panel(
                             }
                         }
                     }
-                    if button.clicked() && !is_closing {
+                    if button.clicked() && !is_choosing {
                         events.switch_to_armature(n);
                     }
 

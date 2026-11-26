@@ -1050,12 +1050,12 @@ pub fn import<R: Read + std::io::Seek>(
 
     let mut temp_arm = shared::Armature {
         path: Some(path.clone()),
-        undo_states: None,
         bones: root.bones.clone(),
         animations: root.animations.clone(),
         styles: root.styles.clone(),
         tex_data: vec![],
         animated_bones: None,
+        opacity: 0.,
     };
 
     // set bone_id for keyframes based on bone_name
@@ -1291,7 +1291,6 @@ pub fn import<R: Read + std::io::Seek>(
             selections: SelectionState::init(),
             camera: imported_camera,
             bone_buffer: RenderBuffer::default(),
-            opacity: 0.,
         });
         shared.events.switch_to_armature(shared.tabs.len() - 1);
     }

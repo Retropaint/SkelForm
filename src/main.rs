@@ -163,7 +163,6 @@ fn init_shared(shared: &mut Shared) {
         selections: SelectionState::init(),
         camera: Camera::default(),
         bone_buffer: RenderBuffer::default(),
-        opacity: 0.,
     });
 
     shared.ui.video_clear_bg = shared.config.colors.background;

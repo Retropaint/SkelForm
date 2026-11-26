@@ -405,14 +405,6 @@ impl ApplicationHandler for App {
                 );
 
                 // ui logic handled in ui.rs
-                let names: Vec<String> = s.tabs.iter().map(|tab| tab.armature.filename()).collect();
-                let saved: Vec<bool> = s
-                    .tabs
-                    .iter()
-                    .map(|tab| {
-                        tab.undo_states.unsaved_undo_actions == tab.undo_states.undo_actions.len()
-                    })
-                    .collect();
                 ui::draw(
                     gui_state.egui_ctx(),
                     &mut s.ui,
@@ -420,9 +412,7 @@ impl ApplicationHandler for App {
                     &mut s.config,
                     &mut s.events,
                     &mut s.edit_mode,
-                    &mut s.tabs[sel_tab],
-                    &names,
-                    &saved,
+                    &s.tabs,
                     &s.copy_buffer,
                     &s.renderer.temp_arm.bones,
                 );
@@ -1047,10 +1037,10 @@ impl BackendRenderer {
 
         let camera = shared.sel_tab().camera.clone();
         for t in 0..shared.tabs.len() {
-            if t == shared.ui.sel_tab || shared.tabs[t].opacity == 0. {
+            let opacity = shared.tabs[t].armature.opacity;
+            if t == shared.ui.sel_tab || opacity == 0. {
                 continue;
             }
-            let opacity = shared.tabs[t].opacity;
             self.render_armature(
                 render_pass,
                 &mut shared.tabs[t],

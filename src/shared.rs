@@ -1401,9 +1401,6 @@ enum_string!(InverseKinematicsMode);
 #[derive(serde::Serialize, serde::Deserialize, Clone, Default, PartialEq)]
 #[serde(default)]
 pub struct Armature {
-    pub path: Option<PathBuf>,
-    #[serde(skip)]
-    pub undo_states: Option<UndoStates>,
     pub bones: Vec<Bone>,
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
@@ -1412,6 +1409,11 @@ pub struct Armature {
     pub tex_data: Vec<TextureData>,
     #[serde(skip)]
     pub animated_bones: Option<Vec<Bone>>,
+
+    #[serde(skip)]
+    pub path: Option<PathBuf>,
+    #[serde(skip)]
+    pub opacity: f32,
 }
 
 impl Armature {
@@ -2560,6 +2562,7 @@ pub enum Events {
     MoveTab,
     RemoveTab,
     LoadFile,
+    SetTabOpacity,
 }
 
 enum_string!(Events);
@@ -2967,6 +2970,12 @@ impl EventState {
         self.events.push(Events::LoadFile);
         self.str_values.push(path.to_str().unwrap().to_string());
     }
+
+    pub fn set_tab_opacity(&mut self, tab_idx: usize, opacity: f32) {
+        self.events.push(Events::SetTabOpacity);
+        self.values.push(tab_idx as f32);
+        self.values.push(opacity as f32);
+    }
 }
 
 #[derive(Default, Clone)]
@@ -3028,7 +3037,6 @@ pub struct ArmatureTab {
     pub selections: SelectionState,
     pub camera: Camera,
     pub bone_buffer: RenderBuffer,
-    pub opacity: f32,
 }
 
 impl ArmatureTab {

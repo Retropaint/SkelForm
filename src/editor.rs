@@ -59,7 +59,13 @@ pub fn iterate_events(
 
     let armature = &mut tabs[ui.sel_tab].armature;
 
-    if event == Events::LoadFile {
+    if event == Events::SetTabOpacity {
+        let tab_idx = events.values[0] as usize;
+        let opacity = events.values[1] as f32;
+        tabs[tab_idx].armature.opacity = opacity;
+        events.events.remove(0);
+        events.values.drain(0..=1);
+    } else if event == Events::LoadFile {
         *ui.file_paths.lock().unwrap() = vec![PathBuf::from(events.str_values[0].clone())];
         *ui.file_type.lock().unwrap() = ImportedFileType::Other;
         ui.changed_window_name = false;
@@ -653,7 +659,6 @@ pub fn simple_event(
                 selections: SelectionState::init(),
                 camera: Camera::default(),
                 bone_buffer: RenderBuffer::default(),
-                opacity: 0.,
             });
             switch_to_armature(tabs.len() - 1, tabs, ui);
         }
