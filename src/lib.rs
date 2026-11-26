@@ -1071,6 +1071,7 @@ impl BackendRenderer {
         let tint = TintColor::new(1., 1., 1., opacity);
         renderer::setup_world_verts(&mut new_arm, armature, &camera, &config, sel, &vec![], tint);
 
+        new_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));
         draw_armature(
             &new_arm,
             &tab.armature,
