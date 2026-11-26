@@ -199,6 +199,7 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::
                 let config = &mut shared_ui.updated_config;
                 default!(config, layout);
                 default!(config, ui_scale);
+                default!(config, no_single_tabs);
             }
         });
     });
@@ -249,6 +250,15 @@ fn user_interface(ui: &mut egui::Ui, shared_ui: &mut crate::Ui, config: &crate::
             });
         });
     });
+
+    basic_checkbox(
+        ui,
+        &shared_ui.loc("settings_modal.user_interface.no_single_tabs"),
+        &shared_ui.loc("settings_modal.user_interface.no_single_tabs_desc"),
+        &mut shared_ui.updated_config.no_single_tabs,
+        config,
+        true,
+    );
 
     ui.add_space(20.);
 }

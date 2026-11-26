@@ -317,7 +317,9 @@
       "layout": "Layout:",
       "layout_split": "Split",
       "layout_right": "Right",
-      "layout_left": "Left"
+      "layout_left": "Left",
+      "no_single_tabs": "Hide tabs on single armature ℹ:",
+      "no_single_tabs_desc": "Tick this to hide top tabs if only one armature is open.\n\nUseful for creating space in workflows that rarely have more than 1 armature open."
     },
     "editing": {
       "heading": "Editing",

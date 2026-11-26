@@ -272,15 +272,16 @@ pub fn draw(
         buffer
     ));
 
-    style_once!(armature_panel(
-        context,
-        config,
-        armature_names,
-        shared_ui,
-        events,
-        input,
-        &tab.selections
-    ));
+    if armature_names.len() > 1 || !config.no_single_tabs {
+        style_once!(armature_panel(
+            context,
+            config,
+            armature_names,
+            shared_ui,
+            events,
+            input,
+        ));
+    }
 
     // render keyframe editor if in Animation mode
     if edit_mode.anim_open {
@@ -1470,7 +1471,6 @@ fn armature_panel(
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     input: &InputStates,
-    selections: &SelectionState,
 ) {
     let panel = egui::TopBottomPanel::top("top_bar")
         .frame(egui::Frame {

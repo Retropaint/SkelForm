@@ -852,6 +852,7 @@ pub struct Config {
     pub rot_snap_step: f32,
     pub bone_translucency: f32,
     pub allow_same_name: bool,
+    pub no_single_tabs: bool,
 
     #[serde(skip)]
     pub colors: ColorConfig,
@@ -905,6 +906,7 @@ impl Default for Config {
             rot_snap_step: 22.5,
             bone_translucency: 0.25,
             allow_same_name: false,
+            no_single_tabs: false,
         }
     }
 }
