@@ -683,7 +683,6 @@ pub fn process_inputs(
         shared_ui.last_pressed = i.keys_down.iter().last().copied();
 
         // UI elements should not receive left click if context menu is open
-        println!("{}", shared_ui.context_menu.id);
         if shared_ui.context_menu.id == "" {
             if shared_ui.mobile {
                 input.left_clicked = i.pointer.any_click();
@@ -1523,6 +1522,7 @@ fn armature_panel(
                         color += Color::new(20, 20, 20, 0);
                     }
 
+                    let mut is_closing = false;
                     let button = ui
                         .dnd_drag_source(id, idx, |ui| {
                             ui.set_height(max_size.y);
@@ -1553,6 +1553,7 @@ fn armature_panel(
                                 ui.with_layout(layout, |ui| {
                                     ui.add_space(10.);
                                     if ui.label("X").contains_pointer() && input.left_clicked {
+                                        is_closing = true;
                                         if !armature_saved[n] {
                                             shared_ui.context_menu.id = format!("rm_{}", n);
                                             let str = shared_ui.loc("armature_unsaved");
@@ -1583,7 +1584,7 @@ fn armature_panel(
                             }
                         }
                     }
-                    if button.clicked() {
+                    if button.clicked() && !is_closing {
                         events.switch_to_armature(n);
                     }
 
