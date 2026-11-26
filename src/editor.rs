@@ -1511,6 +1511,7 @@ pub fn simple_event(
             if ui.sel_tab > tabs.len() - 1 {
                 switch_to_armature(ui.sel_tab - 1, tabs, ui, &config, true);
             }
+            ui.changed_window_name = false;
         }
         _ => {}
     }
