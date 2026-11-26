@@ -417,6 +417,9 @@ pub struct InputStates {
     pub mod_q: Option<global_hotkey::hotkey::HotKey>,
     pub mod_w: Option<global_hotkey::hotkey::HotKey>,
     pub hotkey_manager: Option<global_hotkey::GlobalHotKeyManager>,
+
+    // prevents mod_w from being registered every frame
+    pub holding_mod_w: bool,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -2537,8 +2540,8 @@ pub enum Events {
     SetArmatureSplit,
     SelectAllTexturedBones,
     SwitchToArmature,
-    MoveArmatureInTab,
-    RemoveArmatureInTab,
+    MoveTab,
+    RemoveTab,
 }
 
 enum_string!(Events);
@@ -2663,7 +2666,7 @@ impl EventState {
     event_with_value!(new_bone, Events::NewBone, target_id, i32);
     event_with_value!(set_armature_split, Events::SetArmatureSplit, value, f32);
     event_with_value!(switch_to_armature, Events::SwitchToArmature, value, usize);
-    #[rustfmt::skip]    event_with_value!(remove_armature_in_tab, Events::RemoveArmatureInTab, idx, usize);
+    #[rustfmt::skip]    event_with_value!(remove_tab, Events::RemoveTab, idx, usize);
 
     pub fn open_modal(&mut self, loc_headline: &str, forced: bool) {
         self.events.push(Events::OpenModal);
@@ -2936,8 +2939,8 @@ impl EventState {
         self.values.push(rects as i32 as f32);
     }
 
-    pub fn move_armature_in_tab(&mut self, og_idx: i32, target_idx: i32) {
-        self.events.push(Events::MoveArmatureInTab);
+    pub fn move_tab(&mut self, og_idx: i32, target_idx: i32) {
+        self.events.push(Events::MoveTab);
         self.values.push(og_idx as f32);
         self.values.push(target_idx as f32);
     }

@@ -59,7 +59,7 @@ pub fn iterate_events(
 
     let armature = &mut tabs[ui.sel_tab].armature;
 
-    if event == Events::MoveArmatureInTab {
+    if event == Events::MoveTab {
         let mut remove_idx = events.values[0] as usize;
         tabs.insert(
             events.values[1] as usize,
@@ -1479,7 +1479,7 @@ pub fn simple_event(
         Events::SwitchToArmature => {
             switch_to_armature(value as usize, tabs, ui);
         }
-        Events::RemoveArmatureInTab => {
+        Events::RemoveTab => {
             tabs.remove(value as usize);
             if ui.sel_tab > tabs.len() - 1 {
                 switch_to_armature(ui.sel_tab - 1, tabs, ui);

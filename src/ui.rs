@@ -1544,7 +1544,7 @@ fn armature_panel(
                                     ui.with_layout(layout, |ui| {
                                         ui.add_space(10.);
                                         if ui.label("X").contains_pointer() && input.left_clicked {
-                                            events.remove_armature_in_tab(idx as usize);
+                                            events.remove_tab(idx as usize);
                                         };
                                     });
                                 }
@@ -1580,7 +1580,7 @@ fn armature_panel(
                         let split: Vec<&str> = shared_ui.dragging_element.split('_').collect();
                         let is_left = pointer.unwrap().x < button.rect.center().x;
                         let offset = if is_left { 0 } else { 1 };
-                        events.move_armature_in_tab(split[1].parse().unwrap(), idx + offset);
+                        events.move_tab(split[1].parse().unwrap(), idx + offset);
                     }
                 }
 
