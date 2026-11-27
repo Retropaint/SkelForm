@@ -418,14 +418,13 @@ pub fn encode_sequence(
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-pub fn save_native(shared_ui: &mut shared::Ui) {
+pub fn save_native(shared_ui: &mut shared::Ui, path: &Option<PathBuf>) {
     let mut open_dialog = true;
-    if shared_ui.save_path != None {
-        let path = shared_ui.save_path.clone().unwrap();
-        let filename = path.as_path().file_name().unwrap();
+    if *path != None {
+        let filename = path.as_ref().unwrap().as_path().file_name().unwrap();
         filename.to_str().unwrap().to_string();
         if filename != "autosave.skf" {
-            *shared_ui.file_paths.lock().unwrap() = vec![shared_ui.save_path.clone().unwrap()];
+            *shared_ui.file_paths.lock().unwrap() = vec![path.clone().unwrap()];
             *shared_ui.saving.lock().unwrap() = Saving::CustomPath;
             open_dialog = false;
         }

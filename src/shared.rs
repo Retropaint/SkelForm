@@ -681,7 +681,6 @@ pub struct Ui {
     pub can_quit: bool,
     pub warnings: Vec<Warning>,
     pub warnings_open: bool,
-    pub save_path: Option<PathBuf>,
     pub changed_window_name: bool,
 
     // export options

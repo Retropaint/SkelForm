@@ -656,7 +656,6 @@ pub fn simple_event(
             edit_mode.anim_open = false;
             tabs[ui.sel_tab].camera.pos = Vec2::new(0., 0.);
             tabs[ui.sel_tab].camera.zoom = 2000.;
-            ui.save_path = None;
             ui.changed_window_name = false;
 
             // add armature to list

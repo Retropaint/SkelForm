@@ -373,7 +373,7 @@ impl ApplicationHandler for App {
 
                     if !self.shared.ui.changed_window_name {
                         // show loaded filename as window name
-                        let file = if self.shared.ui.save_path == None {
+                        let file = if self.shared.sel_tab().armature.path == None {
                             "SkelForm".to_string()
                         } else {
                             self.shared.sel_tab().armature.filename()
@@ -1429,7 +1429,6 @@ impl BackendRenderer {
                 shared.ui.can_quit = false;
 
                 // save this path
-                shared.ui.save_path = Some(save_path.clone());
                 shared.sel_tab_mut().armature.path = Some(save_path.clone());
             }
             Saving::Exporting => {

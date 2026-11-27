@@ -35,6 +35,12 @@ pub fn draw(
 ) {
     shared_ui.context_menu.keep = false;
 
+    //if tabs[shared_ui.sel_tab].armature.path != None {
+    //    println!("{:?}", tabs[shared_ui.sel_tab].armature.path);
+    //} else {
+    //    println!("");
+    //}
+
     context.set_cursor_icon(shared_ui.cursor_icon);
     shared_ui.cursor_icon = egui::CursorIcon::Default;
 
@@ -940,7 +946,7 @@ pub fn kb_inputs(
             utils::save_web(armature, camera, edit_mode, saving);
         }
         #[cfg(not(target_arch = "wasm32"))]
-        utils::save_native(shared_ui);
+        utils::save_native(shared_ui, &armature.path);
     }
 
     if input.consume_shortcut(&config.keys.export) {
@@ -949,8 +955,7 @@ pub fn kb_inputs(
 
     #[cfg(not(target_arch = "wasm32"))]
     if input.consume_shortcut(&config.keys.save_as) && !shared_ui.startup_window {
-        shared_ui.save_path = None;
-        utils::save_native(shared_ui);
+        utils::save_native(shared_ui, &None);
     }
 
     if input.consume_shortcut(&config.keys.open) {
@@ -2109,15 +2114,14 @@ fn menu_file_button(
                 shared_ui.saving.lock().unwrap().clone(),
             );
             #[cfg(not(target_arch = "wasm32"))]
-            utils::save_native(shared_ui);
+            utils::save_native(shared_ui, &armature.path);
             ui.close();
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
             let str_save_as = &shared_ui.loc("top_bar.file.save_as");
             if top_bar_button!(str_save_as, Some(&config.keys.save_as)).clicked() {
-                shared_ui.save_path = None;
-                utils::save_native(shared_ui);
+                utils::save_native(shared_ui, &armature.path);
                 ui.close();
             }
         }

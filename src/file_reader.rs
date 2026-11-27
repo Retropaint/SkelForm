@@ -687,19 +687,6 @@ pub fn read_import(_shared: &mut Shared) -> Option<(Vec<u8>, PathBuf)> {
         }
 
         file = raw_file.unwrap().bytes().map(|b| b.unwrap()).collect();
-
-        // skf files starting with _ shouldn't be saved
-        if filepath
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .chars()
-            .next()
-            != Some('_')
-        {
-            _shared.ui.save_path = Some(filepath.clone());
-        }
     }
 
     #[cfg(target_arch = "wasm32")]
