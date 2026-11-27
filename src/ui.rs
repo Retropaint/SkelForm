@@ -2,7 +2,7 @@
 use egui::{Color32, Context, Shadow, Stroke};
 use image::DynamicImage;
 use modal::modal_x;
-use utils::world_mouse;
+use utils::{trunc_str, world_mouse};
 
 use crate::*;
 
@@ -1634,7 +1634,7 @@ fn armature_panel(
                                     if unsaved {
                                         str += " *";
                                     }
-                                    ui.label(&str);
+                                    ui.label(trunc_str(ui, &str, ui.available_width()));
                                 });
                                 if shared_ui.hovering_armature != idx || names.len() == 1 {
                                     return;
