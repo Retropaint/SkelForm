@@ -1051,12 +1051,11 @@ impl BackendRenderer {
     ) {
         let camera = shared.sel_tab().camera.clone();
         for t in min..max {
-            let opacity = shared.tabs[t].armature.opacity;
-            if t == shared.ui.sel_tab || opacity == 0. {
+            if t == shared.ui.sel_tab || shared.tabs[t].armature.tab_opacity == 0. {
                 continue;
             }
             let tab = &mut shared.tabs[t];
-            self.render_armature(render_pass, tab, &camera, &shared.config, opacity);
+            self.render_armature(render_pass, tab, &camera, &shared.config);
         }
     }
 
@@ -1068,18 +1067,27 @@ impl BackendRenderer {
         tab: &mut ArmatureTab,
         camera: &Camera,
         config: &Config,
-        opacity: f32,
     ) {
         let mut buffer = tab.bone_buffer.clone();
         buffer.dirty = true;
         let mut new_arm = Armature {
             bones: tab.armature.bones.clone(),
+            animated_bones: Some(tab.armature.bones.clone()),
             ..Default::default()
         };
-        renderer::construction(&mut new_arm.bones, &tab.armature.bones);
+
+        for bone in new_arm.animated_bones.as_mut().unwrap() {
+            if bone.parent_id == -1 {
+                bone.pos += tab.armature.tab_pos;
+            }
+        }
+        renderer::construction(
+            &mut new_arm.bones,
+            &new_arm.animated_bones.as_ref().unwrap(),
+        );
         let sel = &tab.selections;
         let armature = &tab.armature;
-        let tint = TintColor::new(1., 1., 1., opacity);
+        let tint = TintColor::new(1., 1., 1., tab.armature.tab_opacity);
         renderer::setup_world_verts(&mut new_arm, armature, &camera, &config, sel, &vec![], tint);
 
         new_arm.bones.sort_by(|a, b| a.zindex.cmp(&b.zindex));

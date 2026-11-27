@@ -1414,8 +1414,12 @@ pub struct Armature {
 
     #[serde(skip)]
     pub path: Option<PathBuf>,
+
+    // tab-related (non-selected rendered armature)
     #[serde(skip)]
-    pub opacity: f32,
+    pub tab_opacity: f32,
+    #[serde(skip)]
+    pub tab_pos: Vec2,
 }
 
 impl Armature {
@@ -2565,6 +2569,7 @@ pub enum Events {
     RemoveTab,
     LoadFile,
     SetTabOpacity,
+    SetTabPos,
 }
 
 enum_string!(Events);
@@ -2977,6 +2982,13 @@ impl EventState {
         self.events.push(Events::SetTabOpacity);
         self.values.push(tab_idx as f32);
         self.values.push(opacity as f32);
+    }
+
+    pub fn set_tab_pos(&mut self, tab_idx: usize, pos: Vec2) {
+        self.events.push(Events::SetTabPos);
+        self.values.push(tab_idx as f32);
+        self.values.push(pos.x as f32);
+        self.values.push(pos.y as f32);
     }
 }
 

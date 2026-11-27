@@ -1053,9 +1053,7 @@ pub fn import<R: Read + std::io::Seek>(
         bones: root.bones.clone(),
         animations: root.animations.clone(),
         styles: root.styles.clone(),
-        tex_data: vec![],
-        animated_bones: None,
-        opacity: 0.,
+        ..Default::default()
     };
 
     // set bone_id for keyframes based on bone_name

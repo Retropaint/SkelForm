@@ -4,7 +4,7 @@ use crate::{
     shared::Display,
     ui::EguiUi,
     utils::{self, open_link},
-    Config, ImportedFileType, PolarId,
+    Config, PolarId,
 };
 
 pub fn modal_template<T: FnOnce(&mut egui::Ui), E: FnOnce(&mut egui::Ui)>(

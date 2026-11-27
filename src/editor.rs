@@ -59,10 +59,15 @@ pub fn iterate_events(
 
     let armature = &mut tabs[ui.sel_tab].armature;
 
-    if event == Events::SetTabOpacity {
+    if event == Events::SetTabPos {
+        tabs[events.values[0] as usize].armature.tab_pos =
+            Vec2::new(events.values[1], events.values[2]);
+        events.events.remove(0);
+        events.values.drain(0..=2);
+    } else if event == Events::SetTabOpacity {
         let tab_idx = events.values[0] as usize;
         let opacity = events.values[1] as f32;
-        tabs[tab_idx].armature.opacity = opacity;
+        tabs[tab_idx].armature.tab_opacity = opacity;
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::LoadFile {

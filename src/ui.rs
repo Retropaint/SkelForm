@@ -1312,10 +1312,18 @@ fn context_menu_content(
             }
         }
     } else if element_id == "armaturepanel" {
-        // opacity slider
         let idx: usize = split[1].parse().unwrap();
-        let mut opacity = tabs[idx].armature.opacity;
-        ui.label("Reference opacity:");
+
+        // remove tab
+        if ui.context_button("Remove tab", config).clicked() {
+            events.remove_tab(idx);
+            shared_ui.context_menu.close();
+        }
+        ui.add_space(5.);
+
+        // opacity slider
+        let mut opacity = tabs[idx].armature.tab_opacity;
+        ui.label("Tab opacity:");
         let slider = ui.add(egui::Slider::new(
             &mut opacity,
             egui::Rangef::new(0., 1.).into(),
@@ -1323,11 +1331,30 @@ fn context_menu_content(
         if slider.hovered() && input.left_down {
             events.set_tab_opacity(idx, opacity);
         }
-        ui.add_space(5.);
-        if ui.context_button("Remove tab", config).clicked() {
-            events.remove_tab(idx);
-            shared_ui.context_menu.close();
+
+        if opacity == 0. {
+            return;
         }
+
+        // positions
+        let mut pos_x = tabs[idx].armature.tab_pos.x;
+        let mut pos_y = tabs[idx].armature.tab_pos.y;
+        ui.horizontal(|ui| {
+            ui.label("Tab Pos. X:");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.add(egui::DragValue::new(&mut pos_x)).hovered() && input.left_down {
+                    events.set_tab_pos(idx, Vec2::new(pos_x, pos_y));
+                }
+            })
+        });
+        ui.horizontal(|ui| {
+            ui.label("Tab Pos. Y:");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.add(egui::DragValue::new(&mut pos_y)).hovered() && input.left_down {
+                    events.set_tab_pos(idx, Vec2::new(pos_x, pos_y));
+                }
+            })
+        });
     }
 }
 
