@@ -184,7 +184,7 @@ pub fn render(
             && (!input.left_down || input.left_pressed) // allow detection on LMB press
             && !tab.camera.on_ui
             && selected_mesh
-            && edit_mode.render_options.textures
+            && tab.armature.render_options.textures
         {
             let wv = &renderer.temp_arm.bones[b].world_verts;
             for (_, chunk) in renderer.temp_arm.bones[b]
@@ -301,7 +301,8 @@ pub fn render(
     }
 
     // render onion layers
-    if edit_mode.render_options.textures && selections.anim_frame != -1 && edit_mode.onion_layers {
+    if tab.armature.render_options.textures && selections.anim_frame != -1 && edit_mode.onion_layers
+    {
         #[rustfmt::skip]
         draw_armature(
             &prev_arm, &tab.armature, edit_mode.showing_mesh, &sel, queue, render_pass,
@@ -315,7 +316,7 @@ pub fn render(
     }
 
     // render bones
-    if edit_mode.render_options.textures {
+    if tab.armature.render_options.textures {
         #[rustfmt::skip]
         draw_armature(
             &renderer.temp_arm, &tab.armature, edit_mode.showing_mesh, &sel, queue, render_pass,
@@ -340,7 +341,7 @@ pub fn render(
 
         // render texture, so it appears above everything else
         let tex = tab.armature.tex_of(bone.id);
-        if edit_mode.render_options.textures && tex != None {
+        if tab.armature.render_options.textures && tex != None {
             let bind_group = &tab.armature.tex_data(tex.unwrap()).unwrap().bind_group;
             let sel_bone_buffer = &mut renderer.sel_bone_buffer;
             let mut world_verts = bone.world_verts.clone();
@@ -428,7 +429,7 @@ pub fn render(
     }
 
     // draw render rects if enabled
-    if edit_mode.render_options.rects {
+    if tab.armature.render_options.rects {
         let mut verts = vec![];
         let mut indices = vec![];
         render_pass.set_bind_group(0, &renderer.generic_bindgroup, &[]);
@@ -466,7 +467,7 @@ pub fn render(
     }
 
     // render mesh wireframes if on
-    if edit_mode.render_options.meshes {
+    if tab.armature.render_options.meshes {
         let mut verts = vec![];
         let mut indices = vec![];
         let hiddens = tab.armature.get_propagated_hidden();
@@ -535,7 +536,7 @@ pub fn render(
     #[rustfmt::skip]
     draw_render_points(config, &tab.camera, input, edit_mode, &selected_bone_ids, selections, renderer, queue, render_pass, events, &tab.armature);
     #[rustfmt::skip]
-    draw_kites(config, &tab.camera, edit_mode, selected_bone_ids, renderer, queue, render_pass);
+    draw_kites(config, &tab.camera, edit_mode, selected_bone_ids, renderer, queue, render_pass, &tab.armature);
 
     // is a bone being hovered on, in the renderer?
     renderer.is_hovering_bone = renderer.on_point || on_click_id != -1;
@@ -2280,7 +2281,7 @@ pub fn draw_render_points(
         }
 
         // skip points if they shouldn't be rendered, and this isn't a selected bone
-        if !edit_mode.render_options.points && !selections.bone_ids.contains(&bone.id) {
+        if !armature.render_options.points && !selections.bone_ids.contains(&bone.id) {
             continue;
         }
 
@@ -2371,6 +2372,7 @@ pub fn draw_kites(
     renderer: &mut Renderer,
     queue: &wgpu::Queue,
     render_pass: &mut RenderPass,
+    armature: &Armature
 ) {
     if !renderer.kite_buffer.dirty {
         render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);
@@ -2386,7 +2388,7 @@ pub fn draw_kites(
     for p in 0..renderer.temp_arm.bones.len() {
         let bone = &renderer.temp_arm.bones[p];
 
-        if !edit_mode.render_options.kites
+        if !armature.render_options.kites
             || (edit_mode.editing_mesh && !sel_bone_ids.contains(&bone.id))
         {
             continue;

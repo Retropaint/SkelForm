@@ -89,11 +89,11 @@ pub fn iterate_events(
         events.events.remove(0);
         events.values.drain(0..=1);
     } else if event == Events::UpdateRenderOptions {
-        edit_mode.render_options.textures = events.values[0] == 1.;
-        edit_mode.render_options.points = events.values[1] == 1.;
-        edit_mode.render_options.kites = events.values[2] == 1.;
-        edit_mode.render_options.meshes = events.values[3] == 1.;
-        edit_mode.render_options.rects = events.values[4] == 1.;
+        tabs[ui.sel_tab].armature.render_options.textures = events.values[0] == 1.;
+        tabs[ui.sel_tab].armature.render_options.points = events.values[1] == 1.;
+        tabs[ui.sel_tab].armature.render_options.kites = events.values[2] == 1.;
+        tabs[ui.sel_tab].armature.render_options.meshes = events.values[3] == 1.;
+        tabs[ui.sel_tab].armature.render_options.rects = events.values[4] == 1.;
 
         events.events.remove(0);
         events.values.drain(0..=4);

@@ -894,7 +894,7 @@ pub fn prepare_files(
     let mut editor = EditorOptions {
         camera,
         armature_split: edit_mode.armature_split,
-        render_options: edit_mode.render_options.clone(),
+        render_options: armature.render_options.clone(),
         bones: vec![],
         styles: vec![],
     };
@@ -1185,7 +1185,7 @@ pub fn import<R: Read + std::io::Seek>(
                 let ed_style = &editor.styles[s];
                 style.active = ed_style.active;
             }
-            shared.edit_mode.render_options = editor.render_options;
+            temp_arm.render_options = editor.render_options;
             shared.edit_mode.armature_split = editor.armature_split;
         }
     }

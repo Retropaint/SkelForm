@@ -1340,7 +1340,7 @@ pub struct EditorStyle {
     pub active: bool,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, PartialEq)]
 pub struct RenderOptions {
     #[serde(default = "default_true")]
     pub textures: bool,
@@ -1350,6 +1350,18 @@ pub struct RenderOptions {
     pub kites: bool,
     pub meshes: bool,
     pub rects: bool,
+}
+
+impl Default for RenderOptions {
+    fn default() -> Self {
+        Self {
+            textures: true,
+            points: true,
+            kites: true,
+            meshes: false,
+            rects: false,
+        }
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Default)]
@@ -1406,6 +1418,7 @@ pub struct Armature {
     #[serde(default, skip_serializing_if = "are_anims_empty")]
     pub animations: Vec<Animation>,
     pub styles: Vec<Style>,
+
     #[serde(skip)]
     pub tex_data: Vec<TextureData>,
     #[serde(skip)]
@@ -1418,6 +1431,8 @@ pub struct Armature {
     pub tab_opacity: f32,
     #[serde(skip)]
     pub tab_pos: Vec2,
+    #[serde(skip)]
+    pub render_options: RenderOptions,
 }
 
 impl Armature {
@@ -2277,7 +2292,6 @@ pub struct EditMode {
     pub holding_edit_snap: bool,
     pub editing_pivot: bool,
     pub armature_split: f32,
-    pub render_options: RenderOptions,
 }
 
 #[derive(Default, PartialEq, Debug, Clone)]

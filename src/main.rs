@@ -146,9 +146,6 @@ fn init_shared(shared: &mut Shared) {
     shared.edit_mode.onion_layers = false;
     shared.ui.tracing_gap = 25.;
     shared.ui.tracing_padding = 50.;
-    shared.edit_mode.render_options.points = true;
-    shared.edit_mode.render_options.kites = true;
-    shared.edit_mode.render_options.textures = true;
     shared.ui.use_fallback = true;
     shared.ui.scale = shared.config.ui_scale;
     shared.ui.export_style_id = usize::MAX;

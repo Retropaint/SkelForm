@@ -2570,7 +2570,7 @@ fn render_bar(
             };
         }
 
-        let mut render_options = edit_mode.render_options.clone();
+        let mut render_options = armature.render_options.clone();
         button!(render_options.textures, "Textures", "🖻");
         button!(render_options.points, "Points", "⏺");
         button!(render_options.kites, "Kites", "♦");
