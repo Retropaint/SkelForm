@@ -1411,10 +1411,9 @@ pub struct Armature {
     #[serde(skip)]
     pub animated_bones: Option<Vec<Bone>>,
 
+    // tab-related stuff, kept here to make access easier
     #[serde(skip)]
     pub path: Option<PathBuf>,
-
-    // tab-related (non-selected rendered armature)
     #[serde(skip)]
     pub tab_opacity: f32,
     #[serde(skip)]

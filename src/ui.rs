@@ -1333,7 +1333,7 @@ fn context_menu_content(
             &mut opacity,
             egui::Rangef::new(0., 1.).into(),
         ));
-        if slider.hovered() && input.left_down {
+        if (slider.hovered() && input.left_down) || opacity != tabs[idx].armature.tab_opacity {
             events.set_tab_opacity(idx, opacity);
         }
 
@@ -1347,7 +1347,8 @@ fn context_menu_content(
         ui.horizontal(|ui| {
             ui.label("Tab Pos. X:");
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.add(egui::DragValue::new(&mut pos_x)).hovered() && input.left_down {
+                let drag = ui.add(egui::DragValue::new(&mut pos_x));
+                if (drag.hovered() && input.left_down) || pos_x != tabs[idx].armature.tab_pos.x {
                     events.set_tab_pos(idx, Vec2::new(pos_x, pos_y));
                 }
             })
@@ -1355,7 +1356,8 @@ fn context_menu_content(
         ui.horizontal(|ui| {
             ui.label("Tab Pos. Y:");
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.add(egui::DragValue::new(&mut pos_y)).hovered() && input.left_down {
+                let drag = ui.add(egui::DragValue::new(&mut pos_y));
+                if (drag.hovered() && input.left_down) || pos_y != tabs[idx].armature.tab_pos.y {
                     events.set_tab_pos(idx, Vec2::new(pos_x, pos_y));
                 }
             })
