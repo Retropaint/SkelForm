@@ -1320,6 +1320,11 @@ pub fn save_recent_paths(mut paths: Vec<PathBuf>) {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn add_to_recent_paths(to_add: &PathBuf, paths: &mut Vec<PathBuf>) {
+    let filename = to_add.file_name().unwrap().to_str().unwrap();
+    if filename.chars().next().unwrap() == '_' {
+        return;
+    }
+
     if !paths.contains(&to_add) {
         paths.push(to_add.clone());
     } else {

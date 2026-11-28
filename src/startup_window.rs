@@ -201,12 +201,6 @@ fn middle(
 
                         let path = shared_ui.recent_file_paths[p].clone();
 
-                        // ignore filenames starting with _
-                        let filename = path.file_name().unwrap().to_str().unwrap().to_string();
-                        if filename.chars().nth(0).unwrap() == '_' {
-                            continue;
-                        }
-
                         has_files = true;
 
                         let width = available_width;
