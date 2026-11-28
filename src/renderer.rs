@@ -2372,7 +2372,7 @@ pub fn draw_kites(
     renderer: &mut Renderer,
     queue: &wgpu::Queue,
     render_pass: &mut RenderPass,
-    armature: &Armature
+    armature: &Armature,
 ) {
     if !renderer.kite_buffer.dirty {
         render_pass.set_bind_group(0, &renderer.flow_kite_bindgroup, &[]);

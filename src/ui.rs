@@ -169,21 +169,9 @@ pub fn draw(
 
     // render certain UI elements only if startup isn't open (performance)
     if !shared_ui.startup_window {
-        camera_bar(
-            context,
-            config,
-            shared_ui,
-            &tabs[shared_ui.sel_tab].camera,
-            events,
-        );
-        render_bar(
-            context,
-            config,
-            shared_ui,
-            events,
-            &tabs[shared_ui.sel_tab].armature,
-            &edit_mode,
-        );
+        let tab = &tabs[shared_ui.sel_tab];
+        camera_bar(context, config, shared_ui, &tab.camera, events);
+        render_bar(context, config, shared_ui, events, &tab.armature);
     }
 
     // open certain UI elements if requested
@@ -2466,7 +2454,6 @@ fn render_bar(
     shared_ui: &mut crate::Ui,
     events: &mut EventState,
     armature: &Armature,
-    edit_mode: &EditMode,
 ) {
     // check which toggles are eligible, and return if none are
     let mut eligibles = vec![false, false, false, false, false];
